@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-14
+**Poslední aktualizace:** 2026-11-15
 
 ## Kde jsme
 
@@ -11,8 +11,9 @@ Hotová je **fáze 0** a části fáze 1:
 | Oblast | Stav | Kde |
 |---|---|---|
 | Build bez nástrojů třetích stran (SPM + `tools/bundle.sh`, Makefile) | hotovo | `Package.swift`, `Makefile` |
-| Rope (copy-on-write, úpravy na místě, UTF-8/UTF-16/řádky) | hotovo, chybí selekce, undo, kotvy | `Sources/TextEngine/Rope.swift` |
-| Editor nad Core Text (ASCII tabulka glyfů, dávkové kreslení, okno cache řádků, zarážky tabulátorů) | spike, jeden kurzor | `Sources/EditorKit/` |
+| Rope (copy-on-write, úpravy na místě, UTF-8/UTF-16/řádky) | hotovo, chybí undo, kotvy | `Sources/TextEngine/Rope.swift` |
+| Multi-selekce (`SelectionSet`, slučování překryvů) a `ChangeSet` (víc změn najednou, mapování pozic) | hotovo | `Sources/TextEngine/Selection.swift` |
+| Editor nad Core Text (ASCII tabulka glyfů, dávkové kreslení, okno cache řádků, zarážky tabulátorů) | víc kurzorů: kreslení výběru, Shift+šipky/Home/End/PgUp/PgDn, klik, tažení, Shift+klik, ⌥+klik, Esc | `Sources/EditorKit/` |
 | Formát souborů (výchozí podle PSR-12/gofmt/Nette, `.editorconfig`, settings.json, konce řádků, kódování, ukládání se zachováním práv a odkazů) | jádro hotové | `Sources/MinorCore/`, `docs/format-settings.md` |
 | Standardní menu podle Apple HIG, sheet uložení, Nedávné, otevírání z Finderu | hotovo | `Sources/MinorIDE/MainMenu.swift` |
 | Překlady: angličtina (US) z `L("…")`, čeština povinná, množná čísla `LP` + `.stringsdict` | hotovo | `server/cmd/l10n`, `docs/translations.md` |
@@ -27,10 +28,14 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 ## Další krok
 
 **Fáze 1a: dokončit TextEngine** (`docs/PLAN.md`, fáze 1):
-1. Multi-selekce v `TextEngine` (seřazené rozsahy, slučování překryvů), napojení do `EditorView` (kreslení výběru, Shift+šipky, myš).
+1. ~~Multi-selekce~~ hotovo 2026-11-15.
 2. Transakce editací a undo/redo se slučováním psaní a obnovou selekcí; menu Zpět/Znovu, Kopírovat/Vyjmout/Vybrat vše.
 3. Kotvy (pozice, které přežijí editace).
 4. Property-based testy selekcí a undo.
+
+Pro krok 2: `ChangeSet` je základ transakce, undo potřebuje inverzi (`ChangeSet` + odstraněné bajty) a uložené selekce před/po. Editace v `EditorView` jdou všechny přes `apply(_:selectionsAfter:)`.
+
+Známé mezery po kroku 1: Tab s víceřádkovým výběrem výběr nahradí (odsazení bloku patří do 1c), vložení více řádků do stejného počtu kurzorů nerozděluje text, dvojklik/trojklik a ⌥+tažení jsou v 1b.
 
 Pak 1b (vstup, myš, displayLink), 1c (příkazy, hledání), 1d (lexery a zvýraznění).
 
