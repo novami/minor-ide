@@ -3,7 +3,7 @@
 - Název: **MinorIDE** (`MinorIDE.app`, bundle id `cz.novami.minoride`), repozitář `github.com/novami/minor-ide`, licence **MIT**.
 - Cílový stroj: M2, 16 GB RAM, macOS 14+.
 - Implementuje: Sonnet, po úkolech v pořadí níže. Každý úkol má **Hotovo když**.
-- Analýza konkurence: [ANALYZA.md](ANALYZA.md). Volba závislostí: [ZAVISLOSTI.md](ZAVISLOSTI.md).
+- Analýza konkurence: [ANALYSIS.md](ANALYSIS.md). Volba závislostí: [DEPENDENCIES.md](DEPENDENCIES.md).
 
 **Filozofie: minimum knihoven třetích stran.** Vlastní je editor, zvýraznění, všechny parsery, LSP, updater, hledání, SFTP/FTPS klient i build. Knihovny zůstávají jen tam, kde by vlastní implementace stála měsíce bez přínosu: SwiftTerm, ovladače MySQL a PostgreSQL a data phpstorm-stubs.
 
@@ -145,7 +145,7 @@ MinorIDE se musí chovat jako nativní Mac aplikace, aby se Mac uživatel hned z
 | **Nastavení** | Samostatné okno *Nastavení* (⌘,) s kartami v toolbaru, změny platí okamžitě, bez OK/Storno. Stejná data jako `settings.json`. |
 | **Vzhled** | Systémové barvy a akcentní barva, světlý i tmavý režim, systémové písmo v UI, ikony SF Symbols, kontextová menu na pravé tlačítko, gesto přejetí dvěma prsty = zpět/vpřed v navigaci. |
 | **Přístupnost** | VoiceOver, Zvýšit kontrast, Omezit pohyb, Omezit průhlednost, plné ovládání klávesnicí. |
-| **Jazyk** | Výchozí angličtina (US), **čeština vždy kompletní** (kontroluje `make test` a CI), další jazyky jedním příkazem `make l10n-new LANG=xx`. Aplikace se řídí jazykem systému. Texty jen přes `L("…")`, nikdy napevno. Množná čísla se skloňují podle jazyka (`LP`, `.stringsdict`: 1 mezera / 2 mezery / 5 mezer). Postup: [preklady.md](preklady.md). |
+| **Jazyk** | Výchozí angličtina (US), **čeština vždy kompletní** (kontroluje `make test` a CI), další jazyky jedním příkazem `make l10n-new LANG=xx`. Aplikace se řídí jazykem systému. Texty jen přes `L("…")`, nikdy napevno. Množná čísla se skloňují podle jazyka (`LP`, `.stringsdict`: 1 mezera / 2 mezery / 5 mezer). Postup: [translations.md](translations.md). |
 
 ### Uživatelský zážitek (UX)
 
@@ -226,7 +226,7 @@ Odhady jsou hrubé (jeden vývojář s AI). **Celé MVP: zhruba 12–17 měsíc�
 - Taby, split (vertikální i horizontální), „Reopen closed tab“, indikace neuložených změn.
 - Nastavení: `~/Library/Application Support/MinorIDE/settings.json` + `.minoride/settings.json`, UI v SwiftUI.
 - **Keymap PhpStorm (macOS)** v `docs/keymap.md`. Zkratky podle fyzických kláves (keyCode), aby fungovaly na **české klávesnici**, kde `[ ] / \` vyžadují Alt. Alternativy, např. zpět/vpřed i Cmd+Opt+←/→.
-- **Formát souborů** ([nastaveni-formatu.md](nastaveni-formatu.md)), **jádro hotové** (`MinorCore`: `FormatSettings`, `FormatDefaults`, `EditorConfig`, `FormatResolver`, `TextFile`):
+- **Formát souborů** ([format-settings.md](format-settings.md)), **jádro hotové** (`MinorCore`: `FormatSettings`, `FormatDefaults`, `EditorConfig`, `FormatResolver`, `TextFile`):
   - výchozí hodnoty podle standardů (PSR-12, gofmt, Nette, Prettier…), PHP preset `psr12` / `nette`;
   - priority: jazyk < uživatel < projekt < `.editorconfig`; existující soubor si drží konce řádků, odsazení se z něj rozpozná;
   - buffer má vždy jen `\n`, konce řádků, kódování, koncový řádek a ořez mezer se aplikují při uložení;
@@ -473,8 +473,8 @@ minor-ide/
 ├─ Tests/                      (<Modul>Tests)
 ├─ server/                     (Go: minoride-server)
 ├─ tools/                      (bundle.sh, signrelease/)
-├─ docs/                       (+ bezpecnost.md: postupy rotace klíčů, hlášení zranitelností)
+├─ docs/                       (+ security.md: postupy rotace klíčů, hlášení zranitelností)
 ├─ Resources/                  (Info.plist, ikony, témata, phpstorm-stubs)
-├─ docs/                       (ANALYZA, PLAN, ZAVISLOSTI, keymap, editor-behaviors, release, spike-*)
+├─ docs/                       (ANALYSIS, PLAN, DEPENDENCIES, keymap, editor-behaviors, release, spike-*)
 └─ .github/workflows/          (ci.yml, release.yml)
 ```
