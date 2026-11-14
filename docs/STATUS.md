@@ -15,7 +15,7 @@ Hotová je **fáze 0**, **fáze 1a** (TextEngine) a části fáze 1b:
 | Multi-selekce (`SelectionSet`, slučování překryvů) a `ChangeSet` (víc změn najednou, mapování pozic) | hotovo | `Sources/TextEngine/Selection.swift` |
 | Kotvy (`AnchorSet`: pozice s biasem, posun přes `ChangeSet` včetně undo/redo; `ChangeSet.map` binárním hledáním) | hotovo, `EditorView.anchors` | `Sources/TextEngine/Anchor.swift` |
 | Undo/redo (`EditHistory`: kroky z transakcí, inverze `ChangeSet`, obnova selekcí, slučování psaní/mazání: pauza 500 ms, nové slovo, nový řádek, posun kurzoru, uložení) | hotovo | `Sources/TextEngine/History.swift` |
-| Editor nad Core Text (ASCII tabulka glyfů, dávkové kreslení, okno cache řádků, zarážky tabulátorů) | víc kurzorů, Zpět/Znovu, Vyjmout/Kopírovat (víc výběrů spojí `\n`)/Vybrat vše s validací menu; kreslení výběru, Shift+šipky/Home/End/PgUp/PgDn, klik, tažení, Shift+klik, ⌥+klik, Esc | `Sources/EditorKit/` |
+| Editor nad Core Text (ASCII tabulka glyfů, dávkové kreslení, okno cache řádků, zarážky tabulátorů) | `NSTextInputClient` úplný (replacementRange pro podržení klávesy s akcenty, podřetězce, `firstRect`, `characterIndex`; mrtvé klávesy jako překryv u kurzoru), systémové vazby přes `doCommandBySelector` (⌥←/→ po slovech, ⌥⌫, ⌘⌫, ⌃A/⌃E/⌃K/⌃Y/⌃T/⌃L, Home/End jen posun), víc kurzorů, Zpět/Znovu, Vyjmout/Kopírovat (víc výběrů spojí `\n`)/Vybrat vše s validací menu; kreslení výběru, Shift+šipky/Home/End/PgUp/PgDn, klik, tažení, Shift+klik, ⌥+klik, Esc | `Sources/EditorKit/` |
 | Formát souborů (výchozí podle PSR-12/gofmt/Nette, `.editorconfig`, settings.json, konce řádků, kódování, ukládání se zachováním práv a odkazů) | jádro hotové | `Sources/MinorCore/`, `docs/format-settings.md` |
 | Standardní menu podle Apple HIG, sheet uložení, Nedávné, otevírání z Finderu | hotovo | `Sources/MinorIDE/MainMenu.swift` |
 | Překlady: angličtina (US) z `L("…")`, čeština povinná, množná čísla `LP` + `.stringsdict` | hotovo | `server/cmd/l10n`, `docs/translations.md` |
@@ -31,7 +31,11 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1a je hotová** (2026-11-15): property-based testy rope, selekcí, kotev a undo/redo (`HistoryTests.interleavedEditsUndoRedoMatchModel`: prokládané psaní, mazání, posuny kurzoru, Zpět/Znovu proti modelu textu a selekcí), 1M editací nad 10 MB za 0,67 s (rozpočet 2 s).
 
-**Další: fáze 1b – vykreslování a vstup** (`docs/PLAN.md`): `NSTextInputClient` (marked text, česká diakritika přes mrtvé klávesy, IME), klávesy mimo keymapu přes `interpretKeyEvents`/`doCommandBySelector`, dvojklik/trojklik, ⌥+tažení (sloupcový výběr), kurzory ve vlastní vrstvě, gutter, měření latence přes `NSView.displayLink`. Nejdřív zjistit, co z 1b už `EditorKit` má.
+**Fáze 1b, krok 1 hotový** (2026-11-15): vstup z klávesnice (`TextInputTests`: „čšžýáíéůú“, mrtvé klávesy ˇ ´ °, nahrazení rozsahu, systémové vazby), `Rope.byteOffset(ofUTF16:)`, pohyb po slovech v `Sources/TextEngine/Words.swift`.
+
+**Další: fáze 1b, krok 2 – myš**: dvojklik (slovo, použít `wordStart`/`wordEnd`), trojklik (řádek), tažení po slovech/řádcích po dvoj/trojkliku, ⌥+tažení (sloupcový výběr). Pak kurzory ve vlastní vrstvě (blikání bez překreslení textu), gutter jako samostatný view, měření latence přes `NSView.displayLink`, základní přístupnost (VoiceOver čte aktuální řádek).
+
+Známé mezery po kroku 1b/1: marked text se kreslí jen u primárního kurzoru jako překryv (dlouhá kompozice IME zakryje text za kurzorem, neodsune ho); s víc kurzory ⌃Y vloží celý kill buffer ke každému; ruční ověření na skutečné české klávesnici a s IME (japonština) v běžící aplikaci zatím neproběhlo.
 
 Známé mezery po kroku 3: kotva v smazaném textu se sbalí na místo smazání a Zpět ji nevrátí (breakpoint na smazaném řádku po Zpět zůstane o řádek výš/níž); kotvy jsou jen body, rozsah (diagnostika) = dvě kotvy; `anchors(in:)` prochází všechny kotvy (O(n)), pro tisíce kotev v gutteru případně seřazené pole.
 

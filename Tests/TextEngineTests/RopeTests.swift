@@ -61,7 +61,30 @@ struct RopeTests {
 		#expect(r.isEmpty)
 		#expect(snapshot.lineCount == 10_001)
 	}
+	@Test func utf16ToByteOffsets() {
+		let text = String(repeating: "čau 😀\n", count: 400) // several leaves, sequences split between them
+		let r = Rope(text)
+		var units = 0, bytes = 0
+		for scalar in text.unicodeScalars {
+			#expect(r.byteOffset(ofUTF16: units) == bytes)
+			if scalar.utf16.count == 2 { #expect(r.byteOffset(ofUTF16: units + 1) == bytes) }
+			units += scalar.utf16.count
+			bytes += scalar.utf8.count
+		}
+		#expect(r.byteOffset(ofUTF16: units + 5) == r.byteCount)
+	}
+
+	@Test func wordBoundaries() {
+		let r = Rope("  $žluť_1 ->  x\n")
+		#expect(r.wordEnd(after: 0) == 3) // "$" is punctuation
+		#expect(r.wordEnd(after: 3) == 11)
+		#expect(r.wordEnd(after: 11) == 14)
+		#expect(r.wordStart(before: 14) == 12)
+		#expect(r.wordStart(before: r.byteCount) == 16)
+		#expect(r.wordStart(before: 3) == 2)
+	}
 }
+
 
 /// Deterministic PRNG so failures are reproducible.
 struct SplitMix64: RandomNumberGenerator {
@@ -74,4 +97,5 @@ struct SplitMix64: RandomNumberGenerator {
 		z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
 		return z ^ (z >> 31)
 	}
+
 }

@@ -222,6 +222,36 @@ public struct Rope: Sendable {
 		return units + TextSummary(bytes: node.bytes[0..<o]).utf16
 	}
 
+	/// Byte offset of a UTF-16 offset; one inside a surrogate pair maps to the start of its scalar.
+	public func byteOffset(ofUTF16 units: Int) -> Int {
+		var node = root
+		var u = min(max(units, 0), utf16Count)
+		var base = 0
+		while !node.isLeaf {
+			var next: Node?
+			for c in node.children {
+				if u < c.summary.utf16 { next = c; break }
+				u -= c.summary.utf16
+				base += c.summary.bytes
+			}
+			guard let n = next else { return byteCount }
+			node = n
+		}
+		// Leaves may split a UTF-8 sequence; count lead bytes like TextSummary does.
+		var i = 0
+		let bytes = node.bytes
+		while i < bytes.count {
+			let b = bytes[i]
+			if b & 0xC0 != 0x80 {
+				let width = b >= 0xF0 ? 2 : 1
+				if u < width { break }
+				u -= width
+			}
+			i += 1
+		}
+		return base + i
+	}
+
 	/// Moves an offset back to the start of the UTF-8 sequence it points into.
 	public func scalarBoundary(atOrBefore offset: Int) -> Int {
 		var o = min(max(offset, 0), byteCount)

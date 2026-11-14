@@ -39,6 +39,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	let textInset: CGFloat = 8
 	private let newlineWidth: CGFloat
 	private var markedText = ""
+	/// Text removed by ⌃K, inserted back by ⌃Y.
+	private var killBuffer = ""
 	/// Goal x of each selection for up/down moves, in selection order.
 	private var goalXs: [CGFloat]?
 
@@ -380,6 +382,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	public override func mouseDown(with event: NSEvent) {
+		if hasMarkedText() { // a click drops a pending dead key or composition
+			inputContext?.discardMarkedText()
+			unmarkText()
+		}
 		let offset = offset(at: convert(event.locationInWindow, from: nil))
 		if event.modifierFlags.contains(.shift) {
 			setSelections(selections.replacingPrimary(Selection(anchor: selections.primary.anchor, head: offset)))
@@ -456,7 +462,72 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		case #selector(pageUp(_:)), #selector(scrollPageUp(_:)): moveVertically(-page, extend: false)
 		case #selector(pageDownAndModifySelection(_:)): moveVertically(page, extend: true)
 		case #selector(pageUpAndModifySelection(_:)): moveVertically(-page, extend: true)
+
+		// System bindings (emacs-style keys, ⌥ and ⌘ variants, DefaultKeyBinding.dict).
+		case #selector(moveWordLeft(_:)), #selector(moveWordBackward(_:)):
+			move(extend: false) { rope.wordStart(before: $0.range.lowerBound) }
+		case #selector(moveWordRight(_:)), #selector(moveWordForward(_:)):
+			move(extend: false) { rope.wordEnd(after: $0.range.upperBound) }
+		case #selector(moveWordLeftAndModifySelection(_:)), #selector(moveWordBackwardAndModifySelection(_:)):
+			move(extend: true) { rope.wordStart(before: $0.head) }
+		case #selector(moveWordRightAndModifySelection(_:)), #selector(moveWordForwardAndModifySelection(_:)):
+			move(extend: true) { rope.wordEnd(after: $0.head) }
+		case #selector(moveBackward(_:)): doCommand(by: #selector(moveLeft(_:)))
+		case #selector(moveForward(_:)): doCommand(by: #selector(moveRight(_:)))
+		case #selector(moveBackwardAndModifySelection(_:)): doCommand(by: #selector(moveLeftAndModifySelection(_:)))
+		case #selector(moveForwardAndModifySelection(_:)): doCommand(by: #selector(moveRightAndModifySelection(_:)))
+		case #selector(moveToBeginningOfParagraph(_:)): move(extend: false) { lineStart($0.head) }
+		case #selector(moveToEndOfParagraph(_:)): move(extend: false) { lineEnd($0.head) }
+		case #selector(moveToBeginningOfParagraphAndModifySelection(_:)): move(extend: true) { lineStart($0.head) }
+		case #selector(moveToEndOfParagraphAndModifySelection(_:)): move(extend: true) { lineEnd($0.head) }
+		case #selector(deleteWordBackward(_:)):
+			replaceSelections(.other) { s in (s.isEmpty ? rope.wordStart(before: s.head)..<s.head : s.range, "") }
+		case #selector(deleteWordForward(_:)):
+			replaceSelections(.other) { s in (s.isEmpty ? s.head..<rope.wordEnd(after: s.head) : s.range, "") }
+		case #selector(deleteBackwardByDecomposingPreviousCharacter(_:)): doCommand(by: #selector(deleteBackward(_:)))
+		case #selector(deleteToBeginningOfLine(_:)), #selector(deleteToBeginningOfParagraph(_:)):
+			replaceSelections(.other) { s in
+				guard s.isEmpty else { return (s.range, "") }
+				let start = lineStart(s.head)
+				return ((start == s.head ? previous(s.head) : start)..<s.head, "")
+			}
+		case #selector(deleteToEndOfLine(_:)), #selector(deleteToEndOfParagraph(_:)):
+			// ⌃K: kill to the end of the line, or the newline itself at the end.
+			var killed: [String] = []
+			replaceSelections(.other) { s in
+				let end = lineEnd(s.head)
+				let range = s.isEmpty ? s.head..<(end == s.head ? next(s.head) : end) : s.range
+				killed.append(rope.string(in: range))
+				return (range, "")
+			}
+			killBuffer = killed.joined(separator: "\n")
+		case #selector(yank(_:)): if !killBuffer.isEmpty { replaceSelections { _ in killBuffer } }
+		case #selector(transpose(_:)): transposeCharacters()
+		case #selector(insertLineBreak(_:)), #selector(insertNewlineIgnoringFieldEditor(_:)):
+			doCommand(by: #selector(insertNewline(_:)))
+		case #selector(insertTabIgnoringFieldEditor(_:)): doCommand(by: #selector(insertTab(_:)))
+		case #selector(scrollToBeginningOfDocument(_:)): scroll(NSPoint(x: visibleRect.minX, y: 0))
+		case #selector(scrollToEndOfDocument(_:)): scroll(NSPoint(x: visibleRect.minX, y: bounds.height - visibleRect.height))
+		case #selector(scrollLineUp(_:)): scroll(NSPoint(x: visibleRect.minX, y: visibleRect.minY - lineHeight))
+		case #selector(scrollLineDown(_:)): scroll(NSPoint(x: visibleRect.minX, y: visibleRect.minY + lineHeight))
+		case #selector(centerSelectionInVisibleArea(_:)):
+			let y = CGFloat(rope.line(containing: caret)) * lineHeight
+			scroll(NSPoint(x: visibleRect.minX, y: y - (visibleRect.height - lineHeight) / 2))
 		default: break
+		}
+	}
+
+	/// ⌃T: swaps the characters around each caret; at the end of a line the two before it.
+	private func transposeCharacters() {
+		guard selections.all.allSatisfy(\.isEmpty) else { return }
+		replaceSelections(.other) { s in
+			var mid = s.head
+			if mid == rope.lineRange(rope.line(containing: mid)).upperBound { mid = previous(mid) }
+			let start = previous(mid), end = next(mid)
+			guard start < mid, mid < end else { return (s.range, "") }
+			let before = rope.string(in: start..<mid), after = rope.string(in: mid..<end)
+			guard before != "\n", after != "\n" else { return (s.range, "") }
+			return (start..<end, after + before)
 		}
 	}
 
@@ -540,10 +611,18 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public func insertText(_ string: Any, replacementRange: NSRange) {
 		let text = (string as? NSAttributedString)?.string ?? (string as? String) ?? ""
 		markedText = ""
+		if let range = byteRange(replacementRange) {
+			// Press-and-hold accents and some input methods replace text already in the document.
+			apply(ChangeSet([(range, text)]), kind: .other) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
+			return
+		}
 		replaceSelections(text.contains("\n") ? .other : .typing) { _ in text }
 	}
 
 	public func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
+		if let range = byteRange(replacementRange) {
+			setSelections(SelectionSet([Selection(anchor: range.lowerBound, head: range.upperBound)]))
+		}
 		markedText = (string as? NSAttributedString)?.string ?? (string as? String) ?? ""
 		setNeedsDisplay(lineRect(rope.line(containing: caret)))
 	}
@@ -553,11 +632,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		setNeedsDisplay(lineRect(rope.line(containing: caret)))
 	}
 
-	public func selectedRange() -> NSRange {
-		let r = selections.primary.range
-		let start = rope.utf16Offset(ofByte: r.lowerBound)
-		return NSRange(location: start, length: rope.utf16Offset(ofByte: r.upperBound) - start)
-	}
+	public func selectedRange() -> NSRange { utf16Range(selections.primary.range) }
 
 	public func markedRange() -> NSRange {
 		markedText.isEmpty ? NSRange(location: NSNotFound, length: 0)
@@ -566,17 +641,43 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	public func hasMarkedText() -> Bool { !markedText.isEmpty }
 
-	public func attributedSubstring(forProposedRange range: NSRange, actualRange: NSRangePointer?) -> NSAttributedString? { nil }
+	public func attributedSubstring(forProposedRange range: NSRange, actualRange: NSRangePointer?) -> NSAttributedString? {
+		guard let bytes = byteRange(range) else { return nil }
+		actualRange?.pointee = utf16Range(bytes)
+		return NSAttributedString(string: rope.string(in: bytes), attributes: textAttributes)
+	}
 
 	public func validAttributesForMarkedText() -> [NSAttributedString.Key] { [] }
 
+	/// Screen rect of the range's first line; input methods place their windows below it.
 	public func firstRect(forCharacterRange range: NSRange, actualRange: NSRangePointer?) -> NSRect {
-		let line = rope.line(containing: caret)
-		let rect = NSRect(x: x(of: caret, line: line), y: CGFloat(line) * lineHeight, width: 1, height: lineHeight)
+		let bytes = byteRange(range) ?? caret..<caret
+		let line = rope.line(containing: bytes.lowerBound)
+		let end = min(bytes.upperBound, rope.lineRange(line).upperBound)
+		actualRange?.pointee = utf16Range(bytes.lowerBound..<end)
+		let minX = x(of: bytes.lowerBound, line: line)
+		let rect = NSRect(x: minX, y: CGFloat(line) * lineHeight, width: max(1, x(of: end, line: line) - minX), height: lineHeight)
 		return window?.convertToScreen(convert(rect, to: nil)) ?? rect
 	}
 
-	public func characterIndex(for point: NSPoint) -> Int { NSNotFound }
+	public func characterIndex(for point: NSPoint) -> Int {
+		guard let window else { return NSNotFound }
+		let local = convert(window.convertPoint(fromScreen: point), from: nil)
+		return rope.utf16Offset(ofByte: offset(at: local))
+	}
+
+	/// Byte range of a UTF-16 range clamped to the document; nil for NSNotFound.
+	private func byteRange(_ range: NSRange) -> Range<Int>? {
+		guard range.location != NSNotFound else { return nil }
+		let start = min(range.location, rope.utf16Count)
+		let end = min(start + range.length, rope.utf16Count)
+		return rope.byteOffset(ofUTF16: start)..<rope.byteOffset(ofUTF16: end)
+	}
+
+	private func utf16Range(_ range: Range<Int>) -> NSRange {
+		let start = rope.utf16Offset(ofByte: range.lowerBound)
+		return NSRange(location: start, length: rope.utf16Offset(ofByte: range.upperBound) - start)
+	}
 }
 
 extension EditorView: NSMenuItemValidation {
