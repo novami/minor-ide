@@ -68,3 +68,39 @@ struct SelectionDrawingTests {
 		#expect(inside != outside)
 	}
 }
+
+@MainActor
+struct UndoEditingTests {
+	private func type(_ e: EditorView, _ s: String) {
+		for c in s { e.insertText(String(c), replacementRange: NSRange(location: NSNotFound, length: 0)) }
+	}
+
+	@Test func undoRestoresTextAndCarets() {
+		let e = EditorView(text: "ab\ncd")
+		e.setSelections(SelectionSet([Selection(caret: 1), Selection(caret: 4)]))
+		type(e, "xy z")
+		#expect(e.rope.string == "axy zb\ncxy zd")
+		e.undo(nil)
+		#expect(e.rope.string == "axy b\ncxy d")
+		e.undo(nil)
+		#expect(e.rope.string == "ab\ncd")
+		#expect(e.selections.all.map(\.head) == [1, 4])
+		e.redo(nil)
+		e.redo(nil)
+		#expect(e.rope.string == "axy zb\ncxy zd")
+		#expect(e.selections.all.map(\.head) == [5, 12])
+		#expect(!e.history.canRedo)
+	}
+
+	@Test func cutCopiesAndRemovesSelections() {
+		let e = EditorView(text: "ahoj světe")
+		e.setSelections(SelectionSet([Selection(anchor: 0, head: 4), Selection(anchor: 5, head: 11)]))
+		e.cut(nil)
+		#expect(NSPasteboard.general.string(forType: .string) == "ahoj\nsvěte")
+		#expect(e.rope.string == " ")
+		e.undo(nil)
+		#expect(e.rope.string == "ahoj světe")
+		e.selectAll(nil)
+		#expect(e.selections.primary.range == 0..<e.rope.byteCount)
+	}
+}

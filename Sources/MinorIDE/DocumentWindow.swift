@@ -136,6 +136,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 			// Saved content becomes the new baseline for "trim modified lines".
 			originalLines = Set(editor.rope.string.split(separator: "\n", omittingEmptySubsequences: false))
 			window.isDocumentEdited = false
+			editor.sealUndo()
 			NSDocumentController.shared.noteNewRecentDocumentURL(url)
 			updateTitle()
 			return true

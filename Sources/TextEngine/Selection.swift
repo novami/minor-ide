@@ -96,6 +96,11 @@ public struct ChangeSet: Sendable, Equatable {
 	public struct Change: Sendable, Equatable {
 		public var range: Range<Int>
 		public var text: [UInt8]
+
+		public init(range: Range<Int>, text: [UInt8]) {
+			self.range = range
+			self.text = text
+		}
 	}
 
 	public enum Bias: Sendable { case before, after }
@@ -103,7 +108,11 @@ public struct ChangeSet: Sendable, Equatable {
 	public private(set) var changes: [Change]
 
 	public init(_ edits: [(Range<Int>, String)]) {
-		let sorted = edits.map { Change(range: $0.0, text: Array($0.1.utf8)) }
+		self.init(changes: edits.map { Change(range: $0.0, text: Array($0.1.utf8)) })
+	}
+
+	public init(changes edits: [Change]) {
+		let sorted = edits
 			.sorted { $0.range.lowerBound != $1.range.lowerBound ? $0.range.lowerBound < $1.range.lowerBound : $0.range.upperBound < $1.range.upperBound }
 		var out: [Change] = []
 		for c in sorted {
@@ -117,6 +126,18 @@ public struct ChangeSet: Sendable, Equatable {
 	}
 
 	public var isEmpty: Bool { changes.allSatisfy { $0.range.isEmpty && $0.text.isEmpty } }
+
+	/// The change set that undoes this one; `rope` is the text before the edit.
+	public func inverted(against rope: Rope) -> ChangeSet {
+		var delta = 0
+		var out: [Change] = []
+		for c in changes {
+			let start = c.range.lowerBound + delta
+			out.append(Change(range: start..<(start + c.text.count), text: rope.bytes(in: c.range)))
+			delta += c.text.count - c.range.count
+		}
+		return ChangeSet(changes: out)
+	}
 
 	/// Applies back to front, so earlier ranges stay valid.
 	public func apply(to rope: inout Rope) {

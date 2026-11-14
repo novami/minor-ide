@@ -64,7 +64,7 @@ struct RopeTests {
 }
 
 /// Deterministic PRNG so failures are reproducible.
-struct SplitMix64 {
+struct SplitMix64: RandomNumberGenerator {
 	var state: UInt64
 	init(seed: UInt64) { state = seed }
 	mutating func next() -> UInt64 {

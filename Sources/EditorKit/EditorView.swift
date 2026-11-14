@@ -5,8 +5,8 @@ import MinorCore
 import TextEngine
 
 /// Core Text editor view that draws only visible lines from a rope. Multiple selections,
-/// basic editing and marked text (dead keys, IME). Undo, styling and the layout cache
-/// rework come later in phase 1.
+/// basic editing, undo/redo and marked text (dead keys, IME). Styling and the layout
+/// cache rework come later in phase 1.
 @MainActor
 public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public private(set) var rope: Rope
@@ -14,6 +14,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public private(set) var selections = SelectionSet()
 	/// Head of the primary selection.
 	public var caret: Int { selections.primary.head }
+	public private(set) var history = EditHistory()
 
 	/// Called after every text change (dirty tracking).
 	public var onChange: (() -> Void)?
@@ -89,6 +90,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public func setText(_ text: String) {
 		rope = Rope(text)
 		selections = SelectionSet()
+		history.removeAll()
 		goalXs = nil
 		layoutCache.removeAll()
 		updateSize()
@@ -307,19 +309,28 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	/// Replaces a byte range, leaving a single caret after the new text.
 	public func replace(_ range: Range<Int>, with text: String) {
-		apply(ChangeSet([(range, text)])) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
+		apply(ChangeSet([(range, text)]), kind: .other) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
 	}
 
 	/// Replaces every selection with its own text; carets end after the new text.
-	private func replaceSelections(_ text: (Selection) -> String) {
-		replaceSelections { s in (s.range, text(s)) }
+	private func replaceSelections(_ kind: EditKind = .other, _ text: (Selection) -> String) {
+		replaceSelections(kind) { s in (s.range, text(s)) }
 	}
 
-	private func replaceSelections(_ edit: (Selection) -> (Range<Int>, String)) {
+	private func replaceSelections(_ kind: EditKind = .other, _ edit: (Selection) -> (Range<Int>, String)) {
 		let edits = selections.all.map(edit)
-		apply(ChangeSet(edits)) { cs in
+		apply(ChangeSet(edits), kind: kind) { cs in
 			SelectionSet(edits.map { Selection(caret: cs.map($0.0.upperBound, bias: .after)) }, primary: selections.primaryIndex)
 		}
+	}
+
+	/// Applies and records the edit as one transaction.
+	private func apply(_ changes: ChangeSet, kind: EditKind, selectionsAfter: (ChangeSet) -> SelectionSet) {
+		guard !changes.isEmpty else { return }
+		let before = rope, selectionsBefore = selections
+		apply(changes) { selectionsAfter($0) }
+		history.record(Transaction(changes, on: before, before: selectionsBefore, after: selections,
+		                           kind: kind, time: ProcessInfo.processInfo.systemUptime))
 	}
 
 	/// Applies the edit, sets the selections it produces and repaints as little as possible.
@@ -397,9 +408,9 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		let lineEnd = { (o: Int) in self.rope.lineRange(self.rope.line(containing: o)).upperBound }
 		switch selector {
 		case #selector(deleteBackward(_:)):
-			replaceSelections { s in (s.isEmpty ? previous(s.head)..<s.head : s.range, "") }
+			replaceSelections(.deleting) { s in (s.isEmpty ? previous(s.head)..<s.head : s.range, "") }
 		case #selector(deleteForward(_:)):
-			replaceSelections { s in (s.isEmpty ? s.head..<next(s.head) : s.range, "") }
+			replaceSelections(.deleting) { s in (s.isEmpty ? s.head..<next(s.head) : s.range, "") }
 		case #selector(insertNewline(_:)):
 			// Keep the current line's indentation (up to the caret).
 			replaceSelections { s in
@@ -473,7 +484,44 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			return (start..<(start + count), "")
 		}
 		guard !edits.isEmpty else { return }
-		apply(ChangeSet(edits)) { selections.mapped(through: $0) }
+		apply(ChangeSet(edits), kind: .other) { selections.mapped(through: $0) }
+	}
+
+	// MARK: Undo, clipboard
+
+	@objc public func undo(_ sender: Any?) {
+		unmarkText()
+		guard let step = history.undo() else { return }
+		for t in step.transactions.reversed() { apply(t.inverse) { _ in t.selectionsBefore } }
+	}
+
+	@objc public func redo(_ sender: Any?) {
+		unmarkText()
+		guard let step = history.redo() else { return }
+		for t in step.transactions { apply(t.changes) { _ in t.selectionsAfter } }
+	}
+
+	/// The next edit starts a new undo step.
+	public func sealUndo() { history.seal() }
+
+	private var selectedText: String {
+		selections.all.filter { !$0.isEmpty }.map { rope.string(in: $0.range) }.joined(separator: "\n")
+	}
+
+	@objc public func copy(_ sender: Any?) {
+		guard selections.all.contains(where: { !$0.isEmpty }) else { return }
+		NSPasteboard.general.clearContents()
+		NSPasteboard.general.setString(selectedText, forType: .string)
+	}
+
+	@objc public func cut(_ sender: Any?) {
+		guard selections.all.contains(where: { !$0.isEmpty }) else { return }
+		copy(sender)
+		replaceSelections { _ in "" }
+	}
+
+	@objc public override func selectAll(_ sender: Any?) {
+		setSelections(SelectionSet([Selection(anchor: 0, head: rope.byteCount)]))
 	}
 
 	@objc public func paste(_ sender: Any?) {
@@ -488,7 +536,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public func insertText(_ string: Any, replacementRange: NSRange) {
 		let text = (string as? NSAttributedString)?.string ?? (string as? String) ?? ""
 		markedText = ""
-		replaceSelections { _ in text }
+		replaceSelections(text.contains("\n") ? .other : .typing) { _ in text }
 	}
 
 	public func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
@@ -525,4 +573,16 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	public func characterIndex(for point: NSPoint) -> Int { NSNotFound }
+}
+
+extension EditorView: NSMenuItemValidation {
+	public func validateMenuItem(_ item: NSMenuItem) -> Bool {
+		switch item.action {
+		case #selector(undo(_:)): history.canUndo
+		case #selector(redo(_:)): history.canRedo
+		case #selector(copy(_:)), #selector(cut(_:)): selections.all.contains { !$0.isEmpty }
+		case #selector(paste(_:)): NSPasteboard.general.string(forType: .string) != nil
+		default: true
+		}
+	}
 }
