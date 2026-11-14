@@ -22,7 +22,7 @@ Hotová je **fáze 0** a části fáze 1:
 
 Výkon (M2, `make bench`): psaní znaku 0,05 ms, skok na jiné místo 0,30 ms, 1M editací ropu 0,66 s. Podrobnosti: `docs/spike-editor.md`, `docs/spike-phpls.md`.
 
-Repozitář: https://github.com/novami/minor-ide (větev `main`, vše nahrané).
+Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně nepushnuté commity** (uživatel zatím push nechtěl): STATUS.md a oprava benchmarku pro CI; push jen na jeho pokyn, pak ověřit běh CI.
 
 ## Další krok
 
