@@ -140,7 +140,7 @@ Odhady jsou hrubé (jeden vývojář s AI). **Celé MVP: zhruba 11–15 měsíc�
 - Hotovo když: psaní, mazání a výběr v 10 MB souboru plní rozpočty a test „čšžýáíéůú“ na české klávesnici projde.
 
 **1c. Editační příkazy (≈ 2 týdny)**
-- Multi-cursor (Ctrl+G další výskyt, Ctrl+Cmd+G všechny), duplikace a přesun řádku, komentáře (Cmd+/), párování a obalování závorkami a uvozovkami, chytré odsazení podle lexeru, `.editorconfig`.
+- Multi-cursor (Ctrl+G další výskyt, Ctrl+Cmd+G všechny), duplikace a přesun řádku, komentáře (Cmd+/), párování a obalování závorkami a uvozovkami, chytré odsazení podle lexeru, „Převést odsazení“ (tabulátory ↔ mezery v celém souboru). Tab, Shift+Tab a Enter s převzetím odsazení jsou hotové.
 - Hledat/nahradit v souboru (regex, case, celé slovo, zachování velikosti písmen).
 - Folding podle závorek a odsazení (později doplní LSP `foldingRange`).
 - Checklist chování porovnaný s PhpStormem v `docs/editor-behaviors.md`. Každý bod má test.
@@ -157,7 +157,11 @@ Odhady jsou hrubé (jeden vývojář s AI). **Celé MVP: zhruba 11–15 měsíc�
 - Taby, split (vertikální i horizontální), „Reopen closed tab“, indikace neuložených změn.
 - Nastavení: `~/Library/Application Support/MinorIDE/settings.json` + `.minoride/settings.json`, UI v SwiftUI.
 - **Keymap PhpStorm (macOS)** v `docs/keymap.md`. Zkratky podle fyzických kláves (keyCode), aby fungovaly na **české klávesnici**, kde `[ ] / \` vyžadují Alt. Alternativy, např. zpět/vpřed i Cmd+Opt+←/→.
-- **Kódování**: UTF-8 (s/bez BOM), Windows-1250, ISO-8859-2; zachovat CRLF/LF; přepínač ve stavovém řádku.
+- **Formát souborů** ([nastaveni-formatu.md](nastaveni-formatu.md)), **jádro hotové** (`MinorCore`: `FormatSettings`, `FormatDefaults`, `EditorConfig`, `FormatResolver`, `TextFile`):
+  - výchozí hodnoty podle standardů (PSR-12, gofmt, Nette, Prettier…), PHP preset `psr12` / `nette`;
+  - priority: jazyk < uživatel < projekt < `.editorconfig`; existující soubor si drží konce řádků, odsazení se z něj rozpozná;
+  - buffer má vždy jen `\n`, konce řádků, kódování, koncový řádek a ořez mezer se aplikují při uložení;
+  - **zbývá do 1e**: stavový řádek s přepínači (konce řádků, odsazení, kódování) místo menu, okno nastavení v SwiftUI nad stejným `settings.json`, varování před uložením znaků, které kódování neumí, příkaz „Převést odsazení“ (1c), sledování `.editorconfig` a `settings.json` (přenačtení bez restartu).
 - **Ukládání jako PhpStorm**: auto-save při ztrátě fokusu a přepnutí tabu (zapínatelné), **Local History** (snímek při uložení, 14 dní, náhled a obnovení), obnova sezení a obnova po pádu.
 - Velké a minifikované soubory (> 5 MB nebo řádek > 10 000 znaků): zjednodušený režim bez zvýraznění a analýzy.
 

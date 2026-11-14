@@ -1,6 +1,7 @@
 import AppKit
 import CoreText
 import QuartzCore
+import MinorCore
 import TextEngine
 
 /// Phase-0 spike: a Core Text editor view that draws only visible lines from a rope.
@@ -10,6 +11,19 @@ import TextEngine
 public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public private(set) var rope: Rope
 	public private(set) var caret = 0 // byte offset, always on a scalar boundary
+
+	/// Indentation and tab display for this document. The buffer always uses "\n";
+	/// line endings and charset apply when saving.
+	/// Called after every text change (dirty tracking).
+	public var onChange: (() -> Void)?
+
+	public var format = FormatSettings() {
+		didSet {
+			guard format.tabWidth != oldValue.tabWidth else { return }
+			layoutCache.removeAll()
+			needsDisplay = true
+		}
+	}
 
 	public let font: NSFont
 	let ctFont: CTFont
@@ -150,14 +164,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	private func layout(_ line: Int) -> LineLayout {
 		if let cached = layoutCache[line] { return cached }
-		let l = LineLayout(bytes: rope.bytes(in: rope.lineRange(line)), font: ctFont, ascii: ascii, attributes: textAttributes)
+		let l = LineLayout(bytes: rope.bytes(in: rope.lineRange(line)), font: ctFont, ascii: ascii, tabWidth: format.tabWidth, attributes: textAttributes)
 		layoutCache[line] = l
 		return l
 	}
 
 	private func numberLayout(_ line: Int) -> LineLayout {
 		if let cached = numberCache[line] { return cached }
-		let l = LineLayout(bytes: Array(String(line + 1).utf8), font: ctFont, ascii: ascii, attributes: textAttributes)
+		let l = LineLayout(bytes: Array(String(line + 1).utf8), font: ctFont, ascii: ascii, tabWidth: format.tabWidth, attributes: textAttributes)
 		numberCache[line] = l
 		return l
 	}
@@ -182,6 +196,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		let caretLineBefore = rope.line(containing: caret)
 		rope.replace(range, with: text)
 		caret = range.lowerBound + text.utf8.count
+		onChange?()
 
 		if rope.lineCount == oldLines {
 			layoutCache[firstLine] = nil
@@ -249,8 +264,19 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			var end = caret + 1
 			while end < rope.byteCount && rope.byte(at: end) & 0xC0 == 0x80 { end += 1 }
 			replace(caret..<end, with: "")
-		case #selector(insertNewline(_:)): replace(caret..<caret, with: "\n")
-		case #selector(insertTab(_:)): replace(caret..<caret, with: "\t")
+		case #selector(insertNewline(_:)):
+			// Keep the current line's indentation (up to the caret).
+			let start = rope.offset(ofLine: rope.line(containing: caret))
+			let indent = rope.bytes(in: start..<caret).prefix { $0 == 0x20 || $0 == 0x09 }
+			replace(caret..<caret, with: "\n" + String(decoding: indent, as: UTF8.self))
+		case #selector(insertTab(_:)):
+			if format.indentStyle == .tab {
+				replace(caret..<caret, with: "\t")
+			} else {
+				let column = visualColumn(caret)
+				replace(caret..<caret, with: String(repeating: " ", count: format.indentSize - column % format.indentSize))
+			}
+		case #selector(insertBacktab(_:)): outdentLine()
 		case #selector(moveLeft(_:)): if caret > 0 { moveCaret(to: caret - 1) }
 		case #selector(moveRight(_:)):
 			if caret < rope.byteCount {
@@ -270,6 +296,28 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		case #selector(pageUp(_:)), #selector(scrollPageUp(_:)): moveVertically(-max(1, Int(visibleRect.height / lineHeight) - 1))
 		default: break
 		}
+	}
+
+	/// Column counting tabs to the next tab stop.
+	func visualColumn(_ offset: Int) -> Int {
+		let start = rope.offset(ofLine: rope.line(containing: offset))
+		var column = 0
+		for scalar in rope.string(in: start..<offset).unicodeScalars {
+			column = scalar == "\t" ? (column / format.tabWidth + 1) * format.tabWidth : column + 1
+		}
+		return column
+	}
+
+	/// Removes one indentation level from the start of the caret's line.
+	private func outdentLine() {
+		let line = rope.line(containing: caret)
+		let start = rope.offset(ofLine: line)
+		let leading = rope.bytes(in: rope.lineRange(line)).prefix { $0 == 0x20 || $0 == 0x09 }
+		guard let first = leading.first else { return }
+		let count = first == 0x09 ? 1 : min(leading.prefix { $0 == 0x20 }.count, format.indentSize)
+		let caretBefore = caret
+		replace(start..<(start + count), with: "")
+		moveCaret(to: max(start, caretBefore - count))
 	}
 
 	private func moveVertically(_ delta: Int) {

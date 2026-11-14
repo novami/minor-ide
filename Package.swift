@@ -10,10 +10,12 @@ let package = Package(
 	targets: [
 		.target(name: "MinorCore"),
 		.target(name: "TextEngine"),
-		.target(name: "EditorKit", dependencies: ["TextEngine"]),
+		.target(name: "EditorKit", dependencies: ["TextEngine", "MinorCore"]),
 		.target(name: "DBKit", dependencies: ["MinorCore"]),
 		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit"]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
+		.testTarget(name: "MinorCoreTests", dependencies: ["MinorCore"]),
 		.testTarget(name: "DBKitTests", dependencies: ["DBKit"]),
+		.testTarget(name: "EditorKitTests", dependencies: ["EditorKit", "MinorCore"]),
 	]
 )
