@@ -14,7 +14,8 @@ Nativní IDE pro Go a PHP na macOS (Apple Silicon). Plán: `docs/PLAN.md`, závi
 ## Pravidla
 - Pracuj po úkolech v pořadí fází z `docs/PLAN.md`. Úkol končí splněním „Hotovo když“, testem hlavní cesty a commitem.
 - Commity malé, jen vlastní soubory (`git commit -- <soubory>`), bez AI podpisů. Nikdy `git push` bez vyžádání.
-- **Žádná nová závislost bez souhlasu uživatele.** Povolené: SwiftTerm, `go-sql-driver/mysql`, `jackc/pgx/v5` (+ jejich závislosti), `golang.org/x/*`, phpstorm-stubs (data). Systémové frameworky macOS a stdlib Go jsou volné.
+- **Žádná nová závislost bez souhlasu uživatele.** Povolené: SwiftTerm, `go-sql-driver/mysql`, `jackc/pgx/v5` (+ jejich závislosti), `golang.org/x/*`. Zdroj stubů PHP čeká na rozhodnutí (Q2 v plánu). Systémové frameworky macOS a stdlib Go jsou volné.
+- **Žádná vazba na konkurenční IDE**: nejmenovat je v UI, kódu, dokumentaci ani commitech a nepodporovat jejich vlastní formáty souborů ani jejich data.
 - Na hlavním vlákně jen UI. Změna v editační cestě musí projít `make bench` v rozpočtu z plánu.
 - `TextEngine`, `Highlight`, `LSPKit`, `MinorCore` nesmí importovat AppKit.
 - phpls: každá nová schopnost začíná markerovým testem; každá opravená chyba parseru dostane fixture.

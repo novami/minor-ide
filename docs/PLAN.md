@@ -5,7 +5,7 @@
 - Implementuje: Sonnet, po úkolech v pořadí níže. Každý úkol má **Hotovo když**.
 - Analýza konkurence: [ANALYSIS.md](ANALYSIS.md). Volba závislostí: [DEPENDENCIES.md](DEPENDENCIES.md).
 
-**Filozofie: minimum knihoven třetích stran.** Vlastní je editor, zvýraznění, všechny parsery, LSP, updater, hledání, SFTP/FTPS klient i build. Knihovny zůstávají jen tam, kde by vlastní implementace stála měsíce bez přínosu: SwiftTerm, ovladače MySQL a PostgreSQL a data phpstorm-stubs.
+**Filozofie: minimum knihoven třetích stran.** Vlastní je editor, zvýraznění, všechny parsery, LSP, updater, hledání, SFTP/FTPS klient i build. Knihovny zůstávají jen tam, kde by vlastní implementace stála měsíce bez přínosu: SwiftTerm, ovladače MySQL a PostgreSQL a data stubů PHP.
 
 **Bezpečnost je vlastnost produktu, ne dodatek.** IDE drží hesla k databázím a serverům a spouští cizí kód (nástroje projektu). Pravidla jsou v sekci [Bezpečnost](#bezpečnost) a platí pro každou fázi.
 
@@ -48,7 +48,7 @@ MinorIDE.app/Contents
 ├─ Helpers/minoride-server         (Go: phpls | db | search | remote | debug, mluví JSON-RPC/LSP/DAP přes stdio)
 ├─ Helpers/minoride-askpass        (malý Swift CLI: SSH_ASKPASS/GIT_ASKPASS, heslo si vyžádá od IDE)
 ├─ Helpers/minoride-updater        (malý Swift CLI: výměna app po ukončení)
-└─ Resources/phpstorm-stubs/       (stuby PHP funkcí a rozšíření, Apache-2.0)
+└─ Resources/php-stubs/            (stuby PHP funkcí a rozšíření; zdroj viz Q2)
 
 Externí (hledá v PATH / projektu): gopls, php + phpstan (jen pro PHPStan a formátovače), git, ssh, rsync, docker, dlv, externí LSP servery
 ```
@@ -146,7 +146,7 @@ MinorIDE se musí chovat jako nativní Mac aplikace, aby se Mac uživatel hned z
 | Oblast | Pravidlo |
 |---|---|
 | **Lišta menu** | Pořadí: *MinorIDE, Soubor, Úpravy, Formát, Zobrazení, Navigace, Kód, Okno, Nápověda*. Aplikační menu: O aplikaci, Nastavení… (⌘,), Služby, Skrýt (⌘H), Skrýt ostatní (⌥⌘H), Zobrazit vše, Ukončit (⌘Q). Úpravy vždy obsahují Zpět/Znovu, Vyjmout/Kopírovat/Vložit, Vybrat vše a Najít. Okno: Minimalizovat (⌘M), Zvětšit, Převést vše do popředí. Nápověda má systémové vyhledávání v menu. Každá akce IDE je dostupná z menu (i když má zkratku). |
-| **Zkratky** | Systémové zkratky se nikdy nepřepisují (⌘Q, ⌘H, ⌘M, ⌘Tab, ⌘mezerník, ⌘\`, ⌃⌘F). Standardní textové zkratky platí vždy (⌘Z, ⇧⌘Z, ⌘X/C/V, ⌘A, ⌘F, ⌘G, ⌘S, ⌘W, ⌘N, ⌘O, ⌘,). Keymapa PhpStorm (macOS) jen tam, kde nekoliduje: ⌘E zůstává „Použít výběr pro hledání“ (Recent files má ⇧⌘E) a ⌃mezerník bývá obsazený přepínáním vstupních zdrojů, proto má napovídání i ⌥Esc. Písmenné zkratky se řídí **znakem** (jako systém; na QWERTZ je ⌘Z na klávese Z), fyzickou pozicí jen interpunkce. |
+| **Zkratky** | Systémové zkratky se nikdy nepřepisují (⌘Q, ⌘H, ⌘M, ⌘Tab, ⌘mezerník, ⌘\`, ⌃⌘F). Standardní textové zkratky platí vždy (⌘Z, ⇧⌘Z, ⌘X/C/V, ⌘A, ⌘F, ⌘G, ⌘S, ⌘W, ⌘N, ⌘O, ⌘,). Vlastní zkratky IDE (`docs/keymap.md`) jen tam, kde nekolidují se systémem: ⌘E zůstává „Použít výběr pro hledání“ (Recent files má ⇧⌘E) a ⌃mezerník bývá obsazený přepínáním vstupních zdrojů, proto má napovídání i ⌥Esc. Písmenné zkratky se řídí **znakem** (jako systém; na QWERTZ je ⌘Z na klávese Z), fyzickou pozicí jen interpunkce. |
 | **Okna** | Projektové okno: postranní panel vlevo (strom souborů, jako Finder/Xcode), editor uprostřed, inspektor/panely vpravo a dole skrývatelné, sjednocený toolbar. Plná obrazovka, obnova oken po restartu, Nedávné (`NSDocumentController`), otevření přetažením na Dock nebo okno a z Finderu („Otevřít v aplikaci“). |
 | **Dialogy** | Dotazy k oknu jako *sheet* (ne modální dialog celé aplikace). Uložit změny: *Uložit / Zrušit / Neukládat* se standardními texty. Standardní `NSOpenPanel`/`NSSavePanel`. |
 | **Nastavení** | Samostatné okno *Nastavení* (⌘,) s kartami v toolbaru, změny platí okamžitě, bez OK/Storno. Stejná data jako `settings.json`. |
@@ -220,7 +220,7 @@ Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 61–76 týdnů; s
 - Multi-cursor (Ctrl+G další výskyt, Ctrl+Cmd+G všechny), duplikace a přesun řádku, komentáře (Cmd+/), párování a obalování závorkami a uvozovkami, chytré odsazení podle lexeru, „Převést odsazení“ (tabulátory ↔ mezery v celém souboru). Tab, Shift+Tab a Enter s převzetím odsazení jsou hotové.
 - Hledat/nahradit v souboru (regex, case, celé slovo, zachování velikosti písmen).
 - Folding podle závorek a odsazení (později doplní LSP `foldingRange`).
-- Checklist chování porovnaný s PhpStormem v `docs/editor-behaviors.md`. Každý bod má test.
+- Checklist chování editoru v `docs/editor-behaviors.md`. Každý bod má test.
 
 **1d. Lexery a zvýraznění (≈ 2–3 týdny)**
 - Lexer je stavový automat. Stav na začátku každého řádku se ukládá. Po editaci se přelexuje od změněného řádku, dokud se stav neshoduje s dřívějším.
@@ -233,13 +233,13 @@ Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 61–76 týdnů; s
 - Otevření složky, strom souborů (NSOutlineView, lazy), FSEvents, `vendor/` sbalený, poslední projekty, víc oken.
 - Taby, split (vertikální i horizontální), „Reopen closed tab“, indikace neuložených změn.
 - Nastavení: `~/Library/Application Support/MinorIDE/settings.json` + `.minoride/settings.json`, UI v SwiftUI.
-- **Keymap PhpStorm (macOS)** v `docs/keymap.md`. Písmenné zkratky podle znaku (QWERTZ i QWERTY), **interpunkční zkratky podle fyzické klávesy** (keyCode), aby fungovaly na **české klávesnici**, kde `[ ] / \` vyžadují Alt; menu ukazuje skutečnou klávesu. Alternativy, např. zpět/vpřed i Cmd+Opt+←/→.
+- **Keymapa** v `docs/keymap.md`. Písmenné zkratky podle znaku (QWERTZ i QWERTY), **interpunkční zkratky podle fyzické klávesy** (keyCode), aby fungovaly na **české klávesnici**, kde `[ ] / \` vyžadují Alt; menu ukazuje skutečnou klávesu. Alternativy, např. zpět/vpřed i Cmd+Opt+←/→.
 - **Formát souborů** ([format-settings.md](format-settings.md)), **jádro hotové** (`MinorCore`: `FormatSettings`, `FormatDefaults`, `EditorConfig`, `FormatResolver`, `TextFile`):
   - výchozí hodnoty podle standardů (PSR-12, gofmt, Nette, Prettier…), PHP preset `psr12` / `nette`;
   - priority: jazyk < uživatel < projekt < `.editorconfig`; existující soubor si drží konce řádků, odsazení se z něj rozpozná;
   - buffer má vždy jen `\n`, konce řádků, kódování, koncový řádek a ořez mezer se aplikují při uložení;
   - **zbývá do 1e** (vše podle sekce Standardy macOS): `NSDocumentController` (Nedávné, obnova oken), projektové okno se postranním panelem, okno Nastavení, stavový řádek s přepínači (konce řádků, odsazení, kódování) místo menu, okno nastavení v SwiftUI nad stejným `settings.json`, varování před uložením znaků, které kódování neumí, příkaz „Převést odsazení“ (1c), sledování `.editorconfig` a `settings.json` (přenačtení bez restartu).
-- **Ukládání jako PhpStorm**: auto-save při ztrátě fokusu a přepnutí tabu (zapínatelné), **Local History** (snímek při uložení, 14 dní, náhled a obnovení), obnova sezení a obnova po pádu.
+- **Automatické ukládání**: auto-save při ztrátě fokusu a přepnutí tabu (zapínatelné), **Local History** (snímek při uložení, 14 dní, náhled a obnovení), obnova sezení a obnova po pádu.
 - Velké a minifikované soubory (> 5 MB nebo řádek > 10 000 znaků): zjednodušený režim bez zvýraznění a analýzy. Nad 256 MB jen náhled po částech.
 - **Binární soubory** (NUL bajty v prvních 8 KB): neotevírat jako text, nabídnout Quick Look nebo hex náhled.
 - **Bezpečné ukládání**: atomicky přes dočasný soubor, ale se zachováním **práv** (spustitelné skripty), **vlastníka**, **rozšířených atributů** a **cíle symbolického odkazu** (zapisuje se do cíle, odkaz zůstane). Hotovo: práva a odkazy (oprava z revize plánu).
@@ -321,7 +321,7 @@ $x = $user->getName/*|def: User.php:12*/();
 - PHPDoc parser: `@var @param @return @throws @template(-covariant) @extends @implements @method @property(-read/-write) @mixin @deprecated`, typy včetně generik, `array{shape}`, `list<T>`, `class-string<T>`. Stejně se čtou varianty s předponou `@phpstan-` a `@psalm-` (mají přednost) a celá gramatika typů PHPStanu (`int<0, max>`, `non-empty-string`, `key-of<T>`, `value-of<T>`, `callable(int): string`, podmíněné typy, `@phpstan-type` aliasy, `@phpstan-assert`). Typ, kterému inference nerozumí, se **přečte bez chyby a počítá se jako `mixed`**.
 
 **4b. Index (≈ 2–3 týdny)**
-- Zdroje: projekt; `vendor/` podle Composeru (`installed.json`, `autoload_psr4.php`, `autoload_classmap.php`); phpstorm-stubs filtrované podle verze PHP projektu.
+- Zdroje: projekt; `vendor/` podle Composeru (`installed.json`, `autoload_psr4.php`, `autoload_classmap.php`); stuby PHP (Q2) filtrované podle verze PHP projektu.
 - Deklarace s FQN, umístěním, signaturou a PHPDoc; rozlišení jmen (namespace, `use` všech druhů, aliasy, `self/static/parent`, fallback globálních funkcí); hierarchie a podtypy; **traity** (`use`, `insteadof`, `as`, abstraktní a statické členy), konstanty rozhraní, metody enumů.
 - **Cache na disku** (`~/Library/Caches/MinorIDE/phpls/<hash>/`, gob, per soubor hash obsahu), přeindexování jen změněných souborů, `didChangeWatchedFiles`, změna `composer.lock` → přeindexovat `vendor/`.
 - Paralelní indexace, průběh přes `$/progress`, odpovídá i během indexace.
@@ -330,7 +330,7 @@ $x = $user->getName/*|def: User.php:12*/();
 **4c. Typová inference a napovídání (≈ 3–4 týdny)**
 - Typy: skaláry, `mixed`, `null`, nullable, union, intersection, třídy, `array<K,V>`, `list<T>`, shapes, `iterable<T>`, `callable`, `static/self/$this`, generika `@template` (třídy i metody), `class-string<T>`.
 - Inference (líně, memoizace per verze souboru): nativní typy, PHPDoc, přiřazení, `new`, řetězení volání, narrowing (`instanceof`, `is_*`, `!== null`, early return), `foreach`, closure a arrow funkce, inline `@var`, destrukce, ternár, `??`, `match`.
-- Magie: `__get/__call/__callStatic` přes `@property/@method`, `@mixin`, Nette SmartObject, **`.phpstorm.meta.php`** (`override`/`map`/`type` pro tovární metody a kontejnery; knihovny je už dodávají).
+- Magie: `__get/__call/__callStatic` přes `@property/@method`, `@mixin`, Nette SmartObject. Tovární metody a kontejnery se typují přes generika a podmíněné typy z PHPDoc (4a), ne přes formáty jiných IDE.
 - Scope proměnných: parametry, přiřazení před kurzorem, `use (...)`, `global`, `static`.
 - LSP: **`completion`** (členy za `->`, `?->`, `::`; třídy, funkce, konstanty s **auto-importem**; proměnné; klíčová slova; pojmenované argumenty), **řazení** podle očekávaného typu, blízkosti scope a nedávného použití; `definition` členů, `typeDefinition`, `implementation`, `hover`, `signatureHelp`.
 - Hotovo když: markerové testy pokrývají každý bod a v reálném Nette projektu funguje napovídání a proklik kolečkem na řetězená volání.
@@ -373,7 +373,7 @@ Index cest, otevření souboru a Find in Files jsou ve fázi 2b.
 
 ### Fáze 6b: Vzdálené servery: SSH, SFTP, FTPS, rsync, nasazování (≈ 5–6 týdnů)
 
-Obdoba „Deployment“ v PhpStormu. Sdílí SSH vrstvu s DB tunelem (6.1) a terminálem (2b.4).
+Sdílí SSH vrstvu s DB tunelem (6.1) a terminálem (2b.4).
 
 6b.1 **SSH vrstva (`minoride-server remote`)**
 - Jedno spojení na server pro všechno (SFTP, terminál, tunely, rsync, DB): `ssh -o ControlMaster=auto -o ControlPath=~/.minoride/s/%C -o ControlPersist=10m`, adresář s právy `0700`. Cesta musí být **krátká**: unixový socket má limit 104 bajtů a ssh si při zakládání přidává 17 znaků, takže `~/Library/Caches/…` by u delšího uživatelského jména selhalo. Test s 32znakovým jménem domovské složky.
@@ -451,7 +451,7 @@ SQL v PHP řetězcích, pokrytí testů (coverage), golangci-lint, inlay hinty, 
 | Škodlivý projekt | `phpstan.neon` s bootstrapem, `.minoride/settings.json` s příkazem Dockeru, Composer skripty | **Omezený režim (D18)**: dokud projekt není důvěryhodný, nespouští se žádný nástroj ani příkaz z nastavení projektu; vlastní parsery běží (nespouští kód). Důvěra se pamatuje per cesta v `~/Library/Application Support/MinorIDE/trusted.json`, nikdy v projektu; `.minoride/local.json` se v Omezeném režimu nečte |
 | Kód v konfiguraci repozitáře | `.git/config` s `core.fsmonitor` nebo `core.pager` ve stažené složce, `go.mod` s jiným toolchainem | v Omezeném režimu se nespouští `git`, gopls, externí LSP servery, Docker, run konfigurace ani debugger (D18) |
 | Podvržená aktualizace | kompromitovaný GitHub účet | dvojí ověření ze **dvou oddělených míst**: Ed25519 klíč jen lokálně u vývojáře, certifikát Developer ID v CI; ochrana proti downgradu podle verze v `Info.plist` ověřené aplikace |
-| Kompromitovaná závislost | škodlivá nová verze knihovny | závislosti připnuté (`go.sum`, přesná verze SwiftTerm, commit phpstorm-stubs), `govulncheck` v CI, GitHub Actions připnuté na SHA, aktualizace závislostí jen ručně s kontrolou změn |
+| Kompromitovaná závislost | škodlivá nová verze knihovny | závislosti připnuté (`go.sum`, přesná verze SwiftTerm, připnutá verze stubů PHP), `govulncheck` v CI, GitHub Actions připnuté na SHA, aktualizace závislostí jen ručně s kontrolou změn |
 | Lokální síťový útok na helpery | jiný proces se připojí na port | helpery komunikují **jen přes stdin/stdout**, nikdy neotevírají síťový port; LSP servery také přes stdio; DB tunel přes `ssh -W` bez lokálního portu. Výjimky jen podle D24: ladění (`127.0.0.1`, jen během relace) a askpass (unixový socket `0700` + jednorázový token + kontrola UID) |
 | Ztráta dat | pád při ukládání, rsync `--delete` | atomické ukládání, Local History, náhled před každou destruktivní operací, mazání do Koše |
 
@@ -471,7 +471,7 @@ SQL v PHP řetězcích, pokrytí testů (coverage), golangci-lint, inlay hinty, 
 | R3 | Vlastní PHP server je nejrizikovější část rozsahem | vysoký | podfáze 4a–4e, každá použitelná; PHPStan kryje hlubokou analýzu |
 | R4 | PHP napovídání až po 4c (≈ 10 měsíců od začátku) | střední | pořadí drží editor a Go použitelné dřív; fáze 2b dává denní použitelnost už po ≈ 5 měsících |
 | R5 | Regrese plynulosti | vysoký | výkonové testy psaní a scrollu v CI, build selže při překročení rozpočtu |
-| R6 | Řazení napovídání (PhpStorm působí „chytře“ hlavně díky němu) | střední | řazení podle typu, scope a nedávného použití; testy pořadí top 3 |
+| R6 | Řazení napovídání (IDE působí „chytře“ hlavně díky němu) | střední | řazení podle typu, scope a nedávného použití; testy pořadí top 3 |
 | R7 | Chyba vlastního updateru rozbije instalaci | vysoký | dvojí ověření (Ed25519 + code signature), atomická výměna s návratem, test přerušeného stažení |
 | R8 | Únik Ed25519 klíče nebo certifikátu Developer ID | vysoký | Ed25519 klíč jen v Klíčence vývojáře (ne na GitHubu), certifikát Developer ID v GitHub Secrets, offline záloha, rotace klíče (app zná aktuální i další), postup v `docs/release.md` |
 | R9 | gopls na velkých monorepech 1–2 GB RAM | střední | `directoryFilters`, varování v UI |
@@ -488,6 +488,7 @@ SQL v PHP řetězcích, pokrytí testů (coverage), golangci-lint, inlay hinty, 
 ## 4. Otevřené otázky
 
 - **Q1** Testovací projekty: zatím veřejné open-source (Nette `web-project`, Laravel, velké Go repo), vlastní doplnit později.
+- **Q2** Zdroj stubů PHP (signatury vestavěných funkcí a rozšíření). Původně plánovaná sada je dílo výrobce konkurenčního IDE, nese jeho jméno v názvu, v atributech i v povinném poděkování, proto vypadla. Doporučení: **oficiální `*.stub.php` ze zdrojů PHP** (součást php-src od PHP 8.0, jádro a přibalená rozšíření) a stuby z repozitářů PECL rozšíření (redis, imagick, xdebug…); dostupnost funkcí ve verzích 7.2–7.4 doplnit vlastní tabulkou. Čeká na souhlas uživatele (nová datová závislost).
 
 ---
 
@@ -496,8 +497,9 @@ SQL v PHP řetězcích, pokrytí testů (coverage), golangci-lint, inlay hinty, 
 Po založení repozitáře zkopírovat do `CLAUDE.md` projektu.
 
 - Pracuj po úkolech v pořadí fází. Úkol končí splněním **Hotovo když**, testem hlavní cesty a commitem.
+- **Žádná vazba na konkurenční IDE**: nejmenovat je v UI, kódu, dokumentaci ani commitech a nepodporovat jejich vlastní formáty souborů ani jejich data.
 - Commity malé, jen vlastní soubory (`git commit -- <soubory>`), bez AI podpisů. Nikdy `git push` bez vyžádání.
-- **Žádná nová závislost bez souhlasu uživatele.** Povolené jsou jen: SwiftTerm, `go-sql-driver/mysql` (MPL-2.0), `jackc/pgx/v5` (a jejich závislosti), `golang.org/x/*`, phpstorm-stubs (data). Systémové frameworky macOS a stdlib Go jsou volné. Licence každé závislosti patří do okna Poděkování.
+- **Žádná nová závislost bez souhlasu uživatele.** Povolené jsou jen: SwiftTerm, `go-sql-driver/mysql` (MPL-2.0), `jackc/pgx/v5` (a jejich závislosti), `golang.org/x/*`. Zdroj stubů PHP čeká na rozhodnutí (Q2). Systémové frameworky macOS a stdlib Go jsou volné. Licence každé závislosti patří do okna Poděkování.
 - **Bezpečnost podle sekce Bezpečnost**: hesla jen v Klíčence, nikdy v argumentech procesů, proměnných prostředí, logu ani souborech; procesy jen s polem argumentů, ne přes shell; respektovat Omezený režim (i pro Git, gopls a debugger); helpery jen přes stdin/stdout, porty jen podle D24.
 - Na hlavním vlákně jen UI. Každá změna v editační cestě musí projít výkonovým testem.
 - phpls: každá nová schopnost začíná markerovým testem. Parser: každá opravená chyba dostane fixture.
@@ -516,7 +518,7 @@ minor-ide/
 ├─ Tests/                      (<Modul>Tests)
 ├─ server/                     (Go: minoride-server)
 ├─ tools/                      (bundle.sh, signrelease/)
-├─ Resources/                  (Info.plist, ikony, témata, phpstorm-stubs)
+├─ Resources/                  (Info.plist, ikony, témata, php-stubs)
 ├─ docs/                       (ANALYSIS, PLAN, DEPENDENCIES, STATUS, keymap, editor-behaviors, release, spike-*,
 │                               security: postupy rotace klíčů, hlášení zranitelností)
 └─ .github/workflows/          (ci.yml, release.yml)

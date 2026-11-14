@@ -30,7 +30,7 @@ Rozklad jednoho stisku po optimalizaci: editace ropu 0,003 ms, vlastní kreslen�
 
 ## Chyby nalezené kontrolou snímku (`--snapshot`)
 - Převrácení přes text matrix posouvalo akcenty a po řádku s `CTLine` kreslilo další řádky jinde (Core Text přičítá pozici textu). Opraveno převrácením CTM a nulováním pozice textu.
-- Tabulátor měl pevnou šířku 4 mezer místo zarovnání na další zarážku (jako v PhpStormu). Opraveno ve všech třech cestách (ASCII, rychlá, `CTLine`), ověřeno s češtinou a emoji.
+- Tabulátor měl pevnou šířku 4 mezer místo zarovnání na další zarážku. Opraveno ve všech třech cestách (ASCII, rychlá, `CTLine`), ověřeno s češtinou a emoji.
 
 ## Jak se měří
 - Čas = synchronní `displayIfNeeded()` po editaci nebo posunu. Počítadla `drawCount` / `drawnLines` ověřují, že se opravdu kreslí.
