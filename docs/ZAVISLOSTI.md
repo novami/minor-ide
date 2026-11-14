@@ -1,0 +1,37 @@
+# Závislosti: knihovna, nebo vlastní implementace
+
+Cíl: co nejméně knihoven třetích stran. Vlastní implementace tam, kde to dává smysl.
+Časy jsou hrubé odhady pro jednoho vývojáře s AI, včetně testů. „Oproti knihovně“ je práce navíc u vlastní varianty.
+
+Systémové frameworky macOS (AppKit, Core Text, CryptoKit, Security/Keychain, FSEvents, libsqlite3) a standardní knihovna Go se nepočítají jako závislosti.
+
+## A. Rozhodnuto uživatelem
+
+| # | Oblast | Rozhodnutí | Práce | Oproti knihovně |
+|---|---|---|---|---|
+| A1 | Text editor | **vlastní, Core Text + rope** | 10–14 týdnů | +10 týdnů (místo CodeEditSourceEditor a ~6 tranzitivních balíčků) |
+| A2 | Parsování a zvýraznění | **vše vlastní**: lexery ve Swiftu, parsery PHP, Latte, NEON v Go | +10–14 týdnů | bez tree-sitter, bez cgo v PHP serveru |
+| A3 | Aktualizace | **vlastní updater** (GitHub API, Ed25519 přes CryptoKit, code signature, pomocný proces) | 2 týdny | +1,5 týdne (místo Sparkle) |
+| A4 | Terminál | **SwiftTerm** | 2–3 dny | vlastní emulátor by byl +5–8 týdnů |
+
+## B. Rozhodnuto bez dotazu (dá se přebít)
+
+| # | Oblast | Volba | Proč |
+|---|---|---|---|
+| B1 | Typy LSP (Swift i Go) | **vlastní** (3–5 dní) | potřebujeme jen podmnožinu protokolu |
+| B2 | Hledání v souborech | **vlastní v Go** (1–2 týdny místo přibaleného ripgrep) | Go regexp (RE2) je dost rychlý |
+| B3 | Build | **SPM + vlastní skript** na sestavení `.app` (2 dny místo XcodeGen) | žádný nástroj navíc |
+| B4 | Go helpery | **jedna binárka `minoride-server`** s podpříkazy `phpls`, `db`, `search` | méně artefaktů k podepisování |
+| B5 | JSON-RPC, fuzzy matcher, diff (Myers), Git, Markdown pro release notes | **vlastní** / Git přes CLI / `AttributedString(markdown:)` | malé a dobře testovatelné |
+| B6 | SSH tunel pro DB | **systémové `ssh -L`** místo `x/crypto/ssh` | 0 závislostí, respektuje `~/.ssh/config`, ProxyJump a ssh-agent |
+| B7 | SQLite | **systémová `libsqlite3` přes vlastní tenký cgo binding** (2–3 dny) | `modernc.org/sqlite` je obří strom závislostí |
+| B8 | MySQL/MariaDB ovladač | **knihovna `go-sql-driver/mysql`** (1 malá závislost) | vlastní protokol včetně auth pluginů MariaDB a TLS: +3–4 týdny |
+| B9 | PostgreSQL ovladač | **knihovna `jackc/pgx/v5`** (závislosti jen jackc + `golang.org/x`) | vlastní wire protokol, SCRAM a typy: +3–4 týdny |
+| B10 | Stuby PHP funkcí | **phpstorm-stubs** (data, Apache-2.0) | ručně tisíce funkcí, nereálné |
+
+## Výsledná sada závislostí
+
+- **Swift**: SwiftTerm.
+- **Go**: `go-sql-driver/mysql`, `jackc/pgx/v5`, `golang.org/x/*`.
+- **Data**: phpstorm-stubs.
+- **Cena minimalizace**: MVP se prodloužilo z 6–9 na zhruba 11–15 měsíců.
