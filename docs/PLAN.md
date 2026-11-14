@@ -5,7 +5,9 @@
 - Implementuje: Sonnet, po úkolech v pořadí níže. Každý úkol má **Hotovo když**.
 - Analýza konkurence: [ANALYZA.md](ANALYZA.md). Volba závislostí: [ZAVISLOSTI.md](ZAVISLOSTI.md).
 
-**Filozofie: minimum knihoven třetích stran.** Vlastní je editor, zvýraznění, všechny parsery, LSP, updater, hledání i build. Knihovny zůstávají jen tam, kde by vlastní implementace stála měsíce bez přínosu: SwiftTerm, ovladače MySQL a PostgreSQL a data phpstorm-stubs.
+**Filozofie: minimum knihoven třetích stran.** Vlastní je editor, zvýraznění, všechny parsery, LSP, updater, hledání, SFTP/FTPS klient i build. Knihovny zůstávají jen tam, kde by vlastní implementace stála měsíce bez přínosu: SwiftTerm, ovladače MySQL a PostgreSQL a data phpstorm-stubs.
+
+**Bezpečnost je vlastnost produktu, ne dodatek.** IDE drží hesla k databázím a serverům a spouští cizí kód (nástroje projektu). Pravidla jsou v sekci [Bezpečnost](#bezpečnost) a platí pro každou fázi.
 
 ---
 
@@ -23,21 +25,45 @@
 | D8 | Databáze | MariaDB/MySQL, PostgreSQL, SQLite |
 | D9 | Aktualizace | **vlastní updater**: GitHub Releases API, podpis Ed25519 (CryptoKit), Developer ID + notarizace |
 | D10 | Git / terminál | `git` CLI / **SwiftTerm** (jediná Swift knihovna) |
-| D11 | Build | **SPM + vlastní skript** na sestavení `.app`; jedna Go binárka `minoride-server` (podpříkazy `phpls`, `db`, `search`) |
+| D11 | Build | **SPM + vlastní skript** na sestavení `.app`; jedna Go binárka `minoride-server` (podpříkazy `phpls`, `db`, `search`, `remote`) |
 | D12 | Debugger | po MVP (DAP) |
-| D13 | Licence | MIT |
+| D13 | Licence | MIT (vlastní kód). Závislosti: MIT, BSD, Apache-2.0, **MPL-2.0 jen `go-sql-driver/mysql`** (souborový copyleft, nemodifikujeme, uvedeno v Poděkováních) |
+| D14 | Vzdálené soubory | **vlastní SFTP v3 klient v Go nad systémovým `ssh -s sftp`** (0 závislostí; `~/.ssh/config`, ssh-agent, ProxyJump, sdílené spojení) |
+| D15 | FTP | **SFTP + FTPS** (FTP přes TLS, vlastní klient v Go nad stdlib `crypto/tls`). **Nešifrované FTP ne.** |
+| D16 | SSH | vždy **systémové OpenSSH** (`ssh`, `ssh -s sftp`, `ssh -L`), sdílené spojení přes `ControlMaster`; ověřování klíčů serveru přes `known_hosts`, nikdy `StrictHostKeyChecking=no` |
+| D17 | rsync | systémový `rsync` (na macOS 15.4+ je to `openrsync`) nebo Homebrew `rsync` 3.x, pokud je nainstalovaný; vždy náhled (`--dry-run`) před mazáním |
+| D18 | Důvěra v projekt | **Omezený režim** pro neznámé projekty (jako VS Code): bez spouštění nástrojů a příkazů z nastavení projektu, dokud uživatel neklikne „Důvěřovat“ |
+| D19 | Hesla | jen **Klíčenka macOS**, `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, bez synchronizace do iCloudu; **bez Touch ID** (rozhodnutí uživatele) |
+| D20 | Telemetrie | **žádná**. Žádná analytika ani odesílání pádů. Síť jen pro kontrolu aktualizací (vypnutelné) a pro spojení, která uživatel založí |
+| D21 | Sandbox | **bez App Sandbox** (IDE musí spouštět `git`, `go`, `php`, `ssh`…), distribuce mimo App Store s Developer ID, hardened runtime bez výjimek |
+| D22 | PATH | GUI aplikace z Finderu nemá PATH z terminálu (chybí `/opt/homebrew/bin`). Při startu se jednou načte z přihlašovacího shellu (`$SHELL -l -c 'printf %s "$PATH"'`, s časovým limitem) |
 
 ## 1. Architektura
 
 ```
 MinorIDE.app/Contents
 ├─ MacOS/MinorIDE                  (Swift: UI, editor, LSP klient, Git, terminál, updater UI)
-├─ Helpers/minoride-server         (Go: phpls | db | search, mluví JSON-RPC/LSP přes stdio)
+├─ Helpers/minoride-server         (Go: phpls | db | search | remote, mluví JSON-RPC/LSP přes stdio)
+├─ Helpers/minoride-askpass        (malý Swift CLI: SSH_ASKPASS/GIT_ASKPASS, heslo si vyžádá od IDE)
 ├─ Helpers/minoride-updater        (malý Swift CLI: výměna app po ukončení)
 └─ Resources/phpstorm-stubs/       (stuby PHP funkcí a rozšíření, Apache-2.0)
 
-Externí (hledá v PATH / projektu): gopls, php + phpstan (jen pro PHPStan a formátovače), git, ssh
+Externí (hledá v PATH / projektu): gopls, php + phpstan (jen pro PHPStan a formátovače), git, ssh, rsync, docker
 ```
+
+### Externí nástroje
+
+Nastavení → Nástroje ukazuje každý nástroj s cestou a verzí, umožní cestu přepsat a nabídne instalaci (Homebrew / `go install`). Chybějící nástroj nikdy neblokuje editor, jen vypne danou funkci s vysvětlením.
+
+| Nástroj | K čemu | Minimální verze | Když chybí |
+|---|---|---|---|
+| `git` | Git integrace | 2.30 | nabídnout `xcode-select --install` |
+| `go`, `gopls` | Go inteligence | Go 1.22, gopls 0.16 | nabídnout `go install golang.org/x/tools/gopls@latest` |
+| `php` | PHPStan, formátovače | 7.2 | PHP analýza běží dál (vlastní server PHP nepotřebuje) |
+| `phpstan`, `php-cs-fixer`, `phpcs` | analýza, formátování | z `vendor/bin` projektu, jinak globální | funkce skrytá |
+| `ssh` | SSH, SFTP, tunely | systémový OpenSSH | součást macOS |
+| `rsync` | synchronizace | `openrsync` (macOS) nebo rsync 3.x | součást macOS |
+| `docker` | PHP v kontejneru | 24 | volba skrytá |
 
 ### Swift moduly (targety v jednom `Package.swift`, kód v `Sources/<Modul>/`)
 
@@ -54,6 +80,8 @@ Externí (hledá v PATH / projektu): gopls, php + phpstan (jen pro PHPStan a for
 | `GitKit` | status, diff (vlastní Myers), gutter změn, commit, blame | ne |
 | `TerminalKit` | panel nad SwiftTerm | ano |
 | `UpdateKit` | kontrola, stažení, ověření, předání updateru | ne |
+| `SecretsKit` | Klíčenka (uložení, čtení, smazání hesel podle id), schránka pro hesla, Omezený režim (důvěra projektů), načtení PATH | ne |
+| `RemoteKit` | klient `minoride-server remote`: servery, mapování, vzdálený prohlížeč, fronta přenosů, nasazování, rsync | UI část ano |
 | `App` | okna, menu, zkratky, skládání modulů | ano |
 
 ### Go modul `server/` (jen stdlib + DB ovladače, **bez cgo kromě SQLite**)
@@ -74,6 +102,10 @@ server/
 ├─ internal/neon/                parser NEON + DI model Nette
 ├─ internal/db/                  ovladače, introspekce, SSH tunel, SQLite binding
 ├─ internal/search/              hledání v souborech (RE2, .gitignore)
+├─ internal/ssh/                 správa systémového ssh (ControlMaster, tunely, known_hosts, askpass)
+├─ internal/sftp/                vlastní SFTP v3 klient nad `ssh -s sftp`
+├─ internal/ftps/                vlastní FTPS klient (explicitní TLS, pasivní režim, MLSD)
+├─ internal/sync/                porovnání stromů, plán přenosů, rsync náhled a běh
 └─ testdata/                     markerové testy, korpusy
 ```
 
@@ -91,6 +123,14 @@ server/
 | phpls: teplý start z cache | < 2 s |
 | phpls: RAM na velkém projektu | < 600 MB |
 | RAM aplikace (bez serverů) | < 300 MB |
+| Nečinnost (okno na pozadí) | ~0 % CPU: blikání kurzoru a časovače se zastaví, App Nap povolen |
+| Jakákoli síťová nebo procesová operace | nikdy na hlavním vlákně, vždy s časovým limitem a možností zrušit |
+
+Další pravidla výkonu:
+- **Líný start**: jazykové servery, DB helper a SSH spojení se spouští až při prvním použití, ne při otevření projektu.
+- **Tlak na paměť**: `DispatchSource.makeMemoryPressureSource` → zahodit cache rozvržení řádků, zavřených souborů a výsledků hledání.
+- **Na baterii** se indexace a PHPStan celého projektu spouští s nižší prioritou (`QualityOfService.utility`).
+- **Výchozí vyloučení** z indexace a hledání: `.git`, `node_modules`, `vendor/**/tests`, `temp/`, `log/`, `var/cache` (nastavitelné).
 
 ### Standardy macOS (Apple Human Interface Guidelines)
 
@@ -107,11 +147,25 @@ MinorIDE se musí chovat jako nativní Mac aplikace, aby se Mac uživatel hned z
 | **Přístupnost** | VoiceOver, Zvýšit kontrast, Omezit pohyb, Omezit průhlednost, plné ovládání klávesnicí. |
 | **Jazyk** | Vývojový jazyk angličtina, překlad čeština; aplikace se řídí jazykem systému. Texty přes `NSLocalizedString`, nikdy napevno v kódu. |
 
+### Uživatelský zážitek (UX)
+
+| Oblast | Pravidlo |
+|---|---|
+| **Uvítací okno** | Bez otevřeného projektu: nedávné projekty, Otevřít složku, Klonovat z Gitu, Připojit se k serveru (jako uvítání v Xcode). |
+| **První spuštění** | Kontrola nástrojů (tabulka výše) s jedním tlačítkem pro instalaci chybějících; žádný průvodce s deseti kroky. |
+| **Stavový řádek** | Jazyk, konce řádků, odsazení, kódování (klik = přepnout), pozice kurzoru, Git větev, stav indexace, stav připojení k serveru, režim důvěry projektu. |
+| **Práce na pozadí** | Indexace, PHPStan, nahrávání, rsync nikdy neblokují UI: průběh ve stavovém řádku a panelu Úlohy s možností zrušit. Modální průběh je zakázaný. |
+| **Chyby** | Lidsky a česky: co se stalo, proč, co s tím (tlačítko akce). Technický detail rozbalitelný. Nikdy jen „Error -1“. |
+| **Prázdné stavy** | Každý panel bez obsahu říká, co do něj patří a jak ho naplnit. |
+| **Velikost písma** | ⌘+ / ⌘− / ⌘0 v editoru, volitelné ligatury, výběr monospace písma. |
+| **Bezpečné akce** | Destruktivní operace (smazání souboru, sync s mazáním, DELETE bez WHERE, nahrání na produkci) vždy s náhledem a potvrzením; smazané soubory do Koše, ne natrvalo. |
+| **Produkční prostředí** | Server nebo databáze označené jako produkce mají červený pruh v okně, potvrzení zápisů a výchozí režim jen pro čtení. |
+
 ---
 
 ## 2. Fáze a úkoly
 
-Odhady jsou hrubé (jeden vývojář s AI). **Celé MVP: zhruba 11–15 měsíců.** Použitelné mezistupně:
+Odhady jsou hrubé (jeden vývojář s AI). **Celé MVP: zhruba 12–17 měsíců** (včetně fáze 6b). Použitelné mezistupně:
 
 - **po fázi 2**: rychlý editor s aktualizacemi, dá se denně používat;
 - **po fázi 3**: plnohodnotné Go IDE;
@@ -178,7 +232,12 @@ Odhady jsou hrubé (jeden vývojář s AI). **Celé MVP: zhruba 11–15 měsíc�
   - buffer má vždy jen `\n`, konce řádků, kódování, koncový řádek a ořez mezer se aplikují při uložení;
   - **zbývá do 1e** (vše podle sekce Standardy macOS): `NSDocumentController` (Nedávné, obnova oken), projektové okno se postranním panelem, okno Nastavení, stavový řádek s přepínači (konce řádků, odsazení, kódování) místo menu, okno nastavení v SwiftUI nad stejným `settings.json`, varování před uložením znaků, které kódování neumí, příkaz „Převést odsazení“ (1c), sledování `.editorconfig` a `settings.json` (přenačtení bez restartu).
 - **Ukládání jako PhpStorm**: auto-save při ztrátě fokusu a přepnutí tabu (zapínatelné), **Local History** (snímek při uložení, 14 dní, náhled a obnovení), obnova sezení a obnova po pádu.
-- Velké a minifikované soubory (> 5 MB nebo řádek > 10 000 znaků): zjednodušený režim bez zvýraznění a analýzy.
+- Velké a minifikované soubory (> 5 MB nebo řádek > 10 000 znaků): zjednodušený režim bez zvýraznění a analýzy. Nad 256 MB jen náhled po částech.
+- **Binární soubory** (NUL bajty v prvních 8 KB): neotevírat jako text, nabídnout Quick Look nebo hex náhled.
+- **Bezpečné ukládání**: atomicky přes dočasný soubor, ale se zachováním **práv** (spustitelné skripty), **vlastníka**, **rozšířených atributů** a **cíle symbolického odkazu** (zapisuje se do cíle, odkaz zůstane). Hotovo: práva a odkazy (oprava z revize plánu).
+- **Změna souboru na disku** (git checkout, jiný editor): bez neuložených změn tiše přenačíst se zachováním pozice; s neuloženými změnami lišta „Soubor se změnil na disku: Přenačíst / Porovnat / Ponechat moje“. Smazaný soubor: ponechat obsah a označit.
+- **Uvítací okno, kontrola nástrojů, PATH z přihlašovacího shellu (D22)**.
+- **`.minoride/` v projektu**: `settings.json` (sdílené, commitovat), `local.json` (osobní, do `.gitignore` se přidá automaticky: servery, cesty, důvěra). Hesla nikdy v žádném souboru.
 
 **1f. Dokončení (≈ 1–2 týdny)**: zbylé lexery, **zalamování řádků** (mapování řádek ↔ vizuální řádky, vypnuté výchozí, zapnuté pro Markdown), sticky header s aktuální funkcí.
 
@@ -275,7 +334,7 @@ $x = $user->getName/*|def: User.php:12*/();
 6.1 **`minoride-server db`**
 - Ovladače `go-sql-driver/mysql`, `pgx/v5`, vlastní cgo binding na systémovou `libsqlite3`.
 - Metody `connect`, `disconnect`, `listDatabases`, `listSchemas`, `listTables`, `describeTable` (sloupce, indexy, FK, DDL), `query` (stream po stránkách), `fetchMore`, `cancel` (přes `context`), `execute`, `beginTx/commit/rollback`.
-- **SSH tunel přes systémové `ssh -N -L`** (respektuje `~/.ssh/config`, ProxyJump, ssh-agent), hlídání a ukončení procesu.
+- **SSH tunel přes systémové `ssh -N -L`** (respektuje `~/.ssh/config`, ProxyJump, ssh-agent), hlídání a ukončení procesu. Jakmile vznikne SSH vrstva 6b.1, tunel jede přes sdílené spojení `ControlMaster`.
 - Bezztrátové typy: NULL, binární jako base64, velká čísla jako string, datum ISO 8601.
 - Integrační testy proti Docker Compose (MariaDB 11, PostgreSQL 17), build tag `integration`.
 6.2 Připojení: dialog (host, port, uživatel, DB, SSH, TLS), „Test připojení“, `.minoride/datasources.json` nebo globálně, **hesla jen v Keychain**.
@@ -284,14 +343,43 @@ $x = $user->getName/*|def: User.php:12*/();
 6.5 Editace dat: lokální změny, „Submit“ s **náhledem SQL**, transakce, jen tabulky s PK.
 6.6 SQL konzole: vlastní SQL lexer, Cmd+Enter spustí výraz pod kurzorem, výsledky v tabech, historie, napovídání tabulek a sloupců z cache schématu.
 6.7 Export do CSV/JSON.
+6.8 **Bezpečnost dat**: příznak „produkce“ (červený pruh, výchozí jen pro čtení), potvrzení `UPDATE`/`DELETE` bez `WHERE` a `DROP`/`TRUNCATE`, časový limit dotazu, limit řádků. Historie dotazů lokálně a vypnutelná (může obsahovat citlivá data). Heslo jde do helperu přes stdin (JSON-RPC), nikdy přes argumenty nebo proměnné prostředí (viditelné v `ps`). TLS u MySQL/PostgreSQL s ověřením certifikátu, volitelně vlastní CA.
 - Hotovo když: připojení k MariaDB přímo i přes SSH, editace dat s náhledem SQL a zrušení 30s dotazu fungují.
+
+### Fáze 6b: Vzdálené servery: SSH, SFTP, FTPS, rsync, nasazování (≈ 5–6 týdnů)
+
+Obdoba „Deployment“ v PhpStormu. Sdílí SSH vrstvu s DB tunelem (6.1) a terminálem (7.4).
+
+6b.1 **SSH vrstva (`minoride-server ssh`)**
+- Jedno spojení na server pro všechno (SFTP, terminál, tunely, rsync, DB): `ssh -o ControlMaster=auto -o ControlPath=~/Library/Caches/MinorIDE/ssh/%C -o ControlPersist=10m`, adresář s právy `0700`.
+- Autentizace jen tím, co umí OpenSSH: klíče, ssh-agent (včetně 1Password a Secretive), certifikáty, `~/.ssh/config` (aliasy, ProxyJump). Heslo nebo passphrase přes vlastní `SSH_ASKPASS` helper, který si je vyžádá od IDE (Klíčenka nebo dotaz); **heslo nikdy v argumentech ani v proměnných prostředí**.
+- **Klíč serveru**: první připojení ukáže otisk (SHA256) a uloží ho do `~/.ssh/known_hosts` až po potvrzení; nesouhlasící klíč = tvrdá chyba s vysvětlením, žádné „pokračovat i tak“.
+- Správce tunelů: seznam aktivních přesměrování portů, start/stop.
+
+6b.2 **SFTP klient (vlastní, protokol v3, Go)** nad `ssh -s sftp`: list, stat, read/write po blocích s pipeliningem (víc požadavků za sebou, rychlost blízko `scp`), rename, mkdir, remove, setstat (práva), symlinky. Testy proti OpenSSH v Dockeru.
+
+6b.3 **FTPS klient (vlastní, Go, `crypto/tls`)**: explicitní TLS (`AUTH TLS`), pasivní režim (`EPSV`/`PASV`), `MLSD` s fallbackem na `LIST`, TLS i na datovém kanálu (`PROT P`), ověření certifikátu (výjimka jen ručně pro konkrétní otisk, uložená). Nešifrované FTP se nepodporuje.
+
+6b.4 **Servery a mapování**: dialog serveru (typ SFTP/FTPS, host, port, uživatel, kořenová složka, příznak produkce), mapování lokální ↔ vzdálená cesta, vyloučené cesty (výchozí `.git`, `.minoride/local.json`, `node_modules`, `.env*`). Uloženo v `.minoride/local.json`, heslo v Klíčence.
+
+6b.5 **Vzdálený prohlížeč**: panel jako Finder (strom, ikony, velikost, datum, práva), drag & drop z/do Finderu i stromu projektu, otevřít vzdálený soubor přímo (stáhne se do cache, uložení nahraje zpět), **detekce konfliktu** (soubor se na serveru změnil od stažení → porovnat / přepsat / zrušit).
+
+6b.6 **Nasazování**
+- Nahrát / stáhnout soubor či složku (kontextové menu, zkratky), **nahrávání při uložení** (výchozí vypnuto; u produkce zakázané bez potvrzení).
+- **Porovnat se serverem**: diff lokální vs. vzdálený soubor, a pro složku seznam rozdílů.
+- **Synchronizace přes rsync** (jen SFTP servery): vždy nejdřív náhled (`--dry-run --itemize-changes`) v tabulce *nahrát / smazat / změnit*, mazání (`--delete`) jen po výslovném zaškrtnutí, vylučovací pravidla z mapování, průběh a zrušení. U FTPS synchronizace vlastním porovnáním velikostí a časů.
+- Fronta přenosů s průběhem, opakováním a zrušením; souběžně max. 4 přenosy na server.
+
+6b.7 **Vychytávky**: vzdálený terminál jedním klikem (SwiftTerm + `ssh` přes sdílené spojení), „Otevřít vzdálenou složku“ (SFTP bez lokální kopie, inteligence jen syntaktická), zobrazení logu na serveru živě (`tail -f`), rychlé zkopírování cesty/URL souboru na serveru, přenos práv souborů (chmod v dialogu), záložky oblíbených vzdálených složek.
+- Hotovo když: projekt se nasadí na SFTP i FTPS server, rsync náhled odpovídá skutečnosti, změna klíče serveru je odmítnuta a v `ps` ani logu se neobjeví heslo.
 
 ### Fáze 7: Git a terminál (≈ 2 týdny)
 
 7.1 Gutter změn proti HEAD (vlastní Myers diff nad rope snapshotem), rollback bloku.
 7.2 Panel změn, side-by-side diff, commit s výběrem souborů, amend.
 7.3 Blame v gutteru, přepínání větví, pull/push s výstupem.
-7.4 Terminál (SwiftTerm) jako spodní panel, víc tabů, start v kořeni projektu.
+7.4 Terminál (SwiftTerm) jako spodní panel, víc tabů, start v kořeni projektu, PATH z přihlašovacího shellu, volba „Bezpečné zadávání z klávesnice“ (jako Terminal.app).
+7.5 Přihlašování Git: systémový `git credential-osxkeychain` a ssh-agent, vlastní GUI `GIT_ASKPASS` pro passphrase; IDE si Git hesla neukládá samo.
 
 ### Fáze 8: Nette, Latte, NEON (≈ 5–7 týdnů)
 
@@ -311,6 +399,29 @@ Debugger (DAP: `dlv dap`, Xdebug), SQL v PHP řetězcích, run konfigurace a tes
 
 ---
 
+## Bezpečnost
+
+### Model hrozeb (před čím chráníme)
+
+| Hrozba | Příklad | Ochrana |
+|---|---|---|
+| Únik uložených hesel | malware čte soubory v `~/Library` | hesla **jen v Klíčence** (`WhenUnlockedThisDeviceOnly`, bez iCloudu), v souborech jen odkaz (id položky); položky přístupné jen podepsané aplikaci (ACL Klíčenky váže podpis Developer ID) |
+| Heslo viditelné jiným procesům | `ps aux`, `/proc`, výpisy prostředí | hesla do helperů jen přes stdin/JSON-RPC nebo `SSH_ASKPASS`, nikdy argumenty ani proměnné prostředí |
+| Heslo v logu nebo schránce | ladicí log, zkopírované heslo | `os.Logger` s `privacy: .private`, žádné logování parametrů připojení; zkopírované heslo se ze schránky smaže po 60 s a označí jako `org.nspasteboard.ConcealedType` |
+| Útočník uprostřed (MITM) | podvržený SSH server, falešný TLS certifikát | `known_hosts` s potvrzením otisku, odmítnutí změněného klíče; TLS vždy s ověřením certifikátu; FTP bez šifrování nepodporované |
+| Škodlivý projekt | `phpstan.neon` s bootstrapem, `.minoride/settings.json` s příkazem Dockeru, Composer skripty | **Omezený režim (D18)**: dokud projekt není důvěryhodný, nespouští se žádný nástroj ani příkaz z nastavení projektu; vlastní parsery běží (nespouští kód). Důvěra se pamatuje per cesta v `local.json` uživatele, ne v projektu |
+| Podvržená aktualizace | kompromitovaný GitHub účet | dvojí ověření (Ed25519 + Team ID podpisu), ochrana proti downgradu (starší verze se odmítne) |
+| Kompromitovaná závislost | škodlivá nová verze knihovny | závislosti připnuté (`go.sum`, přesná verze SwiftTerm, commit phpstorm-stubs), `govulncheck` v CI, GitHub Actions připnuté na SHA, aktualizace závislostí jen ručně s kontrolou změn |
+| Lokální síťový útok na helpery | jiný proces se připojí na port | helpery komunikují **jen přes stdin/stdout**, nikdy neotevírají síťový port; LSP servery také přes stdio |
+| Ztráta dat | pád při ukládání, rsync `--delete` | atomické ukládání, Local History, náhled před každou destruktivní operací, mazání do Koše |
+
+### Pravidla pro kód
+- Žádné tajemství v repozitáři, logu, crash reportu, `settings.json`, `local.json` ani v historii SQL dotazů (u připojovacích řetězců se heslo vymaže).
+- Každý spouštěný proces přes `Process` s polem argumentů, **nikdy přes shell s poskládaným řetězcem** (injection). Výjimka jen pro načtení PATH (D22), bez uživatelských dat.
+- Cesty ze serveru a z projektu se před použitím normalizují; žádný zápis mimo cílovou složku (ochrana proti `../` ve jménech ze serveru).
+- Hardened runtime bez výjimek (`disable-library-validation`, `allow-jit` a podobné zakázané).
+- Bezpečnostní testy: heslo se neobjeví v `ps` během připojení (test spustí připojení a čte tabulku procesů), změněný klíč serveru je odmítnut, Omezený režim nespustí PHPStan.
+
 ## 3. Rizika
 
 | # | Riziko | Dopad | Opatření |
@@ -324,7 +435,12 @@ Debugger (DAP: `dlv dap`, Xdebug), SQL v PHP řetězcích, run konfigurace a tes
 | R7 | Chyba vlastního updateru rozbije instalaci | vysoký | dvojí ověření (Ed25519 + code signature), atomická výměna s návratem, test přerušeného stažení |
 | R8 | Únik Ed25519 klíče nebo certifikátu Developer ID | vysoký | jen v GitHub Secrets a Keychainu, offline záloha, rotace klíče (app zná aktuální i další), postup v `docs/release.md` |
 | R9 | gopls na velkých monorepech 1–2 GB RAM | střední | `directoryFilters`, varování v UI |
-| R10 | Celkový rozsah 11–15 měsíců | vysoký | striktně po fázích, vydávat a používat průběžně |
+| R10 | Celkový rozsah 12–17 měsíců | vysoký | striktně po fázích, vydávat a používat průběžně |
+| R11 | Únik hesla (DB, SSH, FTPS) | vysoký | sekce Bezpečnost: Klíčenka, žádná hesla v argumentech, logu ani souborech, bezpečnostní testy |
+| R12 | Škodlivý projekt spustí kód přes nástroje | vysoký | Omezený režim (D18) |
+| R13 | Klíčenka se při vývoji ptá po každém buildu (ad-hoc podpis mění identitu) | nízký | vývojové buildy podepisovat stálým vývojovým certifikátem; testy Klíčenky s vlastní testovací klíčenkou |
+| R14 | `openrsync` v macOS neumí všechny přepínače rsync 3.x | střední | používat jen společnou podmnožinu přepínačů, rsync 3.x z Homebrew využít, když je |
+| R15 | FTPS servery na hostinzích se liší (pasivní režim za NAT, starý TLS) | střední | testy proti `vsftpd` a `pure-ftpd` v Dockeru, TLS 1.2+ povinně, srozumitelné chyby |
 
 ## 4. Otevřené otázky
 
@@ -338,7 +454,8 @@ Po založení repozitáře zkopírovat do `CLAUDE.md` projektu.
 
 - Pracuj po úkolech v pořadí fází. Úkol končí splněním **Hotovo když**, testem hlavní cesty a commitem.
 - Commity malé, jen vlastní soubory (`git commit -- <soubory>`), bez AI podpisů. Nikdy `git push` bez vyžádání.
-- **Žádná nová závislost bez souhlasu uživatele.** Povolené jsou jen: SwiftTerm, `go-sql-driver/mysql`, `jackc/pgx/v5` (a jejich závislosti), `golang.org/x/*`, phpstorm-stubs (data). Systémové frameworky macOS a stdlib Go jsou volné.
+- **Žádná nová závislost bez souhlasu uživatele.** Povolené jsou jen: SwiftTerm, `go-sql-driver/mysql` (MPL-2.0), `jackc/pgx/v5` (a jejich závislosti), `golang.org/x/*`, phpstorm-stubs (data). Systémové frameworky macOS a stdlib Go jsou volné. Licence každé závislosti patří do okna Poděkování.
+- **Bezpečnost podle sekce Bezpečnost**: hesla jen v Klíčence, nikdy v argumentech procesů, proměnných prostředí, logu ani souborech; procesy jen s polem argumentů, ne přes shell; respektovat Omezený režim.
 - Na hlavním vlákně jen UI. Každá změna v editační cestě musí projít výkonovým testem.
 - phpls: každá nová schopnost začíná markerovým testem. Parser: každá opravená chyba dostane fixture.
 - Hesla a tajemství jen v Keychainu, nikdy do logů.
@@ -356,6 +473,7 @@ minor-ide/
 ├─ Tests/                      (<Modul>Tests)
 ├─ server/                     (Go: minoride-server)
 ├─ tools/                      (bundle.sh, signrelease/)
+├─ docs/                       (+ bezpecnost.md: postupy rotace klíčů, hlášení zranitelností)
 ├─ Resources/                  (Info.plist, ikony, témata, phpstorm-stubs)
 ├─ docs/                       (ANALYZA, PLAN, ZAVISLOSTI, keymap, editor-behaviors, release, spike-*)
 └─ .github/workflows/          (ci.yml, release.yml)

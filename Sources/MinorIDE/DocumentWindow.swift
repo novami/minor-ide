@@ -132,7 +132,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 
 	private func write(to url: URL) -> Bool {
 		do {
-			try TextFile.save(editor.rope.string, settings: format, originalLines: originalLines).write(to: url, options: .atomic)
+			try TextFile.write(TextFile.save(editor.rope.string, settings: format, originalLines: originalLines), to: url)
 			// Saved content becomes the new baseline for "trim modified lines".
 			originalLines = Set(editor.rope.string.split(separator: "\n", omittingEmptySubsequences: false))
 			window.isDocumentEdited = false

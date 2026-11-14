@@ -115,4 +115,23 @@ struct FormatTests {
 		#expect(Array(data.prefix(3)) == [0xEF, 0xBB, 0xBF])
 		#expect(String(decoding: data.dropFirst(3), as: UTF8.self) == "a\nb\n")
 	}
+
+	@Test func writeKeepsPermissionsAndSymlinks() throws {
+		let fm = FileManager.default
+		let dir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+		try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+		defer { try? fm.removeItem(at: dir) }
+
+		let script = dir.appendingPathComponent("deploy.sh")
+		try Data("#!/bin/sh\n".utf8).write(to: script)
+		try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
+		let link = dir.appendingPathComponent("link.sh")
+		try fm.createSymbolicLink(at: link, withDestinationURL: script)
+
+		try TextFile.write(Data("#!/bin/sh\necho hi\n".utf8), to: link)
+
+		#expect(try fm.destinationOfSymbolicLink(atPath: link.path) == script.path) // still a link
+		#expect(try String(contentsOf: script, encoding: .utf8).contains("echo hi")) // target written
+		#expect((try fm.attributesOfItem(atPath: script.path)[.posixPermissions] as? Int) == 0o755)
+	}
 }

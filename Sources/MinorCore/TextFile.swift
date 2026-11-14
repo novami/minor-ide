@@ -68,6 +68,18 @@ public enum TextFile {
 		return data
 	}
 
+	/// Writes atomically without changing what the file is: a symbolic link keeps pointing at its
+	/// target (the target is written) and the file keeps its permissions (executable scripts stay executable).
+	public static func write(_ data: Data, to url: URL) throws {
+		let target = url.resolvingSymlinksInPath()
+		let fm = FileManager.default
+		let permissions = (try? fm.attributesOfItem(atPath: target.path))?[.posixPermissions]
+		try data.write(to: target, options: .atomic)
+		if let permissions {
+			try fm.setAttributes([.posixPermissions: permissions], ofItemAtPath: target.path)
+		}
+	}
+
 	static func trimmingTrailing(_ line: String) -> String {
 		var s = Substring(line)
 		while let last = s.last, last == " " || last == "\t" { s.removeLast() }
