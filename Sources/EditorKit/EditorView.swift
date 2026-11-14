@@ -18,6 +18,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	/// Called after every text change (dirty tracking).
 	public var onChange: (() -> Void)?
+	/// Positions that follow edits, undo and redo included.
+	public var anchors = AnchorSet()
 
 	/// Indentation and tab display for this document. The buffer always uses "\n";
 	/// line endings and charset apply when saving.
@@ -91,6 +93,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		rope = Rope(text)
 		selections = SelectionSet()
 		history.removeAll()
+		anchors.removeAll()
 		goalXs = nil
 		layoutCache.removeAll()
 		updateSize()
@@ -347,6 +350,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		invalidate(selections)
 
 		changes.apply(to: &rope)
+		anchors.apply(changes)
 		selections = selectionsAfter(changes)
 		goalXs = nil
 		onChange?()

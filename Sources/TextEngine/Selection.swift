@@ -106,6 +106,8 @@ public struct ChangeSet: Sendable, Equatable {
 	public enum Bias: Sendable { case before, after }
 
 	public private(set) var changes: [Change]
+	/// `deltas[i]`: how much the changes before `changes[i]` shift the text.
+	private var deltas: [Int] = []
 
 	public init(_ edits: [(Range<Int>, String)]) {
 		self.init(changes: edits.map { Change(range: $0.0, text: Array($0.1.utf8)) })
@@ -123,6 +125,13 @@ public struct ChangeSet: Sendable, Equatable {
 			}
 		}
 		changes = out
+		deltas.reserveCapacity(out.count + 1)
+		var delta = 0
+		for c in out {
+			deltas.append(delta)
+			delta += c.text.count - c.range.count
+		}
+		deltas.append(delta)
 	}
 
 	public var isEmpty: Bool { changes.allSatisfy { $0.range.isEmpty && $0.text.isEmpty } }
@@ -147,17 +156,18 @@ public struct ChangeSet: Sendable, Equatable {
 	/// Where `offset` ends up after the edit. At an insertion point or inside a
 	/// replaced range, `.before` keeps it before the new text and `.after` puts it after.
 	public func map(_ offset: Int, bias: Bias) -> Int {
-		var delta = 0
-		for c in changes {
-			if offset < c.range.lowerBound { break }
-			if offset > c.range.upperBound || (offset == c.range.upperBound && !c.range.isEmpty) {
-				delta += c.text.count - c.range.count
-				continue
-			}
-			// lowerBound <= offset <= upperBound, offset not past a deletion
-			if offset == c.range.lowerBound && !c.range.isEmpty { return offset + delta }
-			return c.range.lowerBound + delta + (bias == .after ? c.text.count : 0)
+		// First change the offset is not past (upper bounds never decrease).
+		var lo = 0, hi = changes.count
+		while lo < hi {
+			let mid = (lo + hi) / 2
+			let r = changes[mid].range
+			if offset > r.upperBound || (offset == r.upperBound && !r.isEmpty) { lo = mid + 1 } else { hi = mid }
 		}
-		return offset + delta
+		let delta = deltas[lo]
+		guard lo < changes.count else { return offset + delta }
+		let c = changes[lo]
+		if offset < c.range.lowerBound { return offset + delta }
+		if offset == c.range.lowerBound && !c.range.isEmpty { return offset + delta }
+		return c.range.lowerBound + delta + (bias == .after ? c.text.count : 0)
 	}
 }

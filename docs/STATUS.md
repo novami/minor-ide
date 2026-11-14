@@ -11,8 +11,9 @@ Hotová je **fáze 0** a části fáze 1:
 | Oblast | Stav | Kde |
 |---|---|---|
 | Build bez nástrojů třetích stran (SPM + `tools/bundle.sh`, Makefile) | hotovo | `Package.swift`, `Makefile` |
-| Rope (copy-on-write, úpravy na místě, UTF-8/UTF-16/řádky) | hotovo, chybí kotvy | `Sources/TextEngine/Rope.swift` |
+| Rope (copy-on-write, úpravy na místě, UTF-8/UTF-16/řádky) | hotovo | `Sources/TextEngine/Rope.swift` |
 | Multi-selekce (`SelectionSet`, slučování překryvů) a `ChangeSet` (víc změn najednou, mapování pozic) | hotovo | `Sources/TextEngine/Selection.swift` |
+| Kotvy (`AnchorSet`: pozice s biasem, posun přes `ChangeSet` včetně undo/redo; `ChangeSet.map` binárním hledáním) | hotovo, `EditorView.anchors` | `Sources/TextEngine/Anchor.swift` |
 | Undo/redo (`EditHistory`: kroky z transakcí, inverze `ChangeSet`, obnova selekcí, slučování psaní/mazání: pauza 500 ms, nové slovo, nový řádek, posun kurzoru, uložení) | hotovo | `Sources/TextEngine/History.swift` |
 | Editor nad Core Text (ASCII tabulka glyfů, dávkové kreslení, okno cache řádků, zarážky tabulátorů) | víc kurzorů, Zpět/Znovu, Vyjmout/Kopírovat (víc výběrů spojí `\n`)/Vybrat vše s validací menu; kreslení výběru, Shift+šipky/Home/End/PgUp/PgDn, klik, tažení, Shift+klik, ⌥+klik, Esc | `Sources/EditorKit/` |
 | Formát souborů (výchozí podle PSR-12/gofmt/Nette, `.editorconfig`, settings.json, konce řádků, kódování, ukládání se zachováním práv a odkazů) | jádro hotové | `Sources/MinorCore/`, `docs/format-settings.md` |
@@ -31,10 +32,12 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 **Fáze 1a: dokončit TextEngine** (`docs/PLAN.md`, fáze 1):
 1. ~~Multi-selekce~~ hotovo 2026-11-15.
 2. ~~Transakce a undo/redo~~ hotovo 2026-11-15.
-3. Kotvy (pozice, které přežijí editace).
-4. Property-based testy selekcí a undo.
+3. ~~Kotvy~~ hotovo 2026-11-15.
+4. Property-based testy selekcí a undo (náhodné editace vs. referenční `String`) a ověření „Hotovo když“ fáze 1a (1M editací nad 10 MB < 2 s).
 
-Pro krok 3: kotvy mapovat přes `ChangeSet.map(_:bias:)` (stejně jako `SelectionSet.mapped`); editace i undo/redo v `EditorView` jdou přes `apply(_:selectionsAfter:)`, tam je jedno místo pro posun kotev. Krok 4 už má základ v `HistoryTests.randomEditsUndoAndRedo` a `SelectionTests`.
+Krok 4 už má základ v `HistoryTests.randomEditsUndoAndRedo`, `SelectionTests.randomChangeSetsMatchReference` a `AnchorTests.mapMatchesLinearReference`.
+
+Známé mezery po kroku 3: kotva v smazaném textu se sbalí na místo smazání a Zpět ji nevrátí (breakpoint na smazaném řádku po Zpět zůstane o řádek výš/níž); kotvy jsou jen body, rozsah (diagnostika) = dvě kotvy; `anchors(in:)` prochází všechny kotvy (O(n)), pro tisíce kotev v gutteru případně seřazené pole.
 
 Známé mezery po kroku 2: Zpět až na uložený stav nesmaže příznak „upraveno“; historie nemá limit velikosti; Kopírovat bez výběru nic nedělá (kopie řádku až v 1c).
 
