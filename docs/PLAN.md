@@ -92,6 +92,21 @@ server/
 | phpls: RAM na velkém projektu | < 600 MB |
 | RAM aplikace (bez serverů) | < 300 MB |
 
+### Standardy macOS (Apple Human Interface Guidelines)
+
+MinorIDE se musí chovat jako nativní Mac aplikace, aby se Mac uživatel hned zorientoval. Závazný zdroj: [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/). Konkrétně:
+
+| Oblast | Pravidlo |
+|---|---|
+| **Lišta menu** | Pořadí: *MinorIDE, Soubor, Úpravy, Formát, Zobrazení, Navigace, Kód, Okno, Nápověda*. Aplikační menu: O aplikaci, Nastavení… (⌘,), Služby, Skrýt (⌘H), Skrýt ostatní (⌥⌘H), Zobrazit vše, Ukončit (⌘Q). Úpravy vždy obsahují Zpět/Znovu, Vyjmout/Kopírovat/Vložit, Vybrat vše a Najít. Okno: Minimalizovat (⌘M), Zvětšit, Převést vše do popředí. Nápověda má systémové vyhledávání v menu. Každá akce IDE je dostupná z menu (i když má zkratku). |
+| **Zkratky** | Systémové zkratky se nikdy nepřepisují (⌘Q, ⌘H, ⌘M, ⌘Tab, ⌘mezerník, ⌘\`, ⌃⌘F). Standardní textové zkratky platí vždy (⌘Z, ⇧⌘Z, ⌘X/C/V, ⌘A, ⌘F, ⌘G, ⌘S, ⌘W, ⌘N, ⌘O, ⌘,). Keymapa PhpStorm (macOS) jen tam, kde nekoliduje. |
+| **Okna** | Projektové okno: postranní panel vlevo (strom souborů, jako Finder/Xcode), editor uprostřed, inspektor/panely vpravo a dole skrývatelné, sjednocený toolbar. Plná obrazovka, obnova oken po restartu, Nedávné (`NSDocumentController`), otevření přetažením na Dock nebo okno a z Finderu („Otevřít v aplikaci“). |
+| **Dialogy** | Dotazy k oknu jako *sheet* (ne modální dialog celé aplikace). Uložit změny: *Uložit / Zrušit / Neukládat* se standardními texty. Standardní `NSOpenPanel`/`NSSavePanel`. |
+| **Nastavení** | Samostatné okno *Nastavení* (⌘,) s kartami v toolbaru, změny platí okamžitě, bez OK/Storno. Stejná data jako `settings.json`. |
+| **Vzhled** | Systémové barvy a akcentní barva, světlý i tmavý režim, systémové písmo v UI, ikony SF Symbols, kontextová menu na pravé tlačítko, gesto přejetí dvěma prsty = zpět/vpřed v navigaci. |
+| **Přístupnost** | VoiceOver, Zvýšit kontrast, Omezit pohyb, Omezit průhlednost, plné ovládání klávesnicí. |
+| **Jazyk** | Vývojový jazyk angličtina, překlad čeština; aplikace se řídí jazykem systému. Texty přes `NSLocalizedString`, nikdy napevno v kódu. |
+
 ---
 
 ## 2. Fáze a úkoly
@@ -161,7 +176,7 @@ Odhady jsou hrubé (jeden vývojář s AI). **Celé MVP: zhruba 11–15 měsíc�
   - výchozí hodnoty podle standardů (PSR-12, gofmt, Nette, Prettier…), PHP preset `psr12` / `nette`;
   - priority: jazyk < uživatel < projekt < `.editorconfig`; existující soubor si drží konce řádků, odsazení se z něj rozpozná;
   - buffer má vždy jen `\n`, konce řádků, kódování, koncový řádek a ořez mezer se aplikují při uložení;
-  - **zbývá do 1e**: stavový řádek s přepínači (konce řádků, odsazení, kódování) místo menu, okno nastavení v SwiftUI nad stejným `settings.json`, varování před uložením znaků, které kódování neumí, příkaz „Převést odsazení“ (1c), sledování `.editorconfig` a `settings.json` (přenačtení bez restartu).
+  - **zbývá do 1e** (vše podle sekce Standardy macOS): `NSDocumentController` (Nedávné, obnova oken), projektové okno se postranním panelem, okno Nastavení, stavový řádek s přepínači (konce řádků, odsazení, kódování) místo menu, okno nastavení v SwiftUI nad stejným `settings.json`, varování před uložením znaků, které kódování neumí, příkaz „Převést odsazení“ (1c), sledování `.editorconfig` a `settings.json` (přenačtení bez restartu).
 - **Ukládání jako PhpStorm**: auto-save při ztrátě fokusu a přepnutí tabu (zapínatelné), **Local History** (snímek při uložení, 14 dní, náhled a obnovení), obnova sezení a obnova po pádu.
 - Velké a minifikované soubory (> 5 MB nebo řádek > 10 000 znaků): zjednodušený režim bez zvýraznění a analýzy.
 

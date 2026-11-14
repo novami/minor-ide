@@ -3,6 +3,7 @@ import EditorKit
 import MinorCore
 
 // Usage: MinorIDE [file]        opens a file (phase-0 spike window)
+//        MinorIDE --dump-menu   prints the menu bar (add -AppleLanguages "(cs)" to check Czech)
 //        MinorIDE --bench       runs the editor spike benchmark and prints results
 //        MinorIDE --snapshot <png> [file]   renders the editor to a PNG (visual check)
 //        MINORIDE_FONT_SIZE=40 enlarges the font, useful with --snapshot
@@ -16,13 +17,26 @@ app.run()
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	private var documents: [DocumentWindow] = []
+	/// Benchmark/snapshot runs ignore files AppKit passes from the command line. Set at init:
+	/// AppKit delivers files to open before applicationDidFinishLaunching.
+	private let utilityMode = ["--bench", "--snapshot", "--dump-menu"].contains(CommandLine.arguments.dropFirst().first ?? "")
 
 	/// Editor of the most recently opened window (benchmark and snapshot use it).
 	var editor: EditorView! { documents.last?.editor }
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
-		buildMenu()
+		NSApp.mainMenu = MainMenu.build(target: self)
 		let args = CommandLine.arguments.dropFirst()
+		if utilityMode { setvbuf(stdout, nil, _IOLBF, 0) } // results survive even if the run is killed
+		if args.first == "--dump-menu" { // prints the menu bar (checks structure and localization)
+			for item in NSApp.mainMenu?.items ?? [] {
+				let sub = item.submenu?.items.map { $0.isSeparatorItem ? "—" : $0.title + ($0.keyEquivalent.isEmpty ? "" : " ⌘" + $0.keyEquivalent)
+					+ ($0.isAlternate ? " (alt)" : "") + ($0.isHidden ? " (hidden)" : "") } ?? []
+				print("\(item.submenu?.title ?? item.title): \(sub.joined(separator: " | "))")
+			}
+			NSApp.terminate(nil)
+			return
+		}
 		if args.first == "--bench" {
 			Bench.run(self)
 			return
@@ -40,8 +54,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		}
 		if let file = args.first {
 			open(URL(fileURLWithPath: file))
-		} else {
-			openWindow(text: "// MinorIDE\nfunc main() {\n\tprintln(\"Příliš žluťoučký kůň\")\n}\n", title: "Untitled")
+		} else if documents.isEmpty {
+			newDocument(nil)
 		}
 		NSApp.activate()
 	}
@@ -53,17 +67,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		add(DocumentWindow(text: text, url: nil, format: FormatSettings()))
 	}
 
+	/// Opens a file, or brings its window to front when it is already open.
 	func open(_ url: URL) {
+		if let existing = documents.first(where: { $0.url?.standardizedFileURL == url.standardizedFileURL }) {
+			existing.show()
+			return
+		}
 		do {
 			add(try DocumentWindow.open(url))
+			NSDocumentController.shared.noteNewRecentDocumentURL(url)
 		} catch {
 			NSAlert(error: error).runModal()
 		}
 	}
 
 	private func add(_ doc: DocumentWindow) {
+		let previous = documents.last?.window
 		documents.append(doc)
-		doc.show()
+		doc.show(after: previous)
 		NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: doc.window, queue: .main) { [weak self, weak doc] _ in
 			MainActor.assumeIsolated { self?.documents.removeAll { $0 === doc } }
 		}
@@ -83,6 +104,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	// MARK: Menu actions
 
+	@objc func newDocument(_ sender: Any?) {
+		openWindow(text: "", title: "")
+	}
+
 	@objc func openDocument(_ sender: Any?) {
 		let panel = NSOpenPanel()
 		panel.allowsMultipleSelection = true
@@ -90,7 +115,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		panel.urls.forEach(open)
 	}
 
+	@objc func openRecent(_ sender: NSMenuItem) {
+		if let url = sender.representedObject as? URL { open(url) }
+	}
+
 	@objc func saveDocument(_ sender: Any?) { current?.save() }
+
+	@objc func saveDocumentAs(_ sender: Any?) { current?.saveAs() }
 
 	@objc func setLineEnding(_ sender: NSMenuItem) {
 		if let eol = sender.representedObject as? String, let value = LineEnding(rawValue: eol) {
@@ -106,7 +137,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	@objc func setTabWidth(_ sender: NSMenuItem) { current?.setTabWidth(sender.tag) }
 
-	/// Opens the user settings file, creating a template on first use.
+	/// Opens the user settings file, creating a template on first use. A Settings window
+	/// over the same file replaces this in phase 1e.
 	@objc func openUserSettings(_ sender: Any?) {
 		let url = SettingsFile.userURL
 		if !FileManager.default.fileExists(atPath: url.path) {
@@ -117,10 +149,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	}
 
 	func validateMenuItem(_ item: NSMenuItem) -> Bool {
-		guard let doc = current else {
-			return item.action == #selector(openDocument(_:)) || item.action == #selector(openUserSettings(_:))
-				|| item.action == #selector(NSApplication.terminate(_:))
-		}
+		let needsDocument: Set<Selector?> = [#selector(saveDocument(_:)), #selector(saveDocumentAs(_:)),
+		                                    #selector(setLineEnding(_:)), #selector(setIndent(_:)), #selector(setTabWidth(_:))]
+		guard let doc = current else { return !needsDocument.contains(item.action) }
 		switch item.action {
 		case #selector(setLineEnding(_:)):
 			item.state = (item.representedObject as? String) == doc.format.lineEnding.rawValue && !doc.mixedLineEndings ? .on : .off
@@ -134,42 +165,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		return true
 	}
 
-	private func buildMenu() {
-		let main = NSMenu()
-		func submenu(_ title: String, in parent: NSMenu, _ build: (NSMenu) -> Void) {
-			let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-			let menu = NSMenu(title: title)
-			build(menu)
-			item.submenu = menu
-			parent.addItem(item)
+	// MARK: Finder, Dock and quitting
+
+	/// Files dropped on the Dock icon or opened from Finder ("Open With").
+	func application(_ application: NSApplication, open urls: [URL]) {
+		guard !utilityMode else { return }
+		urls.forEach(open)
+	}
+
+	/// Asks about unsaved documents one by one, each as a sheet on its window.
+	func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+		let edited = documents.filter { $0.window.isDocumentEdited }
+		guard !edited.isEmpty, !utilityMode else { return .terminateNow } // benchmark windows are scratch
+		confirmNext(edited[...])
+		return .terminateLater
+	}
+
+	private func confirmNext(_ remaining: ArraySlice<DocumentWindow>) {
+		guard let doc = remaining.first else {
+			NSApp.reply(toApplicationShouldTerminate: true)
+			return
 		}
-		submenu("MinorIDE", in: main) { m in
-			m.addItem(withTitle: "Nastavení…", action: #selector(openUserSettings(_:)), keyEquivalent: ",")
-			m.addItem(.separator())
-			m.addItem(withTitle: "Ukončit MinorIDE", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-		}
-		submenu("Soubor", in: main) { m in
-			m.addItem(withTitle: "Otevřít…", action: #selector(openDocument(_:)), keyEquivalent: "o")
-			m.addItem(withTitle: "Uložit", action: #selector(saveDocument(_:)), keyEquivalent: "s")
-			m.addItem(withTitle: "Zavřít", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-		}
-		submenu("Formát", in: main) { m in
-			submenu("Konce řádků", in: m) { eol in
-				for (title, value) in [("LF (Unix, macOS)", "lf"), ("CRLF (Windows)", "crlf"), ("CR (starý Mac)", "cr")] {
-					eol.addItem(withTitle: title, action: #selector(setLineEnding(_:)), keyEquivalent: "").representedObject = value
-				}
-			}
-			submenu("Odsazení", in: m) { indent in
-				for (title, tag) in [("Tabulátor", 0), ("2 mezery", 2), ("4 mezery", 4)] {
-					indent.addItem(withTitle: title, action: #selector(setIndent(_:)), keyEquivalent: "").tag = tag
-				}
-			}
-			submenu("Šířka tabulátoru", in: m) { width in
-				for w in [2, 4, 8] {
-					width.addItem(withTitle: "\(w)", action: #selector(setTabWidth(_:)), keyEquivalent: "").tag = w
-				}
+		doc.show()
+		doc.confirmClose { [weak self] ok in
+			if ok {
+				self?.confirmNext(remaining.dropFirst())
+			} else {
+				NSApp.reply(toApplicationShouldTerminate: false)
 			}
 		}
-		NSApp.mainMenu = main
 	}
 }

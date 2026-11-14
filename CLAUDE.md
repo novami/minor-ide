@@ -15,6 +15,7 @@ Nativní IDE pro Go a PHP na macOS (Apple Silicon). Plán: `docs/PLAN.md`, závi
 - Na hlavním vlákně jen UI. Změna v editační cestě musí projít `make bench` v rozpočtu z plánu.
 - `TextEngine`, `Highlight`, `LSPKit`, `MinorCore` nesmí importovat AppKit.
 - phpls: každá nová schopnost začíná markerovým testem; každá opravená chyba parseru dostane fixture.
+- **UI podle Apple HIG** (sekce „Standardy macOS“ v `docs/PLAN.md`): standardní lišta menu a zkratky, sheety místo modálních dialogů, okno Nastavení (⌘,), systémové barvy a tmavý režim. Každý text v UI přes `L("…")` (anglický klíč) s českým překladem v `Resources/cs.lproj/Localizable.strings`.
 - Hesla a tajemství jen v Keychainu, nikdy do logů.
 - Když se rozhodnutí z plánu ukáže jako špatné, zastav a popiš varianty. Technologii neměň sám.
 - Swift: taby, Swift 6 strict concurrency. Go: `gofmt`, jen stdlib + povolené závislosti, cgo jen pro SQLite.

@@ -17,6 +17,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Helpers" "$APP/Contents/Resources"
 cp .build/release/MinorIDE "$APP/Contents/MacOS/MinorIDE"
 cp server/bin/minoride-server "$APP/Contents/Helpers/minoride-server"
+cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -26,6 +27,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
 	<key>CFBundleExecutable</key><string>MinorIDE</string>
 	<key>CFBundleIdentifier</key><string>cz.novami.minoride</string>
 	<key>CFBundleName</key><string>MinorIDE</string>
+	<key>CFBundleDevelopmentRegion</key><string>en</string>
+	<key>CFBundleLocalizations</key><array><string>en</string><string>cs</string></array>
 	<key>CFBundlePackageType</key><string>APPL</string>
 	<key>CFBundleShortVersionString</key><string>${VERSION}</string>
 	<key>CFBundleVersion</key><string>${VERSION}</string>

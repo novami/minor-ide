@@ -72,8 +72,19 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		return nil
 	}
 
-	func show() {
-		window.center()
+	private var placed = false
+
+	/// Brings the window to front; the first time it is centred, or cascaded from `after`
+	/// like new document windows in standard Mac apps.
+	func show(after previous: NSWindow? = nil) {
+		if !placed {
+			if let previous {
+				window.setFrameTopLeftPoint(previous.cascadeTopLeft(from: NSPoint(x: previous.frame.minX, y: previous.frame.maxY)))
+			} else {
+				window.center()
+			}
+			placed = true
+		}
 		window.makeKeyAndOrderFront(nil)
 		window.makeFirstResponder(editor)
 	}
@@ -105,21 +116,31 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 
 	@discardableResult
 	func save() -> Bool {
-		if url == nil {
-			let panel = NSSavePanel()
-			guard panel.runModal() == .OK, let chosen = panel.url else { return false }
-			url = chosen
-		}
-		guard let url else { return false }
+		guard let url else { return saveAs() }
+		return write(to: url)
+	}
+
+	@discardableResult
+	func saveAs() -> Bool {
+		let panel = NSSavePanel()
+		panel.nameFieldStringValue = url?.lastPathComponent ?? L("Untitled")
+		if let dir = url?.deletingLastPathComponent() { panel.directoryURL = dir }
+		guard panel.runModal() == .OK, let chosen = panel.url else { return false }
+		url = chosen
+		return write(to: chosen)
+	}
+
+	private func write(to url: URL) -> Bool {
 		do {
 			try TextFile.save(editor.rope.string, settings: format, originalLines: originalLines).write(to: url, options: .atomic)
 			// Saved content becomes the new baseline for "trim modified lines".
 			originalLines = Set(editor.rope.string.split(separator: "\n", omittingEmptySubsequences: false))
 			window.isDocumentEdited = false
+			NSDocumentController.shared.noteNewRecentDocumentURL(url)
 			updateTitle()
 			return true
 		} catch {
-			NSAlert(error: error).runModal()
+			NSAlert(error: error).beginSheetModal(for: window)
 			return false
 		}
 	}
@@ -133,24 +154,46 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 
 	/// Title shows what will be written: e.g. "User.php — LF · 4 spaces · UTF-8".
 	func updateTitle() {
-		let name = url?.lastPathComponent ?? "Untitled"
-		let indent = format.indentStyle == .tab ? "Tab (\(format.tabWidth))" : "\(format.indentSize) spaces"
-		let eol = mixedLineEndings ? "Mixed→\(format.lineEnding.label)" : format.lineEnding.label
+		let name = url?.lastPathComponent ?? L("Untitled")
+		let indent = format.indentStyle == .tab ? L("Tabs (%d)", format.tabWidth) : L("%d spaces", format.indentSize)
+		let eol = mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
 		window.title = "\(name) — \(eol) · \(indent) · \(format.charset.rawValue.uppercased())"
 		window.representedURL = url
 	}
 
+	// MARK: Closing
+
+	/// HIG save dialog as a sheet: Save (default) / Cancel / Don't Save. Completion gets true
+	/// when the window may close.
+	func confirmClose(_ completion: @escaping (Bool) -> Void) {
+		guard window.isDocumentEdited else { return completion(true) }
+		let alert = NSAlert()
+		alert.messageText = L("Do you want to save the changes made to the document “%@”?", url?.lastPathComponent ?? L("Untitled"))
+		alert.informativeText = L("Your changes will be lost if you don’t save them.")
+		alert.addButton(withTitle: L("Save"))
+		alert.addButton(withTitle: L("Cancel"))
+		let dontSave = alert.addButton(withTitle: L("Don’t Save"))
+		dontSave.keyEquivalent = "d"
+		dontSave.keyEquivalentModifierMask = .command
+		alert.beginSheetModal(for: window) { [weak self] response in
+			MainActor.assumeIsolated {
+				guard let self else { return completion(false) }
+				switch response {
+				case .alertFirstButtonReturn: completion(self.save())
+				case .alertThirdButtonReturn:
+					self.window.isDocumentEdited = false
+					completion(true)
+				default: completion(false)
+				}
+			}
+		}
+	}
+
 	func windowShouldClose(_ sender: NSWindow) -> Bool {
 		guard window.isDocumentEdited else { return true }
-		let alert = NSAlert()
-		alert.messageText = "Uložit změny v \(url?.lastPathComponent ?? "Untitled")?"
-		alert.addButton(withTitle: "Uložit")
-		alert.addButton(withTitle: "Zrušit")
-		alert.addButton(withTitle: "Neukládat")
-		switch alert.runModal() {
-		case .alertFirstButtonReturn: return save()
-		case .alertThirdButtonReturn: return true
-		default: return false
+		confirmClose { [weak self] ok in
+			if ok { self?.window.close() }
 		}
+		return false
 	}
 }

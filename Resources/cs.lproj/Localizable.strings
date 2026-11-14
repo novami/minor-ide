@@ -1,0 +1,59 @@
+/* Czech UI strings for MinorIDE. Keys are the English texts used in code via L("…"). */
+
+"About MinorIDE" = "O aplikaci MinorIDE";
+"Settings…" = "Nastavení…";
+"Services" = "Služby";
+"Hide MinorIDE" = "Skrýt MinorIDE";
+"Hide Others" = "Skrýt ostatní";
+"Show All" = "Zobrazit vše";
+"Quit MinorIDE" = "Ukončit MinorIDE";
+
+"File" = "Soubor";
+"New" = "Nový";
+"Open…" = "Otevřít…";
+"Open Recent" = "Otevřít nedávné";
+"Clear Menu" = "Vymazat nabídku";
+"Close" = "Zavřít";
+"Save" = "Uložit";
+"Save As…" = "Uložit jako…";
+
+"Edit" = "Úpravy";
+"Undo" = "Zpět";
+"Redo" = "Znovu";
+"Cut" = "Vyjmout";
+"Copy" = "Kopírovat";
+"Paste" = "Vložit";
+"Select All" = "Vybrat vše";
+"Find" = "Najít";
+"Find…" = "Najít…";
+"Find Next" = "Najít další";
+"Find Previous" = "Najít předchozí";
+
+"Format" = "Formát";
+"Line Endings" = "Konce řádků";
+"LF (macOS, Unix)" = "LF (macOS, Unix)";
+"CRLF (Windows)" = "CRLF (Windows)";
+"CR (Classic Mac)" = "CR (starý Mac OS)";
+"Indentation" = "Odsazení";
+"Tabs" = "Tabulátory";
+"2 Spaces" = "2 mezery";
+"4 Spaces" = "4 mezery";
+"Tab Width" = "Šířka tabulátoru";
+
+"View" = "Zobrazení";
+"Enter Full Screen" = "Zapnout režim celé obrazovky";
+"Window" = "Okno";
+"Minimize" = "Minimalizovat";
+"Zoom" = "Zvětšit";
+"Bring All to Front" = "Převést vše do popředí";
+"Help" = "Nápověda";
+"MinorIDE Help" = "Nápověda MinorIDE";
+
+"Untitled" = "Bez názvu";
+"Tabs (%d)" = "tabulátory: %d";
+"%d spaces" = "mezery: %d";
+"Mixed → %@" = "smíšené → %@";
+"Do you want to save the changes made to the document “%@”?" = "Chcete uložit změny provedené v dokumentu „%@“?";
+"Your changes will be lost if you don’t save them." = "Pokud změny neuložíte, budou ztraceny.";
+"Don’t Save" = "Neukládat";
+"Cancel" = "Zrušit";

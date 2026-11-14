@@ -328,6 +328,13 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		moveCaret(to: offset(atX: x, line: target), keepColumn: true)
 	}
 
+	@objc public func paste(_ sender: Any?) {
+		guard let text = NSPasteboard.general.string(forType: .string) else { return }
+		// The buffer only holds "\n"; pasted Windows text must not bring "\r" in.
+		let normalized = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
+		replace(caret..<caret, with: normalized)
+	}
+
 	// MARK: NSTextInputClient
 
 	public func insertText(_ string: Any, replacementRange: NSRange) {
