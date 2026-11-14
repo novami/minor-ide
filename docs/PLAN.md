@@ -145,7 +145,7 @@ MinorIDE se musí chovat jako nativní Mac aplikace, aby se Mac uživatel hned z
 | **Nastavení** | Samostatné okno *Nastavení* (⌘,) s kartami v toolbaru, změny platí okamžitě, bez OK/Storno. Stejná data jako `settings.json`. |
 | **Vzhled** | Systémové barvy a akcentní barva, světlý i tmavý režim, systémové písmo v UI, ikony SF Symbols, kontextová menu na pravé tlačítko, gesto přejetí dvěma prsty = zpět/vpřed v navigaci. |
 | **Přístupnost** | VoiceOver, Zvýšit kontrast, Omezit pohyb, Omezit průhlednost, plné ovládání klávesnicí. |
-| **Jazyk** | Výchozí angličtina (US), **čeština vždy kompletní** (kontroluje `make test` a CI), další jazyky jedním příkazem `make l10n-new LANG=xx`. Aplikace se řídí jazykem systému. Texty jen přes `L("…")`, nikdy napevno. Postup: [preklady.md](preklady.md). Později: `.stringsdict` pro množná čísla (1 soubor / 2 soubory / 5 souborů). |
+| **Jazyk** | Výchozí angličtina (US), **čeština vždy kompletní** (kontroluje `make test` a CI), další jazyky jedním příkazem `make l10n-new LANG=xx`. Aplikace se řídí jazykem systému. Texty jen přes `L("…")`, nikdy napevno. Množná čísla se skloňují podle jazyka (`LP`, `.stringsdict`: 1 mezera / 2 mezery / 5 mezer). Postup: [preklady.md](preklady.md). |
 
 ### Uživatelský zážitek (UX)
 

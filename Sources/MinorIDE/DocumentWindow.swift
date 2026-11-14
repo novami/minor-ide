@@ -155,7 +155,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 	/// Title shows what will be written: e.g. "User.php — LF · 4 spaces · UTF-8".
 	func updateTitle() {
 		let name = url?.lastPathComponent ?? L("Untitled")
-		let indent = format.indentStyle == .tab ? L("Tabs (%d)", format.tabWidth) : L("%d spaces", format.indentSize)
+		let indent = format.indentStyle == .tab ? L("Tabs (%d)", format.tabWidth) : LP("%d spaces", one: "%d space", format.indentSize)
 		let eol = mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
 		window.title = "\(name) — \(eol) · \(indent) · \(format.charset.rawValue.uppercased())"
 		window.representedURL = url

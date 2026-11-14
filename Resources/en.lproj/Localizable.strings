@@ -4,7 +4,6 @@
 /* MinorIDE/DocumentWindow.swift */
 "Untitled" = "Untitled";
 "Tabs (%d)" = "Tabs (%d)";
-"%d spaces" = "%d spaces";
 "Mixed → %@" = "Mixed → %@";
 "Do you want to save the changes made to the document “%@”?" = "Do you want to save the changes made to the document “%@”?";
 "Your changes will be lost if you don’t save them." = "Your changes will be lost if you don’t save them.";
@@ -15,6 +14,10 @@
 /* MinorIDE/DocumentWindow.swift */
 "Cancel" = "Cancel";
 "Don’t Save" = "Don’t Save";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
+"%d spaces|one" = "%d space";
+"%d spaces|other" = "%d spaces";
 
 /* MinorIDE/MainMenu.swift */
 "About MinorIDE" = "About MinorIDE";

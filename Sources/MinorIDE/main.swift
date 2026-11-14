@@ -4,6 +4,7 @@ import MinorCore
 
 // Usage: MinorIDE [file]        opens a file (phase-0 spike window)
 //        MinorIDE --dump-menu   prints the menu bar (add -AppleLanguages "(cs)" to check Czech)
+//        MinorIDE --l10n-sample prints plural forms for several counts (same -AppleLanguages trick)
 //        MinorIDE --bench       runs the editor spike benchmark and prints results
 //        MinorIDE --snapshot <png> [file]   renders the editor to a PNG (visual check)
 //        MINORIDE_FONT_SIZE=40 enlarges the font, useful with --snapshot
@@ -19,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	private var documents: [DocumentWindow] = []
 	/// Benchmark/snapshot runs ignore files AppKit passes from the command line. Set at init:
 	/// AppKit delivers files to open before applicationDidFinishLaunching.
-	private let utilityMode = ["--bench", "--snapshot", "--dump-menu"].contains(CommandLine.arguments.dropFirst().first ?? "")
+	private let utilityMode = ["--bench", "--snapshot", "--dump-menu", "--l10n-sample"].contains(CommandLine.arguments.dropFirst().first ?? "")
 
 	/// Editor of the most recently opened window (benchmark and snapshot use it).
 	var editor: EditorView! { documents.last?.editor }
@@ -28,6 +29,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		NSApp.mainMenu = MainMenu.build(target: self)
 		let args = CommandLine.arguments.dropFirst()
 		if utilityMode { setvbuf(stdout, nil, _IOLBF, 0) } // results survive even if the run is killed
+		if args.first == "--l10n-sample" { // prints plural forms (checks .stringsdict in the bundle)
+			print([0, 1, 2, 3, 4, 5, 11, 21, 22, 25, 101].map { LP("%d spaces", one: "%d space", $0) }.joined(separator: ", "))
+			NSApp.terminate(nil)
+			return
+		}
 		if args.first == "--dump-menu" { // prints the menu bar (checks structure and localization)
 			for item in NSApp.mainMenu?.items ?? [] {
 				let sub = item.submenu?.items.map { $0.isSeparatorItem ? "—" : $0.title + ($0.keyEquivalent.isEmpty ? "" : " ⌘" + $0.keyEquivalent)

@@ -20,12 +20,19 @@ type Entry struct {
 	Key, Value string
 	Todo       bool     // value not translated yet
 	Files      []string // where the key is used (only for the English file)
+	// Plural keys come from LP("other", one: "one", n): Key/Value is the English plural,
+	// One the English singular. In .strings files they appear as "key|category" entries.
+	Plural bool
+	One    string
 }
 
 // TodoMarker precedes untranslated entries in a .strings file.
 const TodoMarker = "/* TODO translate */"
 
-var callRe = regexp.MustCompile(`\bL\(\s*"((?:[^"\\]|\\.)*)"`)
+var (
+	callRe   = regexp.MustCompile(`\bL\(\s*"((?:[^"\\]|\\.)*)"`)
+	pluralRe = regexp.MustCompile(`\bLP\(\s*"((?:[^"\\]|\\.)*)"\s*,\s*one:\s*"((?:[^"\\]|\\.)*)"`)
+)
 
 // Extract finds L("…") keys in .swift files under dir, in first-use order grouped by file.
 func Extract(dir string) ([]Entry, error) {
@@ -40,16 +47,35 @@ func Extract(dir string) ([]Entry, error) {
 			return err
 		}
 		rel, _ := filepath.Rel(dir, path)
-		for _, m := range callRe.FindAllStringSubmatch(withoutLineComments(string(src)), -1) {
-			key := unescapeSwift(m[1])
-			if e, ok := byKey[key]; ok {
-				if !contains(e.Files, rel) {
-					e.Files = append(e.Files, rel)
-				}
-				continue
+		code := withoutLineComments(string(src))
+		add := func(e Entry) error {
+			if strings.Contains(e.Key, "|") {
+				return fmt.Errorf("%s: %q: \"|\" is reserved for plural forms", rel, e.Key)
 			}
-			byKey[key] = &Entry{Key: key, Value: key, Files: []string{rel}}
-			order = append(order, key)
+			if old, ok := byKey[e.Key]; ok {
+				if old.Plural != e.Plural {
+					return fmt.Errorf("%s: %q is used both with L and LP", rel, e.Key)
+				}
+				if !contains(old.Files, rel) {
+					old.Files = append(old.Files, rel)
+				}
+				return nil
+			}
+			byKey[e.Key] = &e
+			order = append(order, e.Key)
+			return nil
+		}
+		for _, m := range callRe.FindAllStringSubmatch(code, -1) {
+			key := unescapeSwift(m[1])
+			if err := add(Entry{Key: key, Value: key, Files: []string{rel}}); err != nil {
+				return err
+			}
+		}
+		for _, m := range pluralRe.FindAllStringSubmatch(code, -1) {
+			key := unescapeSwift(m[1])
+			if err := add(Entry{Key: key, Value: key, One: unescapeSwift(m[2]), Plural: true, Files: []string{rel}}); err != nil {
+				return err
+			}
 		}
 		return nil
 	})

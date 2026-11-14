@@ -61,7 +61,11 @@ func Sync(sources, resources string, create string) ([]Report, error) {
 	if err := os.MkdirAll(filepath.Join(resources, "en.lproj"), 0o755); err != nil {
 		return nil, err
 	}
-	if err := os.WriteFile(stringsPath(resources, "en"), []byte(Format(englishHeader, english)), 0o644); err != nil {
+	enEntries := expand(english, "en")
+	if err := os.WriteFile(stringsPath(resources, "en"), []byte(Format(englishHeader, enEntries)), 0o644); err != nil {
+		return nil, err
+	}
+	if err := writeStringsdict(resources, "en", enEntries); err != nil {
 		return nil, err
 	}
 	if create != "" {
@@ -85,28 +89,11 @@ func Sync(sources, resources string, create string) ([]Report, error) {
 				existing[e.Key] = e
 			}
 		}
-		r := Report{Lang: lang}
-		out := make([]Entry, 0, len(english))
-		for _, en := range english {
-			e, ok := existing[en.Key]
-			if !ok {
-				e = Entry{Key: en.Key, Value: en.Value, Todo: true}
-				r.Added++
-			}
-			delete(existing, en.Key)
-			e.Files = en.Files
-			if e.Todo {
-				r.Todo++
-			} else if fmt.Sprint(Placeholders(e.Value)) != fmt.Sprint(Placeholders(en.Key)) {
-				r.PlaceholderMismatch = append(r.PlaceholderMismatch, en.Key)
-			}
-			out = append(out, e)
-		}
-		for k := range existing {
-			r.Obsolete = append(r.Obsolete, k)
-		}
-		sort.Strings(r.Obsolete)
+		out, r := build(english, lang, existing)
 		if err := os.WriteFile(stringsPath(resources, lang), []byte(Format(translationHeader(lang), out)), 0o644); err != nil {
+			return nil, err
+		}
+		if err := writeStringsdict(resources, lang, out); err != nil {
 			return nil, err
 		}
 		reports = append(reports, r)
@@ -114,17 +101,89 @@ func Sync(sources, resources string, create string) ([]Report, error) {
 	return reports, nil
 }
 
+// build merges a language's existing translations with the source keys. Missing keys and
+// plural categories get the English text marked TODO; optional plural categories that the
+// translator added (e.g. Czech "many") are kept; keys no longer in the sources are reported.
+func build(english []Entry, lang string, existing map[string]Entry) ([]Entry, Report) {
+	r := Report{Lang: lang}
+	var out []Entry
+	used := map[string]bool{}
+	take := func(def Entry, reference string, plural bool) {
+		e, ok := existing[def.Key]
+		if !ok {
+			e = Entry{Key: def.Key, Value: def.Value, Todo: true}
+			r.Added++
+		}
+		used[def.Key] = true
+		e.Files = def.Files
+		switch {
+		case e.Todo:
+			r.Todo++
+		case plural && !subset(Placeholders(e.Value), Placeholders(reference)):
+			r.PlaceholderMismatch = append(r.PlaceholderMismatch, def.Key)
+		case !plural && fmt.Sprint(Placeholders(e.Value)) != fmt.Sprint(Placeholders(reference)):
+			r.PlaceholderMismatch = append(r.PlaceholderMismatch, def.Key)
+		}
+		out = append(out, e)
+	}
+	for _, src := range english {
+		if !src.Plural {
+			take(src, src.Key, false)
+			continue
+		}
+		required := RequiredPlurals(lang)
+		for _, c := range pluralCategories {
+			key := pluralKey(src.Key, c)
+			_, present := existing[key]
+			if !contains(required, c) && !present {
+				continue
+			}
+			def := Entry{Key: key, Value: src.Key, Files: src.Files}
+			if c == "one" {
+				def.Value = src.One
+			}
+			take(def, src.Key, true)
+		}
+	}
+	for k := range existing {
+		if !used[k] {
+			r.Obsolete = append(r.Obsolete, k)
+		}
+	}
+	sort.Strings(r.Obsolete)
+	return out, r
+}
+
+func stringsdictPath(resources, lang string) string {
+	return filepath.Join(resources, lang+".lproj", "Localizable.stringsdict")
+}
+
+func writeStringsdict(resources, lang string, entries []Entry) error {
+	content := Stringsdict(entries)
+	if content == "" {
+		if err := os.Remove(stringsdictPath(resources, lang)); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		return nil
+	}
+	return os.WriteFile(stringsdictPath(resources, lang), []byte(content), 0o644)
+}
+
 // Check verifies without writing: English is up to date with the sources, every language has
-// every key with matching placeholders, and required languages have no untranslated entries.
+// every key and plural form with matching placeholders, the generated .stringsdict files are
+// current, and required languages have no untranslated entries.
 func Check(sources, resources string, required []string) []string {
 	var problems []string
 	english, err := Extract(sources)
 	if err != nil {
 		return []string{err.Error()}
 	}
-	want := Format(englishHeader, english)
-	if got, _ := os.ReadFile(stringsPath(resources, "en")); string(got) != want {
+	enEntries := expand(english, "en")
+	if got, _ := os.ReadFile(stringsPath(resources, "en")); string(got) != Format(englishHeader, enEntries) {
 		problems = append(problems, `en: out of date with the sources, run "make l10n"`)
+	}
+	if got, _ := os.ReadFile(stringsdictPath(resources, "en")); string(got) != Stringsdict(enEntries) {
+		problems = append(problems, `en: Localizable.stringsdict out of date, run "make l10n"`)
 	}
 	langs, err := Languages(resources)
 	if err != nil {
@@ -146,21 +205,28 @@ func Check(sources, resources string, required []string) []string {
 			problems = append(problems, fmt.Sprintf("%s: %v", lang, err))
 			continue
 		}
-		have := map[string]Entry{}
+		existing := map[string]Entry{}
 		for _, e := range parsed {
-			have[e.Key] = e
+			existing[e.Key] = e
 		}
-		isRequired := contains(required, lang)
-		for _, en := range english {
-			e, ok := have[en.Key]
-			switch {
-			case !ok:
-				problems = append(problems, fmt.Sprintf(`%s: missing %q (run "make l10n")`, lang, en.Key))
-			case e.Todo && isRequired:
-				problems = append(problems, fmt.Sprintf("%s: not translated %q", lang, en.Key))
-			case !e.Todo && fmt.Sprint(Placeholders(e.Value)) != fmt.Sprint(Placeholders(en.Key)):
-				problems = append(problems, fmt.Sprintf("%s: placeholders differ in %q → %q", lang, en.Key, e.Value))
+		out, r := build(english, lang, existing)
+		if r.Added > 0 {
+			problems = append(problems, fmt.Sprintf(`%s: %d missing text(s) or plural form(s), run "make l10n"`, lang, r.Added))
+		}
+		if contains(required, lang) {
+			for _, e := range out {
+				if e.Todo {
+					if _, wasThere := existing[e.Key]; wasThere {
+						problems = append(problems, fmt.Sprintf("%s: not translated %q", lang, e.Key))
+					}
+				}
 			}
+		}
+		for _, k := range r.PlaceholderMismatch {
+			problems = append(problems, fmt.Sprintf("%s: placeholders differ in %q → %q", lang, k, existing[k].Value))
+		}
+		if got, _ := os.ReadFile(stringsdictPath(resources, lang)); string(got) != Stringsdict(out) {
+			problems = append(problems, fmt.Sprintf(`%s: Localizable.stringsdict out of date, run "make l10n"`, lang))
 		}
 	}
 	return problems

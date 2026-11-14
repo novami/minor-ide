@@ -80,3 +80,50 @@ func TestSyncAndCheck(t *testing.T) {
 		t.Fatalf("de:\n%s", de)
 	}
 }
+
+func TestPlurals(t *testing.T) {
+	root := t.TempDir()
+	sources := filepath.Join(root, "Sources")
+	resources := filepath.Join(root, "Resources")
+	os.MkdirAll(sources, 0o755)
+	os.MkdirAll(filepath.Join(resources, "cs.lproj"), 0o755)
+	os.WriteFile(filepath.Join(sources, "A.swift"), []byte(`LP("%d spaces", one: "%d space", n)`), 0o644)
+
+	if _, err := Sync(sources, resources, ""); err != nil {
+		t.Fatal(err)
+	}
+	en, _ := os.ReadFile(filepath.Join(resources, "en.lproj", "Localizable.strings"))
+	if !strings.Contains(string(en), `"%d spaces|one" = "%d space";`) || !strings.Contains(string(en), `"%d spaces|other" = "%d spaces";`) {
+		t.Fatalf("en:\n%s", en)
+	}
+	csPath := filepath.Join(resources, "cs.lproj", "Localizable.strings")
+	cs, _ := os.ReadFile(csPath)
+	for _, c := range []string{"one", "few", "other"} { // Czech needs few (2–4)
+		if !strings.Contains(string(cs), `"%d spaces|`+c+`"`) {
+			t.Fatalf("cs missing %s:\n%s", c, cs)
+		}
+	}
+	if p := Check(sources, resources, []string{"cs"}); len(p) != 3 {
+		t.Fatalf("expected 3 untranslated forms, got %q", p)
+	}
+
+	// translate, add the optional "many" form, and break one placeholder
+	os.WriteFile(csPath, []byte(`"%d spaces|one" = "jedna mezera";
+"%d spaces|few" = "%d mezery";
+"%d spaces|many" = "%d mezery";
+"%d spaces|other" = "%@ mezer";
+`), 0o644)
+	if _, err := Sync(sources, resources, ""); err != nil {
+		t.Fatal(err)
+	}
+	p := Check(sources, resources, []string{"cs"})
+	if len(p) != 1 || !strings.Contains(p[0], "placeholders differ") || !strings.Contains(p[0], "|other") {
+		t.Fatalf("%q", p) // "jedna mezera" without %d is fine, %@ instead of %d is not
+	}
+	dict, _ := os.ReadFile(filepath.Join(resources, "cs.lproj", "Localizable.stringsdict"))
+	for _, want := range []string{"<key>%d spaces</key>", "<key>few</key>", "<key>many</key>", "<string>jedna mezera</string>", "NSStringPluralRuleType"} {
+		if !strings.Contains(string(dict), want) {
+			t.Fatalf("stringsdict missing %q:\n%s", want, dict)
+		}
+	}
+}

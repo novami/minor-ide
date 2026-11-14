@@ -5,7 +5,6 @@
 /* MinorIDE/DocumentWindow.swift */
 "Untitled" = "Bez názvu";
 "Tabs (%d)" = "tabulátory: %d";
-"%d spaces" = "mezery: %d";
 "Mixed → %@" = "smíšené → %@";
 "Do you want to save the changes made to the document “%@”?" = "Chcete uložit změny provedené v dokumentu „%@“?";
 "Your changes will be lost if you don’t save them." = "Pokud změny neuložíte, budou ztraceny.";
@@ -16,6 +15,11 @@
 /* MinorIDE/DocumentWindow.swift */
 "Cancel" = "Zrušit";
 "Don’t Save" = "Neukládat";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
+"%d spaces|one" = "%d mezera";
+"%d spaces|few" = "%d mezery";
+"%d spaces|other" = "%d mezer";
 
 /* MinorIDE/MainMenu.swift */
 "About MinorIDE" = "O aplikaci MinorIDE";

@@ -9,7 +9,9 @@ Sources/**/*.swift   L("Save")                 ← jediný zdroj textů (anglick
         │ make l10n
         ▼
 Resources/en.lproj/Localizable.strings         ← generuje se, needitovat
+Resources/en.lproj/Localizable.stringsdict     ← generuje se (množná čísla), needitovat
 Resources/cs.lproj/Localizable.strings         ← překlad (povinný, kompletní)
+Resources/cs.lproj/Localizable.stringsdict     ← generuje se z tvarů v .strings, needitovat
 Resources/<jazyk>.lproj/Localizable.strings    ← další jazyky
 ```
 
@@ -24,6 +26,35 @@ Resources/<jazyk>.lproj/Localizable.strings    ← další jazyky
 - jazyk nemá některý klíč,
 - čeština obsahuje nepřeložený text (`TODO translate`),
 - překlad má jiné zástupné znaky než originál (`%d`, `%@`…; pořadí smí změnit přes `%1$@`, `%2$d`).
+
+## Množná čísla
+
+Texty s počtem se skloňují podle pravidel jazyka (Unicode CLDR, vyhodnocuje je macOS):
+
+| Jazyk | Povinné tvary | Příklad |
+|---|---|---|
+| angličtina | `one`, `other` | 1 space · 0, 2, 5 spaces |
+| čeština, slovenština | `one`, `few`, `other` | 1 mezera · 2–4 mezery · 0, 5–20, 21, 22, 101 mezer |
+| polština, ruština, ukrajinština | `one`, `few`, `many`, `other` | |
+| japonština, korejština, čínština | `other` | |
+| ostatní | `one`, `other` | |
+
+V kódu:
+```swift
+LP("%d spaces", one: "%d space", count)   // anglický plurál je klíč, singulár v `one:`
+```
+V překladu má každý tvar vlastní řádek s příponou `|tvar`:
+```
+"%d spaces|one" = "%d mezera";
+"%d spaces|few" = "%d mezery";
+"%d spaces|other" = "%d mezer";
+```
+`make l10n` doplní chybějící tvary podle jazyka (se `TODO translate`) a vygeneruje `Localizable.stringsdict`, který macOS používá. Volitelné tvary (např. české `many` pro desetinná čísla) lze přidat ručně a zůstanou zachované. Tvar smí počet vynechat („jedna mezera“), ale nesmí přidat ani změnit jiné zástupné znaky. Počet je vždy první a jediný argument `LP`.
+
+Ověření v sestavené aplikaci:
+```bash
+build/MinorIDE.app/Contents/MacOS/MinorIDE --l10n-sample -AppleLanguages "(cs)"
+```
 
 ## Postupy
 
@@ -49,6 +80,6 @@ Stačí obyčejný textový editor (soubor je UTF-8). Kontrola: `make l10n-check
 
 ## Pravidla pro texty
 - **Celé věty, žádné skládání** (`L("Saved") + " " + name` je špatně: slovosled se v jazycích liší). Použít formát: `L("Saved “%@”", name)`.
-- **Čísla bez gramatického tvaru**: čeština má tvary 1 soubor / 2 soubory / 5 souborů. Dokud nebude `.stringsdict` (množná čísla), formulovat neutrálně („Souborů: %d“, „mezery: %d“).
+- **Počty vždy přes `LP`**, nikdy `L("%d files")`: jinak vznikne „1 files“ nebo „5 soubory“.
 - **Texty podle Apple**: tři tečky `…` (jeden znak) u příkazů, které otevřou další dotaz („Uložit jako…“); typografické uvozovky „ “ v češtině, “ ” v angličtině; terminologie macOS (Apple má oficiální překlady pojmů: Uložit, Zavřít, Nastavení…, Převést vše do popředí).
 - **Položky, které přidává macOS sám** (Diktování, Emotikony, Zavřít vše, Celá obrazovka…), se nepřekládají, přeloží je systém.
