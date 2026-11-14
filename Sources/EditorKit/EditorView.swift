@@ -41,6 +41,17 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	private var markedText = ""
 	/// Text removed by ⌃K, inserted back by ⌃Y.
 	private var killBuffer = ""
+
+	enum DragUnit { case character, word, line }
+	/// Mouse selection in progress: the unit and range of the first click, the selections kept
+	/// beside it (Shift, Option) and the start of an Option+drag column.
+	private struct Drag {
+		var unit: DragUnit
+		var origin: Range<Int>
+		var others: [Selection]
+		var column: (x: CGFloat, line: Int)?
+	}
+	private var drag: Drag?
 	/// Goal x of each selection for up/down moves, in selection order.
 	private var goalXs: [CGFloat]?
 
@@ -305,10 +316,9 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		return offset
 	}
 
-	private func offset(at point: NSPoint) -> Int {
-		let line = min(max(0, Int(point.y / lineHeight)), rope.lineCount - 1)
-		return offset(atX: point.x, line: line)
-	}
+	private func line(at point: NSPoint) -> Int { min(max(0, Int(point.y / lineHeight)), rope.lineCount - 1) }
+
+	private func offset(at point: NSPoint) -> Int { offset(atX: point.x, line: line(at: point)) }
 
 	// MARK: Editing
 
@@ -386,20 +396,59 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			inputContext?.discardMarkedText()
 			unmarkText()
 		}
-		let offset = offset(at: convert(event.locationInWindow, from: nil))
-		if event.modifierFlags.contains(.shift) {
-			setSelections(selections.replacingPrimary(Selection(anchor: selections.primary.anchor, head: offset)))
-		} else if event.modifierFlags.contains(.option) {
-			setSelections(selections.adding(Selection(caret: offset)))
-		} else {
-			setSelections(SelectionSet(caret: offset))
-		}
+		mouseDown(at: convert(event.locationInWindow, from: nil), clicks: event.clickCount, modifiers: event.modifierFlags)
 	}
 
 	public override func mouseDragged(with event: NSEvent) {
 		autoscroll(with: event)
-		let offset = offset(at: convert(event.locationInWindow, from: nil))
-		setSelections(selections.replacingPrimary(Selection(anchor: selections.primary.anchor, head: offset)))
+		mouseDragged(to: convert(event.locationInWindow, from: nil))
+	}
+
+	public override func mouseUp(with event: NSEvent) { drag = nil }
+
+	/// Click: caret; double: word; triple: line. Shift extends the primary selection,
+	/// Option adds a selection (Option+drag selects a column).
+	func mouseDown(at point: NSPoint, clicks: Int, modifiers: NSEvent.ModifierFlags) {
+		let offset = offset(at: point)
+		let unit: DragUnit = clicks >= 3 ? .line : clicks == 2 ? .word : .character
+		var others: [Selection] = []
+		var origin = range(of: unit, at: offset)
+		if modifiers.contains(.shift) {
+			others = selections.all.enumerated().filter { $0.offset != selections.primaryIndex }.map(\.element)
+			let anchor = selections.primary.anchor
+			origin = anchor..<anchor
+		} else if modifiers.contains(.option) {
+			others = selections.all
+		}
+		let column = modifiers.contains(.option) && !modifiers.contains(.shift) && clicks == 1
+		drag = Drag(unit: unit, origin: origin, others: others,
+		            column: column ? (x: point.x, line: line(at: point)) : nil)
+		mouseDragged(to: point)
+	}
+
+	func mouseDragged(to point: NSPoint) {
+		guard let drag else { return }
+		if let start = drag.column {
+			let current = line(at: point)
+			let lines = Array(stride(from: start.line, through: current, by: current >= start.line ? 1 : -1))
+			let block = lines.map { Selection(anchor: offset(atX: start.x, line: $0), head: offset(atX: point.x, line: $0)) }
+			setSelections(SelectionSet(drag.others + block, primary: drag.others.count + block.count - 1))
+			return
+		}
+		let r = range(of: drag.unit, at: offset(at: point)), o = drag.origin
+		let s = r.lowerBound < o.lowerBound ? Selection(anchor: o.upperBound, head: r.lowerBound)
+			: Selection(anchor: o.lowerBound, head: max(r.upperBound, o.upperBound))
+		setSelections(SelectionSet(drag.others + [s], primary: drag.others.count))
+	}
+
+	private func range(of unit: DragUnit, at offset: Int) -> Range<Int> {
+		switch unit {
+		case .character: return offset..<offset
+		case .word: return rope.wordRange(at: offset)
+		case .line:
+			let line = rope.line(containing: offset)
+			return rope.offset(ofLine: line)..<(line + 1 < rope.lineCount ? rope.offset(ofLine: line + 1) : rope.byteCount)
+		}
 	}
 
 	public override func becomeFirstResponder() -> Bool {

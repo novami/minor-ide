@@ -45,4 +45,24 @@ extension Rope {
 		while let (s, prev) = scalar(before: o), Rope.charClass(s) == kind { o = prev }
 		return o
 	}
+
+	/// Run of same-class characters at the offset (double-click); at a line end the run before it.
+	/// Whitespace runs stop at newlines.
+	public func wordRange(at offset: Int) -> Range<Int> {
+		let same = { (a: Unicode.Scalar, b: Unicode.Scalar) in
+			a != "\n" && b != "\n" && Rope.charClass(a) == Rope.charClass(b)
+		}
+		var start = offset, end = offset
+		if let (s, next) = scalar(at: offset), s != "\n" {
+			end = next
+		} else if let (s, prev) = scalar(before: offset), s != "\n" {
+			start = prev
+		} else {
+			return offset..<offset
+		}
+		guard let (kind, _) = scalar(at: start) else { return start..<end }
+		while let (s, prev) = scalar(before: start), same(s, kind) { start = prev }
+		while let (s, next) = scalar(at: end), same(s, kind) { end = next }
+		return start..<end
+	}
 }

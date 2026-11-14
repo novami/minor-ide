@@ -15,7 +15,7 @@ Hotová je **fáze 0**, **fáze 1a** (TextEngine) a části fáze 1b:
 | Multi-selekce (`SelectionSet`, slučování překryvů) a `ChangeSet` (víc změn najednou, mapování pozic) | hotovo | `Sources/TextEngine/Selection.swift` |
 | Kotvy (`AnchorSet`: pozice s biasem, posun přes `ChangeSet` včetně undo/redo; `ChangeSet.map` binárním hledáním) | hotovo, `EditorView.anchors` | `Sources/TextEngine/Anchor.swift` |
 | Undo/redo (`EditHistory`: kroky z transakcí, inverze `ChangeSet`, obnova selekcí, slučování psaní/mazání: pauza 500 ms, nové slovo, nový řádek, posun kurzoru, uložení) | hotovo | `Sources/TextEngine/History.swift` |
-| Editor nad Core Text (ASCII tabulka glyfů, dávkové kreslení, okno cache řádků, zarážky tabulátorů) | `NSTextInputClient` úplný (replacementRange pro podržení klávesy s akcenty, podřetězce, `firstRect`, `characterIndex`; mrtvé klávesy jako překryv u kurzoru), systémové vazby přes `doCommandBySelector` (⌥←/→ po slovech, ⌥⌫, ⌘⌫, ⌃A/⌃E/⌃K/⌃Y/⌃T/⌃L, Home/End jen posun), víc kurzorů, Zpět/Znovu, Vyjmout/Kopírovat (víc výběrů spojí `\n`)/Vybrat vše s validací menu; kreslení výběru, Shift+šipky/Home/End/PgUp/PgDn, klik, tažení, Shift+klik, ⌥+klik, Esc | `Sources/EditorKit/` |
+| Editor nad Core Text (ASCII tabulka glyfů, dávkové kreslení, okno cache řádků, zarážky tabulátorů) | `NSTextInputClient` úplný (replacementRange pro podržení klávesy s akcenty, podřetězce, `firstRect`, `characterIndex`; mrtvé klávesy jako překryv u kurzoru), systémové vazby přes `doCommandBySelector` (⌥←/→ po slovech, ⌥⌫, ⌘⌫, ⌃A/⌃E/⌃K/⌃Y/⌃T/⌃L, Home/End jen posun), víc kurzorů, Zpět/Znovu, Vyjmout/Kopírovat (víc výběrů spojí `\n`)/Vybrat vše s validací menu; kreslení výběru, Shift+šipky/Home/End/PgUp/PgDn, klik, dvojklik (slovo), trojklik (řádek), tažení po znacích/slovech/řádcích, Shift+klik, ⌥+klik, ⌥+tažení (sloupec), Esc | `Sources/EditorKit/` |
 | Formát souborů (výchozí podle PSR-12/gofmt/Nette, `.editorconfig`, settings.json, konce řádků, kódování, ukládání se zachováním práv a odkazů) | jádro hotové | `Sources/MinorCore/`, `docs/format-settings.md` |
 | Standardní menu podle Apple HIG, sheet uložení, Nedávné, otevírání z Finderu | hotovo | `Sources/MinorIDE/MainMenu.swift` |
 | Překlady: angličtina (US) z `L("…")`, čeština povinná, množná čísla `LP` + `.stringsdict` | hotovo | `server/cmd/l10n`, `docs/translations.md` |
@@ -33,7 +33,11 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1b, krok 1 hotový** (2026-11-15): vstup z klávesnice (`TextInputTests`: „čšžýáíéůú“, mrtvé klávesy ˇ ´ °, nahrazení rozsahu, systémové vazby), `Rope.byteOffset(ofUTF16:)`, pohyb po slovech v `Sources/TextEngine/Words.swift`.
 
-**Další: fáze 1b, krok 2 – myš**: dvojklik (slovo, použít `wordStart`/`wordEnd`), trojklik (řádek), tažení po slovech/řádcích po dvoj/trojkliku, ⌥+tažení (sloupcový výběr). Pak kurzory ve vlastní vrstvě (blikání bez překreslení textu), gutter jako samostatný view, měření latence přes `NSView.displayLink`, základní přístupnost (VoiceOver čte aktuální řádek).
+**Fáze 1b, krok 2 hotový** (2026-11-15): myš (`MouseTests`), `Rope.wordRange(at:)`.
+
+**Další: fáze 1b, krok 3 – vrstvy**: kurzory ve vlastní vrstvě (blikání bez překreslení textu), gutter jako samostatný view; pak měření latence přes `NSView.displayLink` a základní přístupnost (VoiceOver čte aktuální řádek). Nakonec „Hotovo když“ 1b: rozpočty v 10 MB souboru a ruční test české klávesnice v aplikaci.
+
+Známé mezery po kroku 1b/2: sloupcový výběr dává na krátkých řádcích prázdný kurzor na konci řádku (nevynechává je); sloupec počítá s x pozicí, ne s vizuálním sloupcem (u tabulátorů a širokých znaků se posune); autoscroll při tažení jen podle `autoscroll(with:)`, bez opakování při stojící myši.
 
 Známé mezery po kroku 1b/1: marked text se kreslí jen u primárního kurzoru jako překryv (dlouhá kompozice IME zakryje text za kurzorem, neodsune ho); s víc kurzory ⌃Y vloží celý kill buffer ke každému; ruční ověření na skutečné české klávesnici a s IME (japonština) v běžící aplikaci zatím neproběhlo.
 
