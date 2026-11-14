@@ -3,3 +3,4 @@ build/
 server/bin/
 .swiftpm/
 .DS_Store
+*.test

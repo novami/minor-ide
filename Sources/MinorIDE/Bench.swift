@@ -23,13 +23,19 @@ enum Bench {
 		editor.insertText("", replacementRange: NSRange(location: NSNotFound, length: 0))
 		editor.replace(mid..<mid, with: "")
 		var samples: [Double] = []
+		var model = 0.0
+		let drawBefore = editor.drawSeconds
 		for _ in 0..<2000 {
 			t = CACurrentMediaTime()
 			editor.insertText("x", replacementRange: NSRange(location: NSNotFound, length: 0))
+			model += CACurrentMediaTime() - t
 			editor.displayIfNeeded()
 			samples.append(CACurrentMediaTime() - t)
 		}
 		report("type char", samples)
+		let total = samples.reduce(0, +)
+		print(String(format: "  [type char breakdown per key: edit %.3f ms, draw body %.3f ms, AppKit/CA %.3f ms]",
+		             model / 2 , (editor.drawSeconds - drawBefore) / 2, (total - model - (editor.drawSeconds - drawBefore)) / 2))
 
 		samples = []
 		for _ in 0..<300 {
@@ -109,6 +115,20 @@ enum Bench {
 		let p = { (q: Double) in s[min(s.count - 1, Int(Double(s.count) * q))] }
 		print("\(name.padding(toLength: 18, withPad: " ", startingAt: 0)) p50 \(ms(p(0.5)))  p99 \(ms(p(0.99)))  max \(ms(s.last!))")
 	}
+
+	static let snapshotText = """
+	// Fast path: ASCII, Czech, tabs
+	func main() {
+	\tname := "Příliš žluťoučký kůň úpěl ďábelské ódy"
+	\tif x := compute(42); x > 0 {
+	\t\tfmt.Println(name, x) // ěščřžýáíé ĚŠČŘŽÝÁÍÉ
+	\t}
+	}
+	// Fallback path: emoji and combining marks
+	var smile = "😀 café 👍🏽 e\u{301}"
+	\tcolumns:\ta\tbb\tccc|
+	    columns:    a   bb  ccc|
+	"""
 
 	/// Go-like source with Czech strings, tabs and varied line lengths.
 	static func sampleText(bytes: Int) -> String {

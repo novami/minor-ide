@@ -19,6 +19,7 @@ struct RopeTests {
 		let pieces = ["a", "bc", "\n", "č", "😀", "line\n", String(repeating: "x", count: 3000), "ž\nš\n"]
 		var reference: [UInt8] = []
 		var rope = Rope()
+		var snapshots: [(Rope, [UInt8])] = [] // in-place mutation must never leak into earlier copies
 
 		func boundary(_ i: Int) -> Int {
 			var o = i
@@ -34,6 +35,7 @@ struct RopeTests {
 			reference.replaceSubrange(a..<b, with: Array(text.utf8))
 			rope.replace(a..<b, with: text)
 
+			if step % 400 == 0 { snapshots.append((rope, reference)) }
 			if step % 50 == 0 {
 				#expect(rope.bytes(in: 0..<rope.byteCount) == reference)
 				#expect(rope.validate())
@@ -45,6 +47,10 @@ struct RopeTests {
 				#expect(rope.string(in: rope.lineRange(line)) == String(lines[line]))
 				#expect(rope.line(containing: rope.offset(ofLine: line)) == line)
 			}
+		}
+		for (snapshot, bytes) in snapshots {
+			#expect(snapshot.bytes(in: 0..<snapshot.byteCount) == bytes)
+			#expect(snapshot.validate())
 		}
 	}
 

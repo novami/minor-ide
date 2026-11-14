@@ -319,9 +319,17 @@ var ops = []string{
 	"&&", "||", "??", "+=", "-=", "*=", "/=", ".=", "%=", "&=", "|=", "^=",
 }
 
-func opLen(b []byte) int {
+// opsByFirst indexes multi-character operators by their first byte, longest first.
+var opsByFirst = func() (t [256][]string) {
 	for _, op := range ops {
-		if bytes.HasPrefix(b, []byte(op)) {
+		t[op[0]] = append(t[op[0]], op)
+	}
+	return
+}()
+
+func opLen(b []byte) int {
+	for _, op := range opsByFirst[b[0]] {
+		if len(b) >= len(op) && string(b[:len(op)]) == op {
 			return len(op)
 		}
 	}
@@ -333,10 +341,35 @@ func opLen(b []byte) int {
 	return 0
 }
 
-func isSpace(c byte) bool {
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f'
-}
-func isDigit(c byte) bool      { return c >= '0' && c <= '9' }
-func isHex(c byte) bool        { return isDigit(c) || (c|0x20 >= 'a' && c|0x20 <= 'f') }
-func isIdentStart(c byte) bool { return c == '_' || (c|0x20 >= 'a' && c|0x20 <= 'z') || c >= 0x80 }
-func isIdentChar(c byte) bool  { return isIdentStart(c) || isDigit(c) }
+const (
+	clsSpace = 1 << iota
+	clsDigit
+	clsIdentStart
+	clsHex
+)
+
+// charClass is a lookup table; the lexer's hot loops test one byte at a time.
+var charClass = func() (t [256]uint8) {
+	for c := 0; c < 256; c++ {
+		b := byte(c)
+		if b == ' ' || b == '\t' || b == '\n' || b == '\r' || b == '\v' || b == '\f' {
+			t[c] |= clsSpace
+		}
+		if b >= '0' && b <= '9' {
+			t[c] |= clsDigit | clsHex
+		}
+		if b == '_' || (b|0x20 >= 'a' && b|0x20 <= 'z') || b >= 0x80 {
+			t[c] |= clsIdentStart
+		}
+		if b|0x20 >= 'a' && b|0x20 <= 'f' {
+			t[c] |= clsHex
+		}
+	}
+	return
+}()
+
+func isSpace(c byte) bool      { return charClass[c]&clsSpace != 0 }
+func isDigit(c byte) bool      { return charClass[c]&clsDigit != 0 }
+func isHex(c byte) bool        { return charClass[c]&clsHex != 0 }
+func isIdentStart(c byte) bool { return charClass[c]&clsIdentStart != 0 }
+func isIdentChar(c byte) bool  { return charClass[c]&(clsIdentStart|clsDigit) != 0 }

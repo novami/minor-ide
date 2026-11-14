@@ -78,6 +78,14 @@ $enum = 1;
 	}
 }
 
+// A top-level closure with use() must not be read as an import (found in nette/neon examples).
+func TestTopLevelClosureUse(t *testing.T) {
+	r := File([]byte("<?php\n$f = function () use (&$x): void {\n};\nforeach ($a as $b) {\n}\nfunction g() {}\n"))
+	if r.Unbalanced || len(r.Uses) != 0 || len(r.Decls) != 1 || r.Decls[0].Name != "g" {
+		t.Fatalf("%+v", r)
+	}
+}
+
 func TestBracedNamespaces(t *testing.T) {
 	r := File([]byte(`<?php namespace A { class X {} } namespace B { function f() {} }`))
 	if len(r.Decls) != 2 || r.Decls[0].Name != `A\X` || r.Decls[1].Name != `B\f` {

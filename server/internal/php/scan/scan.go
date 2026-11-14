@@ -5,6 +5,7 @@ package scan
 import (
 	"bytes"
 	"strings"
+	"sync"
 
 	"github.com/novami/minor-ide/server/internal/php/lexer"
 )
@@ -43,13 +44,16 @@ type Result struct {
 
 type tok struct {
 	kind lexer.Kind
+	op   byte // the operator byte for single-character operators, else 0
 	text []byte
 	off  int
 }
 
 // File scans one PHP file.
 func File(src []byte) *Result {
-	toks := significant(src)
+	buf := tokPool.Get().(*[]tok)
+	toks := significant(src, (*buf)[:0])
+	defer func() { *buf = toks; tokPool.Put(buf) }()
 	r := &Result{}
 	var (
 		depth     int
@@ -91,7 +95,7 @@ func File(src []byte) *Result {
 				r.Decls = append(r.Decls, Decl{Property, class + "::" + string(t.text), t.off})
 			}
 		default:
-			word := strings.ToLower(string(t.text))
+			word := keyword(t.text)
 			if isOp(prev, "::") || isOp(prev, "->") || isOp(prev, "?->") {
 				continue // Foo::class, $x->class
 			}
@@ -112,7 +116,8 @@ func File(src []byte) *Result {
 					nsDepth = depth + 1
 				}
 			case "use":
-				if depth != nsDepth || class != "" {
+				atStatementStart := prev.kind == lexer.EOF || isOp(prev, ";") || isOp(prev, "{") || isOp(prev, "}")
+				if depth != nsDepth || class != "" || !atStatementStart {
 					continue // closure use(...) or trait use
 				}
 				var b strings.Builder
@@ -179,10 +184,24 @@ func File(src []byte) *Result {
 	return r
 }
 
-// significant drops whitespace, comments and inline HTML.
-func significant(src []byte) []tok {
+// tokPool reuses token buffers across files; token slices dominated allocations.
+var tokPool = sync.Pool{New: func() any { s := make([]tok, 0, 4096); return &s }}
+
+var keywords = []string{"namespace", "use", "class", "interface", "trait", "enum", "function", "const", "case"}
+
+// keyword returns the lower-case keyword the identifier matches (case-insensitively), or "".
+func keyword(b []byte) string {
+	for _, k := range keywords {
+		if len(b) == len(k) && bytes.EqualFold(b, []byte(k)) {
+			return k
+		}
+	}
+	return ""
+}
+
+// significant drops whitespace, comments and inline HTML, appending to toks.
+func significant(src []byte, toks []tok) []tok {
 	l := lexer.New(src)
-	toks := make([]tok, 0, len(src)/6)
 	for {
 		t := l.Next()
 		switch t.Kind {
@@ -192,10 +211,14 @@ func significant(src []byte) []tok {
 			continue
 		case lexer.CloseTag:
 			// "?>" ends a statement like ";"
-			toks = append(toks, tok{lexer.Op, []byte(";"), t.Start})
+			toks = append(toks, tok{lexer.Op, ';', []byte(";"), t.Start})
 			continue
 		}
-		toks = append(toks, tok{t.Kind, t.Text(src), t.Start})
+		nt := tok{kind: t.Kind, text: t.Text(src), off: t.Start}
+		if t.Kind == lexer.Op && len(nt.text) == 1 {
+			nt.op = nt.text[0]
+		}
+		toks = append(toks, nt)
 	}
 }
 
@@ -206,5 +229,10 @@ func at(toks []tok, i int) tok {
 	return toks[i]
 }
 
-func isOp(t tok, op string) bool  { return t.kind == lexer.Op && string(t.text) == op }
+func isOp(t tok, op string) bool {
+	if len(op) == 1 {
+		return t.op == op[0]
+	}
+	return t.kind == lexer.Op && string(t.text) == op
+}
 func isWord(t tok, w string) bool { return t.kind == lexer.Ident && bytes.EqualFold(t.text, []byte(w)) }

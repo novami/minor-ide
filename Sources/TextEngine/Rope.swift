@@ -17,6 +17,14 @@ public struct TextSummary: Sendable, Equatable {
 
 	init() {}
 
+	static func - (a: TextSummary, b: TextSummary) -> TextSummary {
+		var r = a
+		r.bytes -= b.bytes
+		r.newlines -= b.newlines
+		r.utf16 -= b.utf16
+		return r
+	}
+
 	static func + (a: TextSummary, b: TextSummary) -> TextSummary {
 		var r = a
 		r.bytes += b.bytes
@@ -26,15 +34,30 @@ public struct TextSummary: Sendable, Equatable {
 	}
 }
 
-/// Immutable B-tree node. Leaves hold UTF-8 bytes; all leaves are at height 0.
-final class Node: Sendable {
+/// B-tree node. Leaves hold UTF-8 bytes; all leaves are at height 0.
+/// Nodes are mutated in place only while uniquely referenced (no snapshot shares them),
+/// otherwise copied first, so every Rope value behaves as an immutable snapshot.
+final class Node: @unchecked Sendable {
 	static let maxLeaf = 1024
 	static let maxChildren = 16
 
-	let summary: TextSummary
+	var summary: TextSummary
 	let height: Int
-	let bytes: [UInt8]
-	let children: [Node]
+	var bytes: [UInt8]
+	var children: [Node]
+
+	private init(copying n: Node) {
+		summary = n.summary
+		height = n.height
+		bytes = n.bytes
+		children = n.children
+	}
+
+	func copy() -> Node { Node(copying: self) }
+
+	func recomputeSummary() {
+		summary = isLeaf ? TextSummary(bytes: bytes) : children.dropFirst().reduce(children[0].summary) { $0 + $1.summary }
+	}
 
 	init(leaf: [UInt8]) {
 		summary = TextSummary(bytes: leaf)
@@ -111,11 +134,12 @@ public struct Rope: Sendable {
 	public mutating func replace(_ range: Range<Int>, with bytes: [UInt8]) {
 		precondition(range.lowerBound >= 0 && range.upperBound <= byteCount, "range out of bounds")
 		if !range.isEmpty {
-			root = Rope.delete(root, range) ?? Node(leaf: [])
+			if Rope.delete(&root, range) { root = Node(leaf: []) }
 			while !root.isLeaf && root.children.count == 1 { root = root.children[0] }
 		}
 		if !bytes.isEmpty {
-			root = Rope.join(Rope.insert(root, at: range.lowerBound, bytes))
+			let extra = Rope.insert(&root, at: range.lowerBound, bytes, TextSummary(bytes: bytes))
+			if !extra.isEmpty { root = Rope.join([root] + extra) }
 		}
 	}
 
@@ -227,47 +251,73 @@ public struct Rope: Sendable {
 		}
 	}
 
-	/// Returns one or more nodes of the same height as `node`.
-	static func insert(_ node: Node, at offset: Int, _ bytes: [UInt8]) -> [Node] {
+	static func makeUnique(_ node: inout Node) {
+		if !isKnownUniquelyReferenced(&node) { node = node.copy() }
+	}
+
+	/// Inserts in place; returns overflow siblings (same height) to place right of `node`.
+	static func insert(_ node: inout Node, at offset: Int, _ bytes: [UInt8], _ added: TextSummary) -> [Node] {
+		makeUnique(&node)
 		if node.isLeaf {
-			var b = node.bytes
-			b.insert(contentsOf: bytes, at: offset)
-			return b.count <= Node.maxLeaf ? [Node(leaf: b)] : leaves(b)
+			node.bytes.insert(contentsOf: bytes, at: offset)
+			node.summary = node.summary + added
+			guard node.bytes.count > Node.maxLeaf else { return [] }
+			var parts = leaves(node.bytes)
+			node.bytes = parts[0].bytes
+			node.summary = parts[0].summary
+			parts.removeFirst()
+			return parts
 		}
 		var o = offset
 		var index = node.children.count - 1
-		for (i, c) in node.children.enumerated() {
-			if o <= c.summary.bytes { index = i; break }
-			o -= c.summary.bytes
+		for i in node.children.indices {
+			let size = node.children[i].summary.bytes
+			if o <= size { index = i; break }
+			o -= size
 		}
-		var children = node.children
-		children.replaceSubrange(index...index, with: insert(node.children[index], at: o, bytes))
-		return children.count <= Node.maxChildren ? [Node(children: children)] : group(children)
+		let extra = insert(&node.children[index], at: o, bytes, added)
+		node.summary = node.summary + added
+		guard !extra.isEmpty else { return [] }
+		node.children.insert(contentsOf: extra, at: index + 1)
+		guard node.children.count > Node.maxChildren else { return [] }
+		var groups = group(node.children)
+		node.children = groups[0].children
+		node.recomputeSummary()
+		groups.removeFirst()
+		return groups
 	}
 
-	/// Returns nil when the whole node was deleted.
-	static func delete(_ node: Node, _ range: Range<Int>) -> Node? {
+	/// Deletes in place; returns true when the node became empty.
+	static func delete(_ node: inout Node, _ range: Range<Int>) -> Bool {
+		makeUnique(&node)
 		if node.isLeaf {
-			var b = node.bytes
-			b.removeSubrange(range)
-			return b.isEmpty ? nil : Node(leaf: b)
+			node.summary = node.summary - TextSummary(bytes: node.bytes[range])
+			node.bytes.removeSubrange(range)
+			return node.bytes.isEmpty
 		}
-		var children: [Node] = []
 		var base = 0
-		for c in node.children {
-			let end = base + c.summary.bytes
-			defer { base = end }
-			if end <= range.lowerBound || base >= range.upperBound {
-				children.append(c)
+		var i = 0
+		while i < node.children.count {
+			let size = node.children[i].summary.bytes
+			let end = base + size
+			if end <= range.lowerBound {
+				base = end
+				i += 1
 				continue
 			}
+			if base >= range.upperBound { break }
 			let local = max(range.lowerBound, base) - base..<min(range.upperBound, end) - base
-			if local.count == c.summary.bytes { continue }
-			if let kept = delete(c, local) { children.append(kept) }
+			if local.count == size || delete(&node.children[i], local) {
+				node.children.remove(at: i)
+			} else {
+				i += 1
+			}
+			base = end
 		}
-		if children.isEmpty { return nil }
-		if node.height == 1 { children = mergeSmallLeaves(children) }
-		return Node(children: children)
+		if node.children.isEmpty { return true }
+		if node.height == 1 { node.children = mergeSmallLeaves(node.children) }
+		node.recomputeSummary()
+		return false
 	}
 
 	/// Joins neighbouring leaves that fit together, so deletions do not leave dust.
@@ -305,8 +355,10 @@ public struct Rope: Sendable {
 	/// Checks structural invariants; used by tests.
 	func validate() -> Bool {
 		func check(_ n: Node) -> Bool {
-			if n.isLeaf { return n.bytes.count <= Node.maxLeaf }
-			guard n.children.count <= Node.maxChildren else { return false }
+			if n.isLeaf { return n.bytes.count <= Node.maxLeaf && n.summary == TextSummary(bytes: n.bytes) }
+			guard n.children.count <= Node.maxChildren,
+			      n.summary == n.children.dropFirst().reduce(n.children[0].summary, { $0 + $1.summary })
+			else { return false }
 			return n.children.allSatisfy { $0.height == n.height - 1 && check($0) }
 		}
 		return check(root)
