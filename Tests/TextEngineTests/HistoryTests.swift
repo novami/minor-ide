@@ -44,6 +44,76 @@ struct HistoryTests {
 		}
 	}
 
+	/// Typing, deleting, caret moves, undo and redo interleaved at random, checked against
+	/// a model that keeps the text and selections after each undo step.
+	@Test func interleavedEditsUndoRedoMatchModel() {
+		var rng = SplitMix64(seed: 99)
+		var rope = Rope("ahoj\nsvěte\n😀 čau\n")
+		var sel = SelectionSet(caret: 0)
+		var history = EditHistory()
+		var states = [(rope.string, sel)] // states[i] = after undo step i
+		var befores = [sel] // befores[i] = selections right before step i
+		var current = 0
+		var time = 0.0
+		let pieces = ["a", "b", " ", "\n", "č", "😀", "_x"]
+
+		func randomCarets() -> SelectionSet {
+			let raw = (0..<Int.random(in: 1...3, using: &rng)).map { _ -> Selection in
+				let a = rope.scalarBoundary(atOrBefore: Int.random(in: 0...rope.byteCount, using: &rng))
+				let b = rng.next() % 3 == 0 ? rope.scalarBoundary(atOrBefore: min(rope.byteCount, a + 4)) : a
+				return Selection(anchor: a, head: b)
+			}
+			return SelectionSet(raw)
+		}
+
+		for _ in 0..<3000 {
+			time += [0.1, 0.1, 0.1, 1.0][Int(rng.next() % 4)]
+			switch rng.next() % 10 {
+			case 0:
+				sel = randomCarets()
+			case 1:
+				guard let step = history.undo() else { continue }
+				for t in step.transactions.reversed() { t.inverse.apply(to: &rope) }
+				sel = step.selectionsBefore
+				#expect(sel == befores[current])
+				current -= 1
+				#expect(rope.string == states[current].0)
+			case 2:
+				guard let step = history.redo() else { continue }
+				for t in step.transactions { t.changes.apply(to: &rope) }
+				sel = step.selectionsAfter
+				current += 1
+				#expect(rope.string == states[current].0)
+				#expect(sel == states[current].1)
+			default:
+				let deleting = rng.next() % 3 == 0
+				let piece = pieces[Int(rng.next() % UInt64(pieces.count))]
+				let cs = ChangeSet(sel.all.map { s -> (Range<Int>, String) in
+					guard deleting else { return (s.range, piece) }
+					let start = s.isEmpty ? rope.scalarBoundary(atOrBefore: max(0, s.range.lowerBound - 1)) : s.range.lowerBound
+					return (start..<s.range.upperBound, "")
+				})
+				guard !cs.isEmpty else { continue }
+				let after = sel.mapped(through: cs).map { Selection(caret: $0.range.upperBound) }
+				let before = history.undoStack.count, selBefore = sel
+				history.record(Transaction(cs, on: rope, before: sel, after: after, kind: deleting ? .deleting : .typing, time: time))
+				cs.apply(to: &rope)
+				sel = after
+				if history.undoStack.count > before {
+					current += 1
+					states.removeSubrange(current...)
+					befores.removeSubrange(current...)
+					states.append((rope.string, sel))
+					befores.append(selBefore)
+				} else {
+					states[current] = (rope.string, sel)
+				}
+				#expect(history.undoStack.count == current && history.redoStack.isEmpty)
+			}
+		}
+		#expect(rope.validate())
+	}
+
 	@Test func typingCoalescesByWordPauseAndCaret() {
 		var history = EditHistory()
 		var rope = Rope("")

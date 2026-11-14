@@ -6,7 +6,7 @@ Aktualizuje se po každém dokončeném bloku práce. Nová session začíná p�
 
 ## Kde jsme
 
-Hotová je **fáze 0** a části fáze 1:
+Hotová je **fáze 0**, **fáze 1a** (TextEngine) a části fáze 1b:
 
 | Oblast | Stav | Kde |
 |---|---|---|
@@ -29,13 +29,9 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 ## Další krok
 
-**Fáze 1a: dokončit TextEngine** (`docs/PLAN.md`, fáze 1):
-1. ~~Multi-selekce~~ hotovo 2026-11-15.
-2. ~~Transakce a undo/redo~~ hotovo 2026-11-15.
-3. ~~Kotvy~~ hotovo 2026-11-15.
-4. Property-based testy selekcí a undo (náhodné editace vs. referenční `String`) a ověření „Hotovo když“ fáze 1a (1M editací nad 10 MB < 2 s).
+**Fáze 1a je hotová** (2026-11-15): property-based testy rope, selekcí, kotev a undo/redo (`HistoryTests.interleavedEditsUndoRedoMatchModel`: prokládané psaní, mazání, posuny kurzoru, Zpět/Znovu proti modelu textu a selekcí), 1M editací nad 10 MB za 0,67 s (rozpočet 2 s).
 
-Krok 4 už má základ v `HistoryTests.randomEditsUndoAndRedo`, `SelectionTests.randomChangeSetsMatchReference` a `AnchorTests.mapMatchesLinearReference`.
+**Další: fáze 1b – vykreslování a vstup** (`docs/PLAN.md`): `NSTextInputClient` (marked text, česká diakritika přes mrtvé klávesy, IME), klávesy mimo keymapu přes `interpretKeyEvents`/`doCommandBySelector`, dvojklik/trojklik, ⌥+tažení (sloupcový výběr), kurzory ve vlastní vrstvě, gutter, měření latence přes `NSView.displayLink`. Nejdřív zjistit, co z 1b už `EditorKit` má.
 
 Známé mezery po kroku 3: kotva v smazaném textu se sbalí na místo smazání a Zpět ji nevrátí (breakpoint na smazaném řádku po Zpět zůstane o řádek výš/níž); kotvy jsou jen body, rozsah (diagnostika) = dvě kotvy; `anchors(in:)` prochází všechny kotvy (O(n)), pro tisíce kotev v gutteru případně seřazené pole.
 
@@ -43,7 +39,7 @@ Známé mezery po kroku 2: Zpět až na uložený stav nesmaže příznak „upr
 
 Známé mezery po kroku 1: Tab s víceřádkovým výběrem výběr nahradí (odsazení bloku patří do 1c), vložení více řádků do stejného počtu kurzorů nerozděluje text, dvojklik/trojklik a ⌥+tažení jsou v 1b.
 
-Pak 1b (vstup, myš, displayLink), 1c (příkazy, hledání), 1d (lexery a zvýraznění).
+Pak 1c (příkazy, hledání), 1d (lexery a zvýraznění).
 
 **Revize plánu 2026-11-14** (pořadí fází se změnilo, další krok ne): nová fáze 2b (otevření souboru, hledání, Git gutter, terminál) před LSP, debugger Go a testy v MVP (7b; PHP přes Tracy, Xdebug až po MVP), žádná vazba na konkurenční IDE (stuby PHP z oficiálních zdrojů PHP, D25), Git rozšířen o konflikty, externí LSP servery (D23), PHP až po aktuální verzi. Opravy, které se týkají už hotového kódu nebo nejbližší práce:
 - zkratky: písmena podle znaku, keyCode jen pro interpunkci (1e); ⌘E zůstává systémové;
