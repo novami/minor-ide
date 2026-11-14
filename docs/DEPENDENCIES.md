@@ -21,7 +21,7 @@ Systémové frameworky macOS (AppKit, Core Text, CryptoKit, Security/Keychain, F
 | B1 | Typy LSP (Swift i Go) | **vlastní** (3–5 dní) | potřebujeme jen podmnožinu protokolu |
 | B2 | Hledání v souborech | **vlastní v Go** (1–2 týdny místo přibaleného ripgrep) | Go regexp (RE2) je dost rychlý |
 | B3 | Build | **SPM + vlastní skript** na sestavení `.app` (2 dny místo XcodeGen) | žádný nástroj navíc |
-| B4 | Go helpery | **jedna binárka `minoride-server`** s podpříkazy `phpls`, `db`, `search`, `remote`, `debug` | méně artefaktů k podepisování |
+| B4 | Go helpery | **jedna binárka `minoride-server`** s podpříkazy `phpls`, `db`, `search`, `remote` | méně artefaktů k podepisování |
 | B5 | JSON-RPC, fuzzy matcher, diff (Myers), Git, Markdown pro release notes | **vlastní** / Git přes CLI / `AttributedString(markdown:)` | malé a dobře testovatelné |
 | B6 | SSH tunel pro DB | **systémové `ssh -W`** jako dialer ovladače místo `x/crypto/ssh` | 0 závislostí, respektuje `~/.ssh/config`, ProxyJump a ssh-agent; na rozdíl od `ssh -L` neotevírá lokální port |
 | B7 | SQLite | **systémová `libsqlite3` přes vlastní tenký cgo binding** (2–3 dny) | `modernc.org/sqlite` je obří strom závislostí |
@@ -32,7 +32,7 @@ Systémové frameworky macOS (AppKit, Core Text, CryptoKit, Security/Keychain, F
 | B12 | SFTP | **vlastní klient protokolu v3 v Go** (≈ 2 týdny) místo `pkg/sftp` + `x/crypto/ssh` | rozhodnutí uživatele; vlastní SSH stack by byl bezpečnostní riziko |
 | B13 | FTPS | **vlastní klient v Go nad `crypto/tls`** (≈ 1,5 týdne) | knihovny pro FTP jsou málo udržované; nešifrované FTP se nepodporuje |
 | B14 | rsync | systémový `openrsync` / Homebrew `rsync` 3.x | externí nástroj, ne knihovna |
-| B15 | Debugger | **vlastní DAP klient** (Swift) a **vlastní adaptér Xdebug DBGp → DAP** v Go (≈ 2 týdny) místo `vscode-php-debug`; Go přes externí `dlv dap` | `vscode-php-debug` potřebuje Node; DBGp je malý textový protokol |
+| B15 | Debugger | **vlastní DAP klient** (Swift), Go přes externí `dlv dap`. PHP v MVP přes **Tracy** (URL schéma `minoride://open`), Xdebug až po MVP vlastním adaptérem DBGp → DAP | 0 závislostí; Tracy nevyžaduje rozšíření v PHP ani naslouchající port |
 | B16 | JS/TS, CSS, HTML | **externí LSP servery podle nastavení uživatele**, nic se nepřibaluje | vlastní inteligence pro web by byla další roky práce |
 
 ## Výsledná sada závislostí
@@ -40,4 +40,4 @@ Systémové frameworky macOS (AppKit, Core Text, CryptoKit, Security/Keychain, F
 - **Swift**: SwiftTerm.
 - **Go**: `go-sql-driver/mysql` (**MPL-2.0**: souborový copyleft, s MIT aplikací slučitelný, pokud jeho soubory neměníme; uvést v Poděkováních), `jackc/pgx/v5` (MIT), `golang.org/x/*` (BSD).
 - **Data**: stuby PHP (zdroj čeká na rozhodnutí, B10).
-- **Cena minimalizace**: MVP se prodloužilo z 6–9 na zhruba 14–17 měsíců čisté práce (18–23 s rezervou, viz `PLAN.md`).
+- **Cena minimalizace**: MVP se prodloužilo z 6–9 na zhruba 14–17 měsíců čisté práce (18–22 s rezervou, viz `PLAN.md`).

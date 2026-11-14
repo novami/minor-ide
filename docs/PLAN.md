@@ -25,8 +25,8 @@
 | D8 | Databáze | MariaDB/MySQL, PostgreSQL, SQLite |
 | D9 | Aktualizace | **vlastní updater**: GitHub Releases API, podpis Ed25519 (CryptoKit; **podepisuje se lokálně, klíč není na GitHubu**), Developer ID + notarizace |
 | D10 | Git / terminál | `git` CLI / **SwiftTerm** (jediná Swift knihovna) |
-| D11 | Build | **SPM + vlastní skript** na sestavení `.app`; jedna Go binárka `minoride-server` (podpříkazy `phpls`, `db`, `search`, `remote`, `debug`) |
-| D12 | Debugger a testy | **v MVP** (fáze 7b): vlastní DAP klient, `dlv dap` pro Go, vlastní adaptér Xdebug DBGp → DAP v `minoride-server debug`; test runner pro `go test`, PHPUnit a Nette Tester |
+| D11 | Build | **SPM + vlastní skript** na sestavení `.app`; jedna Go binárka `minoride-server` (podpříkazy `phpls`, `db`, `search`, `remote`) |
+| D12 | Debugger a testy | **v MVP** (fáze 7b): vlastní DAP klient a `dlv dap` pro Go; test runner pro `go test`, PHPUnit a Nette Tester. **PHP se v MVP ladí přes Tracy** (odkazy z chybové stránky a `bdump()` otevírají řádek v MinorIDE). Krokovací debugger PHP (Xdebug) až po MVP (rozhodnutí uživatele) |
 | D13 | Licence | MIT (vlastní kód). Závislosti: MIT, BSD, Apache-2.0, **MPL-2.0 jen `go-sql-driver/mysql`** (souborový copyleft, nemodifikujeme, uvedeno v Poděkováních) |
 | D14 | Vzdálené soubory | **vlastní SFTP v3 klient v Go nad systémovým `ssh -s sftp`** (0 závislostí; `~/.ssh/config`, ssh-agent, ProxyJump, sdílené spojení) |
 | D15 | FTP | **SFTP + FTPS** (FTP přes TLS, vlastní klient v Go nad stdlib `crypto/tls`). **Nešifrované FTP ne.** |
@@ -38,14 +38,14 @@
 | D21 | Sandbox | **bez App Sandbox** (IDE musí spouštět `git`, `go`, `php`, `ssh`…), distribuce mimo App Store s Developer ID, hardened runtime bez výjimek |
 | D22 | PATH | GUI aplikace z Finderu nemá PATH z terminálu (chybí `/opt/homebrew/bin`). Při startu se jednou načte prostředí z přihlašovacího **interaktivního** shellu (`$SHELL -l -i -c`, výstup mezi značkami kvůli výpisům z `.zshrc`, časový limit): `PATH`, `GOPATH`, `GOPRIVATE`, `GOFLAGS`, `SSH_AUTH_SOCK`. Při selhání záložní cesty `/opt/homebrew/bin`, `/usr/local/bin`, `~/go/bin` |
 | D23 | Ostatní jazyky (JS/TS, CSS, HTML…) | **externí LSP servery podle nastavení** (`settings.json`: jazyk → příkaz a argumenty) nad `LSPKit`; nic se nepřibaluje, bez serveru zůstává zvýraznění |
-| D24 | Síťové porty | helpery mluví jen přes stdin/stdout. Jediné výjimky: **ladění** (`dlv dap` a Xdebug DBGp, jen `127.0.0.1`, jen po dobu ladicí relace) a **askpass** (unixový socket v adresáři `0700`, jednorázový token) |
+| D24 | Síťové porty | helpery mluví jen přes stdin/stdout. Jediné výjimky: **ladění Go** (`dlv dap`, jen `127.0.0.1`, jen po dobu ladicí relace) a **askpass** (unixový socket v adresáři `0700`, jednorázový token) |
 
 ## 1. Architektura
 
 ```
 MinorIDE.app/Contents
 ├─ MacOS/MinorIDE                  (Swift: UI, editor, LSP klient, Git, terminál, updater UI)
-├─ Helpers/minoride-server         (Go: phpls | db | search | remote | debug, mluví JSON-RPC/LSP/DAP přes stdio)
+├─ Helpers/minoride-server         (Go: phpls | db | search | remote, mluví JSON-RPC/LSP přes stdio)
 ├─ Helpers/minoride-askpass        (malý Swift CLI: SSH_ASKPASS/GIT_ASKPASS, heslo si vyžádá od IDE)
 ├─ Helpers/minoride-updater        (malý Swift CLI: výměna app po ukončení)
 └─ Resources/php-stubs/            (stuby PHP funkcí a rozšíření; zdroj viz Q2)
@@ -67,7 +67,6 @@ Nastavení → Nástroje ukazuje každý nástroj s cestou a verzí, umožní ce
 | `rsync` | synchronizace | `openrsync` (macOS) nebo rsync 3.x | součást macOS |
 | `docker` | PHP v kontejneru | 24 | volba skrytá |
 | `dlv` | ladění Go | 1.22 | nabídnout `go install github.com/go-delve/delve/cmd/dlv@latest` |
-| Xdebug (rozšíření PHP) | ladění PHP | 3.0 | návod k zapnutí (`xdebug.mode=debug`) |
 | externí LSP servery (např. `typescript-language-server`) | JS/TS, CSS, HTML (D23) | podle nastavení | zůstává jen zvýraznění |
 
 ### Swift moduly (targety v jednom `Package.swift`, kód v `Sources/<Modul>/`)
@@ -94,10 +93,9 @@ Nastavení → Nástroje ukazuje každý nástroj s cestou a verzí, umožní ce
 
 ```
 server/
-├─ cmd/minoride-server/          main + podpříkazy phpls | db | search | remote | debug
+├─ cmd/minoride-server/          main + podpříkazy phpls | db | search | remote
 ├─ internal/jsonrpc/             framing (Content-Length) a dispatch
 ├─ internal/lsp/                 vlastní LSP typy
-├─ internal/dbgp/                adaptér Xdebug DBGp → DAP
 ├─ internal/php/lexer/           lexer PHP 7.2–8.5
 ├─ internal/php/parser/          rekurzivní sestup + Pratt pro výrazy, zotavení z chyb
 ├─ internal/php/ast/             AST s pozicemi (bajtové offsety)
@@ -173,7 +171,7 @@ MinorIDE se musí chovat jako nativní Mac aplikace, aby se Mac uživatel hned z
 
 ## 2. Fáze a úkoly
 
-Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 61–76 týdnů; s rezervou zhruba 30 % na to, co plán nevidí, **celé MVP: 18–23 měsíců**. Použitelné mezistupně:
+Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 59–74 týdnů; s rezervou zhruba 30 % na to, co plán nevidí, **celé MVP: 18–22 měsíců**. Použitelné mezistupně:
 
 - **po fázi 2b**: rychlý editor s aktualizacemi, otevřením souboru podle jména, hledáním v souborech, terminálem a Git gutterem; dá se denně používat;
 - **po fázi 3**: Go IDE (ladění a testy až v 7b);
@@ -410,15 +408,14 @@ Gutter změn a terminál jsou ve fázi 2b.
 7.5 Přihlašování Git: systémový `git credential-osxkeychain` a ssh-agent, vlastní GUI `GIT_ASKPASS` pro passphrase; IDE si Git hesla neukládá samo.
 - Hotovo když: merge s konfliktem ve dvou souborech se dá vyřešit a commitnout bez terminálu.
 
-### Fáze 7b: spouštění, testy a debugger (≈ 5–6 týdnů)
+### Fáze 7b: spouštění, testy a debugger (≈ 3–4 týdny)
 
 7b.1 **Run konfigurace** (`RunKit`): příkaz jako pole argumentů, pracovní složka, prostředí; uložené v `.minoride/settings.json`. Výstup v panelu, proklik z `cesta:řádek` ve výstupu.
 7b.2 **Test runner**: `go test -json`, PHPUnit (JUnit XML), Nette Tester; strom výsledků, ikona v gutteru u testu (spustit / ladit), opakování neúspěšných, proklik z chyby na řádek.
 7b.3 **DAP klient** (vlastní typy, jen použitá podmnožina): breakpointy v gutteru přes kotvy (i podmíněné), zásobník, proměnné, sledované výrazy, krokování, vyhodnocení výrazu, hodnota při najetí myší.
 7b.4 **Go**: `dlv dap` na `127.0.0.1` s náhodným portem; ladění programu i testu.
-7b.5 **PHP**: `minoride-server debug` je adaptér Xdebug **DBGp → DAP** (aplikace mluví jen DAP přes stdio). Naslouchá na `127.0.0.1:9003` (nastavitelné) jen po dobu ladicí relace; mapování cest pro Docker sdílené s 4e; ladění CLI skriptu, testu i webového požadavku.
-7b.6 **Spike před 7b.5**: ověřit, že Xdebug z kontejneru (`host.docker.internal`) dosáhne na port vázaný na `127.0.0.1`. Pokud ne, zastavit a popsat varianty.
-- Hotovo když: breakpoint v Go testu i v Nette presenteru (lokálně i v Dockeru) zastaví, jdou číst proměnné a krokovat, a po skončení relace nezůstane otevřený žádný port (test).
+7b.5 **PHP přes Tracy** (bez rozšíření v PHP a bez portu): aplikace registruje URL schéma `minoride://open?file=…&line=…` (`CFBundleURLTypes`), takže klik na soubor v chybové stránce Tracy nebo v `bdump()` otevře přesný řádek. Nastavení → Nástroje ukáže hotový řádek pro konfiguraci Tracy (`editor` a `editorMapping` pro cesty z Dockeru, mapování sdílené s 4e). Odkaz **jen otevírá existující soubor**: nic nespouští, nic nevytváří, cesta se normalizuje, soubor mimo otevřené projekty se otevře až po potvrzení.
+- Hotovo když: breakpoint v Go testu zastaví, jdou číst proměnné a krokovat, po skončení relace nezůstane otevřený žádný port (test); klik v chybové stránce Tracy (lokálně i z Dockeru) otevře správný řádek.
 
 ### Fáze 8: Nette, Latte, NEON (≈ 5–7 týdnů)
 
@@ -434,7 +431,7 @@ Cíl: Nette 3.x, Latte 3.x, struktura `app/UI/<Name>/` i starší `app/Presenter
 - Hotovo když: v reálném Nette 3.2 projektu funguje proklik kolečkem presenter ↔ šablona ↔ komponenta a napovídání členů proměnných v Latte.
 
 ### Po MVP
-SQL v PHP řetězcích, pokrytí testů (coverage), golangci-lint, inlay hinty, live templates, refaktoringy extract/inline.
+Krokovací debugger PHP (Xdebug přes vlastní adaptér DBGp → DAP nad hotovým DAP klientem, ≈ 2 týdny; potřebuje naslouchající port, tedy rozšířit D24), SQL v PHP řetězcích, pokrytí testů (coverage), golangci-lint, inlay hinty, live templates, refaktoringy extract/inline.
 
 ---
 
@@ -475,7 +472,7 @@ SQL v PHP řetězcích, pokrytí testů (coverage), golangci-lint, inlay hinty, 
 | R7 | Chyba vlastního updateru rozbije instalaci | vysoký | dvojí ověření (Ed25519 + code signature), atomická výměna s návratem, test přerušeného stažení |
 | R8 | Únik Ed25519 klíče nebo certifikátu Developer ID | vysoký | Ed25519 klíč jen v Klíčence vývojáře (ne na GitHubu), certifikát Developer ID v GitHub Secrets, offline záloha, rotace klíče (app zná aktuální i další), postup v `docs/release.md` |
 | R9 | gopls na velkých monorepech 1–2 GB RAM | střední | `directoryFilters`, varování v UI |
-| R10 | Celkový rozsah 18–23 měsíců | vysoký | striktně po fázích, vydávat a používat průběžně; kandidáti na odložení za MVP, když se čas natáhne: 6b (FTPS, rsync), 7.3–7.4, 8.7 |
+| R10 | Celkový rozsah 18–22 měsíců | vysoký | striktně po fázích, vydávat a používat průběžně; kandidáti na odložení za MVP, když se čas natáhne: 6b (FTPS, rsync), 7.3–7.4, 8.7 |
 | R11 | Únik hesla (DB, SSH, FTPS) | vysoký | sekce Bezpečnost: Klíčenka, žádná hesla v argumentech, logu ani souborech, bezpečnostní testy |
 | R12 | Škodlivý projekt spustí kód přes nástroje | vysoký | Omezený režim (D18) |
 | R13 | Klíčenka se při vývoji ptá po každém buildu (ad-hoc podpis mění identitu) | nízký | vývojové buildy podepisovat stálým vývojovým certifikátem; testy Klíčenky s vlastní testovací klíčenkou |
@@ -483,7 +480,7 @@ SQL v PHP řetězcích, pokrytí testů (coverage), golangci-lint, inlay hinty, 
 | R15 | FTPS servery na hostinzích se liší (pasivní režim za NAT, starý TLS) | střední | testy proti `vsftpd` a `pure-ftpd` v Dockeru, TLS 1.2+ povinně, obnovení TLS relace na datovém kanálu, srozumitelné chyby |
 | R16 | Dva PHP lexery (Swift pro zvýraznění, Go pro parser) se rozejdou | střední | společný korpus golden testů tokenů, nová syntaxe vždy do obou ve stejném commitu |
 | R17 | Falešné chyby inspekcí phpls u typů, kterým inference nerozumí | vysoký | neznámý typ = `mixed`, inspekce jen při jistotě, korpus reálných projektů musí projít bez hlášení „neznámá metoda“ |
-| R18 | Xdebug z Dockeru nedosáhne na port vázaný na `127.0.0.1` | střední | spike 7b.6 před implementací, varianty až podle výsledku |
+| R18 | PHP v MVP nemá krokovací debugger; DAP klient se ověří jen na Go | střední | Tracy pokryje běžné ladění v Nette; DAP klient psát obecně, aby se Xdebug po MVP jen připojil |
 
 ## 4. Otevřené otázky
 

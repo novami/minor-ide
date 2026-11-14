@@ -55,7 +55,7 @@ Priorita: **M** = MVP, **P** = později, **N** = zatím ne.
 | Databáze | Připojení, prohlížeč schématu, data grid, SQL konzole | ✔ | ✔ | rozšíření | **M** | Go sidecar proces |
 | | SQL v PHP řetězcích (language injection) | ✔ | ✔ | — | P | vnořený SQL lexer + schéma |
 | Spouštění | Run konfigurace, testy | ✔ | ✔ | ✔ | **M** | `go test -json`, PHPUnit, Nette Tester (coverage P) |
-| Debug | Delve / Xdebug | ✔ | ✔ | ✔ | **M** | DAP (`dlv dap`, vlastní adaptér DBGp → DAP) |
+| Debug | Delve / Xdebug | ✔ | ✔ | ✔ | **M** Go, **P** PHP | DAP (`dlv dap`); PHP v MVP přes Tracy, Xdebug později |
 | Web | JS/TS, CSS, HTML inteligence | — | ✔ | ✔ | M | externí LSP servery podle nastavení |
 | VCS | Git gutter, diff, commit, blame | ✔ | ✔ | ✔ | M | `git` CLI |
 | Terminál | Vestavěný terminál | ✔ | ✔ | ✔ | M | SwiftTerm |
