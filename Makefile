@@ -1,4 +1,4 @@
-.PHONY: build test server bench bundle run clean
+.PHONY: build test server bench bundle run clean l10n l10n-new l10n-check
 
 # SwiftPM's default build system cannot load the Swift Testing macros with Command Line Tools
 # only (no Xcode). The native build system plus explicit paths works with both setups.
@@ -17,9 +17,22 @@ build:
 server:
 	cd server && go build -o bin/minoride-server ./cmd/minoride-server
 
-test: server
+test: server l10n-check
 	cd server && go vet ./... && go test ./...
 	swift test $(SWIFT_BUILD) $(TEST_FLAGS)
+
+# Translations: English is generated from L("…") in Sources/, Czech must always be complete.
+L10N := cd server && go run ./cmd/l10n -sources ../Sources -resources ../Resources
+
+l10n:
+	$(L10N) sync
+
+l10n-new:
+	@test -n "$(LANG)" || { echo "usage: make l10n-new LANG=de" >&2; exit 2; }
+	$(L10N) new $(LANG)
+
+l10n-check:
+	$(L10N) -require cs check
 
 bench:
 	swift build -c release $(SWIFT_BUILD)

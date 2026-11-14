@@ -19,6 +19,10 @@ cp .build/release/MinorIDE "$APP/Contents/MacOS/MinorIDE"
 cp server/bin/minoride-server "$APP/Contents/Helpers/minoride-server"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
+# Every Resources/<lang>.lproj becomes a declared localization (new languages need no edit here).
+LOCALIZATIONS=""
+for d in Resources/*.lproj; do LOCALIZATIONS="$LOCALIZATIONS<string>$(basename "$d" .lproj)</string>"; done
+
 cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -28,7 +32,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 	<key>CFBundleIdentifier</key><string>cz.novami.minoride</string>
 	<key>CFBundleName</key><string>MinorIDE</string>
 	<key>CFBundleDevelopmentRegion</key><string>en</string>
-	<key>CFBundleLocalizations</key><array><string>en</string><string>cs</string></array>
+	<key>CFBundleLocalizations</key><array>${LOCALIZATIONS}</array>
 	<key>CFBundlePackageType</key><string>APPL</string>
 	<key>CFBundleShortVersionString</key><string>${VERSION}</string>
 	<key>CFBundleVersion</key><string>${VERSION}</string>
