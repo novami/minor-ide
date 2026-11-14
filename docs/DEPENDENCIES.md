@@ -27,7 +27,7 @@ Systémové frameworky macOS (AppKit, Core Text, CryptoKit, Security/Keychain, F
 | B7 | SQLite | **systémová `libsqlite3` přes vlastní tenký cgo binding** (2–3 dny) | `modernc.org/sqlite` je obří strom závislostí |
 | B8 | MySQL/MariaDB ovladač | **knihovna `go-sql-driver/mysql`** (1 malá závislost) | vlastní protokol včetně auth pluginů MariaDB a TLS: +3–4 týdny |
 | B9 | PostgreSQL ovladač | **knihovna `jackc/pgx/v5`** (závislosti jen jackc + `golang.org/x`) | vlastní wire protokol, SCRAM a typy: +3–4 týdny |
-| B10 | Stuby PHP funkcí | **čeká na rozhodnutí** (Q2 v `PLAN.md`); doporučení: oficiální `*.stub.php` ze zdrojů PHP + stuby z repozitářů PECL rozšíření | ručně tisíce funkcí, nereálné; data od výrobce konkurenčního IDE nechceme |
+| B10 | Stuby PHP funkcí | **oficiální `*.stub.php` ze zdrojů PHP** + stuby z repozitářů PECL rozšíření (data; rozhodnutí uživatele, D25 v `PLAN.md`) | ručně tisíce funkcí, nereálné; data od výrobce konkurenčního IDE nechceme. Cena: vlastní tabulka dostupnosti funkcí pro PHP 7.2–7.4 |
 | B11 | SSH | **systémové OpenSSH** (`ssh`, `ssh -s sftp`, `ssh -W`, ControlMaster) | 0 závislostí, plná kompatibilita s `~/.ssh/config`, agenty a ProxyJump; bezpečnostně citlivé věci (klíče, known_hosts) řeší OpenSSH |
 | B12 | SFTP | **vlastní klient protokolu v3 v Go** (≈ 2 týdny) místo `pkg/sftp` + `x/crypto/ssh` | rozhodnutí uživatele; vlastní SSH stack by byl bezpečnostní riziko |
 | B13 | FTPS | **vlastní klient v Go nad `crypto/tls`** (≈ 1,5 týdne) | knihovny pro FTP jsou málo udržované; nešifrované FTP se nepodporuje |
@@ -39,5 +39,5 @@ Systémové frameworky macOS (AppKit, Core Text, CryptoKit, Security/Keychain, F
 
 - **Swift**: SwiftTerm.
 - **Go**: `go-sql-driver/mysql` (**MPL-2.0**: souborový copyleft, s MIT aplikací slučitelný, pokud jeho soubory neměníme; uvést v Poděkováních), `jackc/pgx/v5` (MIT), `golang.org/x/*` (BSD).
-- **Data**: stuby PHP (zdroj čeká na rozhodnutí, B10).
+- **Data**: oficiální stuby PHP (php-src a PECL rozšíření, B10).
 - **Cena minimalizace**: MVP se prodloužilo z 6–9 na zhruba 14–17 měsíců čisté práce (18–22 s rezervou, viz `PLAN.md`).

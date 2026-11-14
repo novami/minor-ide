@@ -27,7 +27,7 @@
 | D10 | Git / terminál | `git` CLI / **SwiftTerm** (jediná Swift knihovna) |
 | D11 | Build | **SPM + vlastní skript** na sestavení `.app`; jedna Go binárka `minoride-server` (podpříkazy `phpls`, `db`, `search`, `remote`) |
 | D12 | Debugger a testy | **v MVP** (fáze 7b): vlastní DAP klient a `dlv dap` pro Go; test runner pro `go test`, PHPUnit a Nette Tester. **PHP se v MVP ladí přes Tracy** (odkazy z chybové stránky a `bdump()` otevírají řádek v MinorIDE). Krokovací debugger PHP (Xdebug) až po MVP (rozhodnutí uživatele) |
-| D13 | Licence | MIT (vlastní kód). Závislosti: MIT, BSD, Apache-2.0, **MPL-2.0 jen `go-sql-driver/mysql`** (souborový copyleft, nemodifikujeme, uvedeno v Poděkováních) |
+| D13 | Licence | MIT (vlastní kód). Závislosti: MIT, BSD, Apache-2.0, licence PHP (stuby), **MPL-2.0 jen `go-sql-driver/mysql`** (souborový copyleft, nemodifikujeme, uvedeno v Poděkováních) |
 | D14 | Vzdálené soubory | **vlastní SFTP v3 klient v Go nad systémovým `ssh -s sftp`** (0 závislostí; `~/.ssh/config`, ssh-agent, ProxyJump, sdílené spojení) |
 | D15 | FTP | **SFTP + FTPS** (FTP přes TLS, vlastní klient v Go nad stdlib `crypto/tls`). **Nešifrované FTP ne.** |
 | D16 | SSH | vždy **systémové OpenSSH** (`ssh`, `ssh -s sftp`, `ssh -W`; `ssh -L` jen pro tunely, které si uživatel sám založí), sdílené spojení přes `ControlMaster`; ověřování klíčů serveru přes `known_hosts`, nikdy `StrictHostKeyChecking=no` |
@@ -38,6 +38,7 @@
 | D21 | Sandbox | **bez App Sandbox** (IDE musí spouštět `git`, `go`, `php`, `ssh`…), distribuce mimo App Store s Developer ID, hardened runtime bez výjimek |
 | D22 | PATH | GUI aplikace z Finderu nemá PATH z terminálu (chybí `/opt/homebrew/bin`). Při startu se jednou načte prostředí z přihlašovacího **interaktivního** shellu (`$SHELL -l -i -c`, výstup mezi značkami kvůli výpisům z `.zshrc`, časový limit): `PATH`, `GOPATH`, `GOPRIVATE`, `GOFLAGS`, `SSH_AUTH_SOCK`. Při selhání záložní cesty `/opt/homebrew/bin`, `/usr/local/bin`, `~/go/bin` |
 | D23 | Ostatní jazyky (JS/TS, CSS, HTML…) | **externí LSP servery podle nastavení** (`settings.json`: jazyk → příkaz a argumenty) nad `LSPKit`; nic se nepřibaluje, bez serveru zůstává zvýraznění |
+| D25 | Stuby PHP | **oficiální `*.stub.php` ze zdrojů PHP** (php-src, jádro a přibalená rozšíření, od PHP 8.0) a stuby z repozitářů PECL rozšíření (redis, imagick, memcached…). Dostupnost funkcí ve verzích 7.2–7.4 vlastní tabulkou. Připnuto na tag vydání PHP, aktualizace s každou novou verzí (úkol v 4a). Licenci každého zdroje ověřit před přibalením a uvést v Poděkováních |
 | D24 | Síťové porty | helpery mluví jen přes stdin/stdout. Jediné výjimky: **ladění Go** (`dlv dap`, jen `127.0.0.1`, jen po dobu ladicí relace) a **askpass** (unixový socket v adresáři `0700`, jednorázový token) |
 
 ## 1. Architektura
@@ -48,7 +49,7 @@ MinorIDE.app/Contents
 ├─ Helpers/minoride-server         (Go: phpls | db | search | remote, mluví JSON-RPC/LSP přes stdio)
 ├─ Helpers/minoride-askpass        (malý Swift CLI: SSH_ASKPASS/GIT_ASKPASS, heslo si vyžádá od IDE)
 ├─ Helpers/minoride-updater        (malý Swift CLI: výměna app po ukončení)
-└─ Resources/php-stubs/            (stuby PHP funkcí a rozšíření; zdroj viz Q2)
+└─ Resources/php-stubs/            (oficiální stuby PHP funkcí a rozšíření, D25)
 
 Externí (hledá v PATH / projektu): gopls, php + phpstan (jen pro PHPStan a formátovače), git, ssh, rsync, docker, dlv, externí LSP servery
 ```
@@ -319,7 +320,7 @@ $x = $user->getName/*|def: User.php:12*/();
 - PHPDoc parser: `@var @param @return @throws @template(-covariant) @extends @implements @method @property(-read/-write) @mixin @deprecated`, typy včetně generik, `array{shape}`, `list<T>`, `class-string<T>`. Stejně se čtou varianty s předponou `@phpstan-` a `@psalm-` (mají přednost) a celá gramatika typů PHPStanu (`int<0, max>`, `non-empty-string`, `key-of<T>`, `value-of<T>`, `callable(int): string`, podmíněné typy, `@phpstan-type` aliasy, `@phpstan-assert`). Typ, kterému inference nerozumí, se **přečte bez chyby a počítá se jako `mixed`**.
 
 **4b. Index (≈ 2–3 týdny)**
-- Zdroje: projekt; `vendor/` podle Composeru (`installed.json`, `autoload_psr4.php`, `autoload_classmap.php`); stuby PHP (Q2) filtrované podle verze PHP projektu.
+- Zdroje: projekt; `vendor/` podle Composeru (`installed.json`, `autoload_psr4.php`, `autoload_classmap.php`); stuby PHP (D25) filtrované podle verze PHP projektu.
 - Deklarace s FQN, umístěním, signaturou a PHPDoc; rozlišení jmen (namespace, `use` všech druhů, aliasy, `self/static/parent`, fallback globálních funkcí); hierarchie a podtypy; **traity** (`use`, `insteadof`, `as`, abstraktní a statické členy), konstanty rozhraní, metody enumů.
 - **Cache na disku** (`~/Library/Caches/MinorIDE/phpls/<hash>/`, gob, per soubor hash obsahu), přeindexování jen změněných souborů, `didChangeWatchedFiles`, změna `composer.lock` → přeindexovat `vendor/`.
 - Paralelní indexace, průběh přes `$/progress`, odpovídá i během indexace.
@@ -485,8 +486,6 @@ Krokovací debugger PHP (Xdebug přes vlastní adaptér DBGp → DAP nad hotový
 ## 4. Otevřené otázky
 
 - **Q1** Testovací projekty: zatím veřejné open-source (Nette `web-project`, Laravel, velké Go repo), vlastní doplnit později.
-- **Q2** Zdroj stubů PHP (signatury vestavěných funkcí a rozšíření). Původně plánovaná sada je dílo výrobce konkurenčního IDE, nese jeho jméno v názvu, v atributech i v povinném poděkování, proto vypadla. Doporučení: **oficiální `*.stub.php` ze zdrojů PHP** (součást php-src od PHP 8.0, jádro a přibalená rozšíření) a stuby z repozitářů PECL rozšíření (redis, imagick, xdebug…); dostupnost funkcí ve verzích 7.2–7.4 doplnit vlastní tabulkou. Čeká na souhlas uživatele (nová datová závislost).
-
 ---
 
 ## 5. Pravidla pro implementátora (Sonnet)
@@ -496,7 +495,7 @@ Po založení repozitáře zkopírovat do `CLAUDE.md` projektu.
 - Pracuj po úkolech v pořadí fází. Úkol končí splněním **Hotovo když**, testem hlavní cesty a commitem.
 - **Žádná vazba na konkurenční IDE**: nejmenovat je v UI, kódu, dokumentaci ani commitech a nepodporovat jejich vlastní formáty souborů ani jejich data.
 - Commity malé, jen vlastní soubory (`git commit -- <soubory>`), bez AI podpisů. Nikdy `git push` bez vyžádání.
-- **Žádná nová závislost bez souhlasu uživatele.** Povolené jsou jen: SwiftTerm, `go-sql-driver/mysql` (MPL-2.0), `jackc/pgx/v5` (a jejich závislosti), `golang.org/x/*`. Zdroj stubů PHP čeká na rozhodnutí (Q2). Systémové frameworky macOS a stdlib Go jsou volné. Licence každé závislosti patří do okna Poděkování.
+- **Žádná nová závislost bez souhlasu uživatele.** Povolené jsou jen: SwiftTerm, `go-sql-driver/mysql` (MPL-2.0), `jackc/pgx/v5` (a jejich závislosti), `golang.org/x/*`, oficiální stuby PHP (data, D25). Systémové frameworky macOS a stdlib Go jsou volné. Licence každé závislosti patří do okna Poděkování.
 - **Bezpečnost podle sekce Bezpečnost**: hesla jen v Klíčence, nikdy v argumentech procesů, proměnných prostředí, logu ani souborech; procesy jen s polem argumentů, ne přes shell; respektovat Omezený režim (i pro Git, gopls a debugger); helpery jen přes stdin/stdout, porty jen podle D24.
 - Na hlavním vlákně jen UI. Každá změna v editační cestě musí projít výkonovým testem.
 - phpls: každá nová schopnost začíná markerovým testem. Parser: každá opravená chyba dostane fixture.
