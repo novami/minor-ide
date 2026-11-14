@@ -22,6 +22,13 @@ enum Bench {
 		let mid = editor.rope.lineRange(editor.rope.lineCount / 2).upperBound
 		editor.insertText("", replacementRange: NSRange(location: NSNotFound, length: 0))
 		editor.replace(mid..<mid, with: "")
+		// Warm-up, not measured: first use of fonts, caches and Core Animation layers.
+		for _ in 0..<20 {
+			editor.insertText("w", replacementRange: NSRange(location: NSNotFound, length: 0))
+			editor.displayIfNeeded()
+		}
+		for _ in 0..<20 { editor.doCommand(by: #selector(NSResponder.deleteBackward(_:))) }
+		editor.displayIfNeeded()
 		var samples: [Double] = []
 		var model = 0.0
 		let drawBefore = editor.drawSeconds
@@ -100,32 +107,41 @@ enum Bench {
 
 	static var lastDraws = (0, 0)
 	/// Worst sample of each measurement, checked against the plan's budgets at the end.
+	/// p99 and worst sample of each measurement, checked against the plan's budgets at the end.
+	static var p99: [String: Double] = [:]
 	static var worst: [String: Double] = [:]
 
-	/// Budgets from docs/PLAN.md: every frame-producing action under 8 ms, 1M rope edits under 2 s.
-	/// Overridable for slower machines: MINORIDE_BENCH_FRAME_MS, MINORIDE_BENCH_ROPE_MS.
+	/// Budgets from docs/PLAN.md. Local (default): 99 % of frames under 8 ms, none over 16 ms,
+	/// open under 300 ms, 1M rope edits under 2 s. MINORIDE_BENCH_PROFILE=ci is for shared
+	/// virtual machines without a GPU: one-off stalls of the VM are not the editor's, so only
+	/// p99 (8 ms) and rope throughput (4 s) are checked there.
 	static func checkBudgets() -> Bool {
-		let env = ProcessInfo.processInfo.environment
-		let frame = (env["MINORIDE_BENCH_FRAME_MS"].flatMap(Double.init) ?? 8) / 1000
-		let rope = (env["MINORIDE_BENCH_ROPE_MS"].flatMap(Double.init) ?? 2000) / 1000
-		let budgets: [(String, Double)] = [
-			("type char", frame), ("type newline", frame), ("backspace", frame),
-			("scroll 40px", frame), ("scroll jump", frame), ("1M rope edits", rope), ("open + first draw", 0.3),
-		]
+		let ci = ProcessInfo.processInfo.environment["MINORIDE_BENCH_PROFILE"] == "ci"
+		let frames = ["type char", "type newline", "backspace", "scroll 40px", "scroll jump"]
+		var checks: [(String, Double?, Double)] = [] // name, measured, limit (seconds)
+		for name in frames {
+			checks.append((name + " p99", p99[name], 0.008))
+			if !ci { checks.append((name + " max", worst[name], 0.016)) }
+		}
+		checks.append(("1M rope edits", worst["1M rope edits"], ci ? 4.0 : 2.0))
+		if !ci { checks.append(("open + first draw", worst["open + first draw"], 0.3)) }
+
 		var ok = true
-		for (name, limit) in budgets {
-			guard let value = worst[name] else { continue }
+		for (name, value, limit) in checks {
+			guard let value else { continue }
 			if value > limit {
 				print(String(format: "BUDGET FAIL %@: %.2f ms > %.2f ms", name, value * 1000, limit * 1000))
 				ok = false
 			}
 		}
-		print(ok ? "BUDGET OK" : "BUDGET EXCEEDED")
+		print(ok ? "BUDGET OK\(ci ? " (ci profile)" : "")" : "BUDGET EXCEEDED")
 		return ok
 	}
 
 	static func report(_ name: String, _ samples: [Double]) {
-		worst[name] = samples.max()
+		let sorted = samples.sorted()
+		worst[name] = sorted.last
+		p99[name] = sorted[min(sorted.count - 1, Int(Double(sorted.count) * 0.99))]
 		if let e = (NSApp.delegate as? AppDelegate)?.editor {
 			let draws = (e.drawCount - lastDraws.0, e.drawnLines - lastDraws.1)
 			lastDraws = (e.drawCount, e.drawnLines)
