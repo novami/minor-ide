@@ -1,0 +1,46 @@
+# Stav práce (pracovní pozice)
+
+Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
+
+**Poslední aktualizace:** 2026-11-14
+
+## Kde jsme
+
+Hotová je **fáze 0** a části fáze 1:
+
+| Oblast | Stav | Kde |
+|---|---|---|
+| Build bez nástrojů třetích stran (SPM + `tools/bundle.sh`, Makefile) | hotovo | `Package.swift`, `Makefile` |
+| Rope (copy-on-write, úpravy na místě, UTF-8/UTF-16/řádky) | hotovo, chybí selekce, undo, kotvy | `Sources/TextEngine/Rope.swift` |
+| Editor nad Core Text (ASCII tabulka glyfů, dávkové kreslení, okno cache řádků, zarážky tabulátorů) | spike, jeden kurzor | `Sources/EditorKit/` |
+| Formát souborů (výchozí podle PSR-12/gofmt/Nette, `.editorconfig`, settings.json, konce řádků, kódování, ukládání se zachováním práv a odkazů) | jádro hotové | `Sources/MinorCore/`, `docs/format-settings.md` |
+| Standardní menu podle Apple HIG, sheet uložení, Nedávné, otevírání z Finderu | hotovo | `Sources/MinorIDE/MainMenu.swift` |
+| Překlady: angličtina (US) z `L("…")`, čeština povinná, množná čísla `LP` + `.stringsdict` | hotovo | `server/cmd/l10n`, `docs/translations.md` |
+| Go helper: JSON-RPC, SQLite přes systémovou libsqlite3 | spike | `server/internal/db`, `jsonrpc` |
+| PHP lexer + skener deklarací (30 000 souborů za 0,35 s) | spike | `server/internal/php/` |
+| CI na GitHub Actions (testy + benchmark s rozpočtem) | nahráno, první běh viz níže | `.github/workflows/ci.yml` |
+
+Výkon (M2, `make bench`): psaní znaku 0,05 ms, skok na jiné místo 0,30 ms, 1M editací ropu 0,66 s. Podrobnosti: `docs/spike-editor.md`, `docs/spike-phpls.md`.
+
+Repozitář: https://github.com/novami/minor-ide (větev `main`, vše nahrané).
+
+## Další krok
+
+**Fáze 1a: dokončit TextEngine** (`docs/PLAN.md`, fáze 1):
+1. Multi-selekce v `TextEngine` (seřazené rozsahy, slučování překryvů), napojení do `EditorView` (kreslení výběru, Shift+šipky, myš).
+2. Transakce editací a undo/redo se slučováním psaní a obnovou selekcí; menu Zpět/Znovu, Kopírovat/Vyjmout/Vybrat vše.
+3. Kotvy (pozice, které přežijí editace).
+4. Property-based testy selekcí a undo.
+
+Pak 1b (vstup, myš, displayLink), 1c (příkazy, hledání), 1d (lexery a zvýraznění).
+
+## Otevřené věci mimo kód
+- **Apple Developer účet** (potřeba pro fázi 2: podepsané aktualizace).
+- **První běh CI**: viz sekce Poznámky k prostředí. Pokud selže verze Swiftu na runneru, upravit `runs-on` nebo kód.
+
+## Poznámky k prostředí
+- Mac má jen **Command Line Tools** (bez Xcode): testy vždy přes `make test` (obchází chybu SwiftPM se Swift Testing).
+- Go 1.27.4 a Composer 2.11 nainstalované přes Homebrew.
+- Push na GitHub: `git push` (token v `GH_TOKEN` má oprávnění `workflow`); pokud git nezná přihlášení, `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push`.
+- Testovací PHP projekt pro skener: `composer create-project nette/web-project <složka> --no-interaction --no-scripts`, pak `server/bin/minoride-server phpscan <složka>`.
+- Ladicí přepínače aplikace: `--bench`, `--snapshot <png> [soubor]`, `--dump-menu`, `--l10n-sample` (s `-AppleLanguages "(cs)"`).

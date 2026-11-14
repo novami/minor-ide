@@ -2,6 +2,8 @@
 
 Nativní IDE pro Go a PHP na macOS (Apple Silicon). Plán: `docs/PLAN.md`, závislosti: `docs/DEPENDENCIES.md`.
 
+**Pracovní pozice: `docs/STATUS.md`.** Na začátku session ho přečti a pokračuj „Dalším krokem“. Po každém dokončeném bloku práce ho aktualizuj (co je hotové, další krok, otevřené věci), commitni a řekni uživateli, že může vyčistit kontext.
+
 ## Příkazy
 - `make test` – Go vet + testy, Swift testy (vždy přes make: SwiftPM s Command Line Tools potřebuje native build system a cesty k Swift Testing)
 - `make bench` – výkonový benchmark editoru (release)
