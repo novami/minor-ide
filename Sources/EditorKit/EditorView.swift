@@ -20,8 +20,11 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	private var markedText = ""
 	private var preferredColumnX: CGFloat?
 
-	private var layoutCache: [Int: LineLayout] = [:]
-	private var numberCache: [Int: LineLayout] = [:]
+	private var layoutCache = LayoutCache()
+	private var numberCache = LayoutCache()
+	private let ascii: AsciiGlyphs
+	private var batchGlyphs: [CGGlyph] = []
+	private var batchPositions: [CGPoint] = []
 	private let textAttributes: [NSAttributedString.Key: Any]
 
 	/// Number of draw passes, drawn lines and time spent in draw(_:), for benchmarks.
@@ -38,6 +41,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		let digitWidth = ("0" as NSString).size(withAttributes: [.font: font]).width
 		gutterWidth = ceil(digitWidth * 7) + 16
 		textAttributes = [.font: font, .foregroundColor: NSColor.textColor]
+		ascii = AsciiGlyphs(font: font as CTFont)
 		super.init(frame: .zero)
 		wantsLayer = true
 		layerContentsRedrawPolicy = .onSetNeedsDisplay
@@ -91,35 +95,42 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 		if first <= last {
 			drawnLines += last - first + 1
-			for line in first...last {
-				let y = CGFloat(line) * lineHeight
-				if line == caretLine {
-					ctx.setFillColor(NSColor.selectedTextBackgroundColor.withAlphaComponent(0.15).cgColor)
-					ctx.fill(CGRect(x: gutterWidth, y: y, width: bounds.width - gutterWidth, height: lineHeight))
-				}
-				let number = numberLayout(line)
-				ctx.setFillColor(numberColor)
-				number.draw(in: ctx, font: ctFont, at: CGPoint(x: gutterWidth - 10 - number.width, y: y + ascent + 1))
-				ctx.setFillColor(textColor)
-				layout(line).draw(in: ctx, font: ctFont, at: CGPoint(x: gutterWidth + textInset, y: y + ascent + 1))
+			if (first...last).contains(caretLine) {
+				ctx.setFillColor(NSColor.selectedTextBackgroundColor.withAlphaComponent(0.15).cgColor)
+				ctx.fill(CGRect(x: gutterWidth, y: CGFloat(caretLine) * lineHeight, width: bounds.width - gutterWidth, height: lineHeight))
 			}
+			// Fast-path lines are batched into one glyph draw per colour; CTLine fallbacks draw alone.
+			drawBatch(ctx, color: numberColor, lines: first...last) { line in
+				let n = numberLayout(line)
+				return (n, gutterWidth - 10 - n.width)
+			}
+			drawBatch(ctx, color: textColor, lines: first...last) { line in (layout(line), gutterWidth + textInset) }
 		}
 		drawCaret(ctx, line: caretLine)
-		trimCaches(keepingAround: first...max(first, last))
+		let keep = (first - 300)...(max(first, last) + 300)
+		layoutCache.trim(keep: keep, limit: 1500) // bounds memory when scrolling through large files
+		numberCache.trim(keep: keep, limit: 1500)
 	}
 
-	/// Bounds memory: scrolling through a large file must not keep every line's layout.
-	/// Evicted layouts are released on a background queue: freeing thousands of them
-	/// on the main thread showed up as 2 ms frame spikes.
-	private func trimCaches(keepingAround visible: ClosedRange<Int>) {
-		let limit = 1500
-		guard layoutCache.count > limit || numberCache.count > limit else { return }
-		let caretLine = rope.line(containing: caret)
-		let keep = (visible.lowerBound - 300)...(visible.upperBound + 300)
-		let evicted = Evicted(layouts: layoutCache, numbers: numberCache)
-		layoutCache = layoutCache.filter { keep.contains($0.key) || $0.key == caretLine }
-		numberCache = numberCache.filter { keep.contains($0.key) }
-		DispatchQueue.global(qos: .utility).async { evicted.release() }
+	private func drawBatch(_ ctx: CGContext, color: CGColor, lines: ClosedRange<Int>, _ layoutAt: (Int) -> (LineLayout, CGFloat)) {
+		ctx.setFillColor(color)
+		batchGlyphs.removeAll(keepingCapacity: true)
+		batchPositions.removeAll(keepingCapacity: true)
+		for line in lines {
+			let (l, x) = layoutAt(line)
+			let baseline = CGFloat(line) * lineHeight + ascent + 1
+			if l.ctLine != nil {
+				l.draw(in: ctx, font: ctFont, at: CGPoint(x: x, y: baseline))
+				continue
+			}
+			batchGlyphs.append(contentsOf: l.glyphs)
+			// The batch is drawn with the CTM flipped around y = 0, so baselines are negated.
+			for p in l.positions { batchPositions.append(CGPoint(x: x + p.x, y: -baseline)) }
+		}
+		guard !batchGlyphs.isEmpty else { return }
+		LineLayout.withBaseline(ctx, .zero) {
+			CTFontDrawGlyphs(ctFont, batchGlyphs, batchPositions, batchGlyphs.count, ctx)
+		}
 	}
 
 	private func drawCaret(_ ctx: CGContext, line: Int) {
@@ -139,14 +150,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	private func layout(_ line: Int) -> LineLayout {
 		if let cached = layoutCache[line] { return cached }
-		let l = LineLayout(bytes: rope.bytes(in: rope.lineRange(line)), font: ctFont, attributes: textAttributes)
+		let l = LineLayout(bytes: rope.bytes(in: rope.lineRange(line)), font: ctFont, ascii: ascii, attributes: textAttributes)
 		layoutCache[line] = l
 		return l
 	}
 
 	private func numberLayout(_ line: Int) -> LineLayout {
 		if let cached = numberCache[line] { return cached }
-		let l = LineLayout(bytes: Array(String(line + 1).utf8), font: ctFont, attributes: textAttributes)
+		let l = LineLayout(bytes: Array(String(line + 1).utf8), font: ctFont, ascii: ascii, attributes: textAttributes)
 		numberCache[line] = l
 		return l
 	}
@@ -177,26 +188,13 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			setNeedsDisplay(lineRect(firstLine))
 			if caretLineBefore != firstLine { setNeedsDisplay(lineRect(caretLineBefore)) }
 		} else {
-			shiftLayoutCache(from: firstLine, removed: removedNewlines, delta: rope.lineCount - oldLines)
+			layoutCache.shift(from: firstLine, removed: removedNewlines, delta: rope.lineCount - oldLines)
 			updateSize()
 			let visible = visibleRect
 			setNeedsDisplay(NSRect(x: 0, y: CGFloat(firstLine) * lineHeight, width: bounds.width,
 			                       height: max(0, visible.maxY - CGFloat(firstLine) * lineHeight)))
 		}
 		scrollCaretVisible()
-	}
-
-	/// Keeps cached layouts of unchanged lines when lines are inserted or removed:
-	/// lines before the edit stay, edited lines are dropped, lines after the edit move by `delta`.
-	private func shiftLayoutCache(from line: Int, removed: Int, delta: Int) {
-		var shifted: [Int: LineLayout] = [:]
-		shifted.reserveCapacity(layoutCache.count)
-		let firstUnchangedAfter = line + removed + 1 // old index of the first line below the edit
-		for (index, l) in layoutCache {
-			if index < line { shifted[index] = l }
-			else if index >= firstUnchangedAfter { shifted[index + delta] = l }
-		}
-		layoutCache = shifted
 	}
 
 	func moveCaret(to offset: Int, keepColumn: Bool = false) {
@@ -322,19 +320,4 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	public func characterIndex(for point: NSPoint) -> Int { NSNotFound }
-}
-
-/// Carries evicted cache entries to a background queue. CTLine is immutable and safe to
-/// release from any thread; nothing else touches these values after eviction.
-private final class Evicted: @unchecked Sendable {
-	private var layouts: [Int: LineLayout]?
-	private var numbers: [Int: LineLayout]?
-	init(layouts: [Int: LineLayout], numbers: [Int: LineLayout]) {
-		self.layouts = layouts
-		self.numbers = numbers
-	}
-	func release() {
-		layouts = nil
-		numbers = nil
-	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -53,8 +54,9 @@ func runPHPScan(args []string) error {
 		wg.Add(1)
 		go func(s *stat) {
 			defer wg.Done()
+			var buf []byte // reused per worker: scan results copy what they keep
 			for p := range jobs {
-				src, err := os.ReadFile(p)
+				src, err := readInto(&buf, p)
 				if err != nil {
 					continue
 				}
@@ -114,4 +116,26 @@ func runPHPScan(args []string) error {
 		fmt.Printf("  %s\n", p)
 	}
 	return nil
+}
+
+// readInto reads a file into *buf, growing it only when needed.
+func readInto(buf *[]byte, path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	n := int(info.Size())
+	if cap(*buf) < n {
+		*buf = make([]byte, n+n/4)
+	}
+	b := (*buf)[:n]
+	if _, err := io.ReadFull(f, b); err != nil {
+		return nil, err
+	}
+	return b, nil
 }

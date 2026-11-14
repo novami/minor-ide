@@ -1,3 +1,5 @@
+import Foundation
+
 /// Aggregated metrics of a text span. Counting works on raw UTF-8 bytes, so a span may
 /// start or end inside a multi-byte sequence and the sums stay correct.
 public struct TextSummary: Sendable, Equatable {
@@ -128,10 +130,10 @@ public struct Rope: Sendable {
 	// MARK: Editing
 
 	public mutating func replace(_ range: Range<Int>, with text: String) {
-		replace(range, with: Array(text.utf8))
+		replace(range, with: text.utf8) // no intermediate array: typing must not allocate
 	}
 
-	public mutating func replace(_ range: Range<Int>, with bytes: [UInt8]) {
+	public mutating func replace<C: Collection>(_ range: Range<Int>, with bytes: C) where C.Element == UInt8 {
 		precondition(range.lowerBound >= 0 && range.upperBound <= byteCount, "range out of bounds")
 		if !range.isEmpty {
 			if Rope.delete(&root, range) { root = Node(leaf: []) }
@@ -159,11 +161,19 @@ public struct Rope: Sendable {
 				base += c.summary.bytes
 			}
 		}
-		for (i, b) in node.bytes.enumerated() where b == 0x0A {
-			remaining -= 1
-			if remaining == 0 { return base + i + 1 }
+		let found: Int? = node.bytes.withUnsafeBufferPointer { buf in
+			guard let start = buf.baseAddress else { return nil }
+			var p = UnsafeRawPointer(start)
+			let end = p + buf.count
+			while p < end, let hit = memchr(p, 0x0A, end - p) {
+				remaining -= 1
+				if remaining == 0 { return UnsafeRawPointer(hit) - UnsafeRawPointer(start) }
+				p = UnsafeRawPointer(hit) + 1
+			}
+			return nil
 		}
-		preconditionFailure("newline index inconsistent")
+		guard let i = found else { preconditionFailure("newline index inconsistent") }
+		return base + i + 1
 	}
 
 	/// 0-based line containing the byte offset.
@@ -256,7 +266,8 @@ public struct Rope: Sendable {
 	}
 
 	/// Inserts in place; returns overflow siblings (same height) to place right of `node`.
-	static func insert(_ node: inout Node, at offset: Int, _ bytes: [UInt8], _ added: TextSummary) -> [Node] {
+	static func insert<C: Collection>(_ node: inout Node, at offset: Int, _ bytes: C, _ added: TextSummary) -> [Node]
+		where C.Element == UInt8 {
 		makeUnique(&node)
 		if node.isLeaf {
 			node.bytes.insert(contentsOf: bytes, at: offset)
@@ -315,7 +326,9 @@ public struct Rope: Sendable {
 			base = end
 		}
 		if node.children.isEmpty { return true }
-		if node.height == 1 { node.children = mergeSmallLeaves(node.children) }
+		if node.height == 1, node.children.contains(where: { $0.bytes.count < Node.maxLeaf / 4 }) {
+			node.children = mergeSmallLeaves(node.children)
+		}
 		node.recomputeSummary()
 		return false
 	}

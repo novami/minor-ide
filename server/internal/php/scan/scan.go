@@ -42,12 +42,18 @@ type Result struct {
 	Unbalanced bool
 }
 
+// tok is 12 bytes; text is sliced from the source on demand.
 type tok struct {
-	kind lexer.Kind
-	op   byte // the operator byte for single-character operators, else 0
-	text []byte
-	off  int
+	kind       lexer.Kind
+	op         byte // single-character operator byte, or opDoubleColon/opArrow/opNullsafe, else 0
+	start, end int32
 }
+
+const (
+	opDoubleColon = 1 // ::
+	opArrow       = 2 // ->
+	opNullsafe    = 3 // ?->
+)
 
 // File scans one PHP file.
 func File(src []byte) *Result {
@@ -55,6 +61,7 @@ func File(src []byte) *Result {
 	toks := significant(src, (*buf)[:0])
 	defer func() { *buf = toks; tokPool.Put(buf) }()
 	r := &Result{}
+	text := func(t tok) []byte { return src[t.start:t.end] }
 	var (
 		depth     int
 		nsDepth   int    // brace depth of the current namespace body
@@ -92,11 +99,11 @@ func File(src []byte) *Result {
 			paren--
 		case t.kind != lexer.Ident:
 			if t.kind == lexer.Variable && depth == classBody && paren == 0 && class != "" {
-				r.Decls = append(r.Decls, Decl{Property, class + "::" + string(t.text), t.off})
+				r.Decls = append(r.Decls, Decl{Property, class + "::" + string(text(t)), int(t.start)})
 			}
 		default:
-			word := keyword(t.text)
-			if isOp(prev, "::") || isOp(prev, "->") || isOp(prev, "?->") {
+			word := keyword(text(t))
+			if prev.op == opDoubleColon || prev.op == opArrow || prev.op == opNullsafe {
 				continue // Foo::class, $x->class
 			}
 			switch word {
@@ -107,7 +114,7 @@ func File(src []byte) *Result {
 				name := at(toks, i+1)
 				switch {
 				case name.kind == lexer.Ident || name.kind == lexer.Name:
-					r.Namespace = strings.TrimPrefix(string(name.text), `\`)
+					r.Namespace = strings.TrimPrefix(string(text(name)), `\`)
 					i++
 				case isOp(name, "{"):
 					r.Namespace = ""
@@ -122,7 +129,7 @@ func File(src []byte) *Result {
 				}
 				var b strings.Builder
 				for i++; i < len(toks) && !isOp(toks[i], ";"); i++ {
-					b.Write(toks[i].text)
+					b.Write(text(toks[i]))
 					if toks[i].kind == lexer.Ident && at(toks, i+1).kind == lexer.Ident {
 						b.WriteByte(' ')
 					}
@@ -130,15 +137,15 @@ func File(src []byte) *Result {
 				r.Uses = append(r.Uses, b.String())
 			case "class", "interface", "trait", "enum":
 				name := at(toks, i+1)
-				if name.kind != lexer.Ident || isWord(prev, "new") || pending != "" {
+				if name.kind != lexer.Ident || isWord(src, prev, "new") || pending != "" {
 					continue // anonymous class or "enum" used as a name
 				}
-				if word == "enum" && !(isOp(at(toks, i+2), "{") || isOp(at(toks, i+2), ":") || isWord(at(toks, i+2), "implements")) {
+				if word == "enum" && !(isOp(at(toks, i+2), "{") || isOp(at(toks, i+2), ":") || isWord(src, at(toks, i+2), "implements")) {
 					continue
 				}
 				kind := map[string]Kind{"class": Class, "interface": Interface, "trait": Trait, "enum": Enum}[word]
-				fqn := qualify(string(name.text))
-				r.Decls = append(r.Decls, Decl{kind, fqn, name.off})
+				fqn := qualify(string(text(name)))
+				r.Decls = append(r.Decls, Decl{kind, fqn, int(name.start)})
 				pending = fqn
 				i++
 			case "function":
@@ -152,9 +159,9 @@ func File(src []byte) *Result {
 				}
 				switch {
 				case class != "" && depth == classBody:
-					r.Decls = append(r.Decls, Decl{Method, class + "::" + string(name.text), name.off})
+					r.Decls = append(r.Decls, Decl{Method, class + "::" + string(text(name)), int(name.start)})
 				case class == "" && depth == nsDepth:
-					r.Decls = append(r.Decls, Decl{Function, qualify(string(name.text)), name.off})
+					r.Decls = append(r.Decls, Decl{Function, qualify(string(text(name))), int(name.start)})
 				}
 				i = j
 			case "const":
@@ -164,18 +171,18 @@ func File(src []byte) *Result {
 				// const [type] NAME = …, NAME2 = …; the name is the identifier before "=".
 				for j := i + 1; j < len(toks) && !isOp(toks[j], ";"); j++ {
 					if isOp(toks[j], "=") && toks[j-1].kind == lexer.Ident {
-						name := string(toks[j-1].text)
+						name := string(text(toks[j-1]))
 						if class != "" {
 							name = class + "::" + name
 						} else {
 							name = qualify(name)
 						}
-						r.Decls = append(r.Decls, Decl{Const, name, toks[j-1].off})
+						r.Decls = append(r.Decls, Decl{Const, name, int(toks[j-1].start)})
 					}
 				}
 			case "case":
 				if class != "" && depth == classBody && at(toks, i+1).kind == lexer.Ident {
-					r.Decls = append(r.Decls, Decl{EnumCase, class + "::" + string(toks[i+1].text), toks[i+1].off})
+					r.Decls = append(r.Decls, Decl{EnumCase, class + "::" + string(text(toks[i+1])), int(toks[i+1].start)})
 				}
 			}
 		}
@@ -191,6 +198,9 @@ var keywords = []string{"namespace", "use", "class", "interface", "trait", "enum
 
 // keyword returns the lower-case keyword the identifier matches (case-insensitively), or "".
 func keyword(b []byte) string {
+	if len(b) < 3 || len(b) > 9 {
+		return ""
+	}
 	for _, k := range keywords {
 		if len(b) == len(k) && bytes.EqualFold(b, []byte(k)) {
 			return k
@@ -211,12 +221,21 @@ func significant(src []byte, toks []tok) []tok {
 			continue
 		case lexer.CloseTag:
 			// "?>" ends a statement like ";"
-			toks = append(toks, tok{lexer.Op, ';', []byte(";"), t.Start})
+			toks = append(toks, tok{kind: lexer.Op, op: ';', start: int32(t.Start), end: int32(t.Start)})
 			continue
 		}
-		nt := tok{kind: t.Kind, text: t.Text(src), off: t.Start}
-		if t.Kind == lexer.Op && len(nt.text) == 1 {
-			nt.op = nt.text[0]
+		nt := tok{kind: t.Kind, start: int32(t.Start), end: int32(t.End)}
+		if t.Kind == lexer.Op {
+			switch op := src[t.Start:t.End]; {
+			case len(op) == 1:
+				nt.op = op[0]
+			case string(op) == "::":
+				nt.op = opDoubleColon
+			case string(op) == "->":
+				nt.op = opArrow
+			case string(op) == "?->":
+				nt.op = opNullsafe
+			}
 		}
 		toks = append(toks, nt)
 	}
@@ -229,10 +248,9 @@ func at(toks []tok, i int) tok {
 	return toks[i]
 }
 
-func isOp(t tok, op string) bool {
-	if len(op) == 1 {
-		return t.op == op[0]
-	}
-	return t.kind == lexer.Op && string(t.text) == op
+// isOp matches single-character operators (multi-character ones are compared via op codes).
+func isOp(t tok, op string) bool { return t.op == op[0] }
+
+func isWord(src []byte, t tok, w string) bool {
+	return t.kind == lexer.Ident && bytes.EqualFold(src[t.start:t.end], []byte(w))
 }
-func isWord(t tok, w string) bool { return t.kind == lexer.Ident && bytes.EqualFold(t.text, []byte(w)) }

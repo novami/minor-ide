@@ -10,19 +10,20 @@ Nástroj: `minoride-server phpscan <dir>`: vlastní lexer PHP + skener deklarac�
 
 ## Výsledky (teplá cache souborů)
 
-| Korpus | Před optimalizací | Po optimalizaci | Paměť | Neuzavřené závorky |
+| Korpus | Před optimalizací | 2. kolo | 3. kolo (naslepo) | Neuzavřené závorky |
 |---|---|---|---|---|
-| nette/web-project | 23 ms | **12 ms** | 6 MB | 0 (předtím 2, viz níže) |
-| Syntetický, 30 000 souborů | 0,99 s | **0,38 s** (460 MB/s) | 18–23 MB | 0 |
-| Jedno vlákno, Nette (`go test -bench`) | 83 MB/s, 35 MB alokací | **220 MB/s, 1,4 MB alokací** | | |
+| nette/web-project | 23 ms | 12 ms | **9 ms** | 0 (předtím 2, viz níže) |
+| Syntetický, 30 000 souborů | 0,99 s | 0,38 s | **0,35 s** (500 MB/s) | 0 |
+| Jedno vlákno, Nette (`go test -bench`) | 83 MB/s, 35 MB alokací | 220 MB/s, 1,4 MB | **236 MB/s**, 1,4 MB | |
 
-Rozpočet „30 000 souborů pod 10 s“ je splněný **26×**.
+Rozpočet „30 000 souborů pod 10 s“ je splněný **28×**.
 
 ## Co přineslo zrychlení
 1. Znovupoužití bufferu tokenů mezi soubory (`sync.Pool`); alokace tokenů byly 12× větší než vstup.
 2. Rozpoznání klíčových slov bez `strings.ToLower` (alokace u každého identifikátoru).
 3. Operátory indexované podle prvního bajtu, jednoznakové porovnávané jako bajt.
 4. Tabulka tříd znaků místo řetězců porovnání v lexeru.
+5. (3. kolo) Tokeny skeneru zmenšené na 12 B (text se bere ze zdroje podle pozic), víceznakové operátory jako kódy, znovupoužitý buffer pro čtení souborů.
 
 ## Chyba nalezená na Nette projektu
 `$f = function () use (&$x) { … };` na úrovni souboru skener četl jako import `use` a ztratil složenou závorku (2 soubory v `nette/neon/examples`). Opraveno: import `use` jen na začátku příkazu. Má regresní test.

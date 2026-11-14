@@ -11,36 +11,83 @@ struct LineLayout {
 	let positions: [CGPoint] // baseline-relative, y = 0
 	/// Fallback path: the typeset line and the units, so offsets are computed only when asked.
 	let ctLine: CTLine?
-	private let units: [UInt16]
+	private let expandedIndex: [Int] // fallback: string index in the tab-expanded text per unit boundary
 	let width: CGFloat
 
-	var unitCount: Int { ctLine == nil ? unitX.count - 1 : units.count }
+	var unitCount: Int { ctLine == nil ? unitX.count - 1 : expandedIndex.count - 1 }
 
 	/// x offset before the UTF-16 unit at `index` (tabs expanded).
 	func x(atUnit index: Int) -> CGFloat {
 		let i = min(max(index, 0), unitCount)
 		guard let ctLine else { return unitX[i] }
-		let expanded = units[0..<i].reduce(0) { $0 + ($1 == 0x09 ? LineLayout.tabWidth : 1) }
-		return CTLineGetOffsetForStringIndex(ctLine, expanded, nil)
+		return CTLineGetOffsetForStringIndex(ctLine, expandedIndex[i], nil)
 	}
 
 	static let tabWidth = 4
 
-	init(bytes: some Collection<UInt8>, font: CTFont, attributes: [NSAttributedString.Key: Any]) {
+	/// Tabs advance to the next tab stop, not by a fixed width.
+	@inline(__always) static func nextTabStop(_ x: CGFloat, space: CGFloat) -> CGFloat {
+		let stop = space * CGFloat(tabWidth)
+		return (floor(x / stop + 0.001) + 1) * stop
+	}
+
+	init(bytes: [UInt8], font: CTFont, ascii: AsciiGlyphs, attributes: [NSAttributedString.Key: Any]) {
+		if let fast = LineLayout.asciiPath(bytes, ascii) {
+			(unitX, glyphs, positions, ctLine, expandedIndex) = (fast.unitX, fast.glyphs, fast.positions, nil, [])
+			width = fast.unitX.last ?? 0
+			return
+		}
 		var text = String(decoding: bytes, as: UTF8.self)
 		if text.hasSuffix("\r") { text.removeLast() }
 		let units = Array(text.utf16)
 
 		if let fast = LineLayout.fastPath(units, font) {
-			(unitX, glyphs, positions, ctLine, self.units) = (fast.unitX, fast.glyphs, fast.positions, nil, [])
+			(unitX, glyphs, positions, ctLine, expandedIndex) = (fast.unitX, fast.glyphs, fast.positions, nil, [])
 			width = fast.unitX.last ?? 0
 			return
 		}
 		// Fallback: expand tabs so the typesetter sees the same columns as the fast path.
-		let expanded = text.replacingOccurrences(of: "\t", with: String(repeating: " ", count: LineLayout.tabWidth))
-		let line = CTLineCreateWithAttributedString(NSAttributedString(string: expanded, attributes: attributes))
-		(unitX, glyphs, positions, ctLine, self.units) = ([], [], [], line, units)
+		// Expand tabs to the next tab stop by column (UTF-16 units approximate columns here).
+		var expanded: [UInt16] = []
+		var map = [0]
+		for u in units {
+			if u == 0x09 {
+				let spaces = LineLayout.tabWidth - expanded.count % LineLayout.tabWidth
+				expanded.append(contentsOf: repeatElement(0x20, count: spaces))
+			} else {
+				expanded.append(u)
+			}
+			map.append(expanded.count)
+		}
+		let line = CTLineCreateWithAttributedString(NSAttributedString(
+			string: String(utf16CodeUnits: expanded, count: expanded.count), attributes: attributes))
+		(unitX, glyphs, positions, ctLine, expandedIndex) = ([], [], [], line, map)
 		width = CTLineGetTypographicBounds(line, nil, nil, nil)
+	}
+
+	/// Pure ASCII lines (most code): table lookups only, no String and no Core Text calls.
+	private static func asciiPath(_ bytes: [UInt8], _ ascii: AsciiGlyphs) -> (unitX: [CGFloat], glyphs: [CGGlyph], positions: [CGPoint])? {
+		var n = bytes.count
+		if n > 0 && bytes[n - 1] == 0x0D { n -= 1 }
+		var glyphs = [CGGlyph](repeating: 0, count: n)
+		var positions = [CGPoint](repeating: .zero, count: n)
+		var unitX = [CGFloat](repeating: 0, count: n + 1)
+		var x: CGFloat = 0
+		for i in 0..<n {
+			let b = Int(bytes[i])
+			guard b < 0x80, ascii.glyphs[b] != 0 || b == 0x09 else { return nil }
+			if b == 0x09 {
+				glyphs[i] = ascii.glyphs[0x20]
+				positions[i] = CGPoint(x: x, y: 0)
+				x = nextTabStop(x, space: ascii.advances[0x20])
+			} else {
+				glyphs[i] = ascii.glyphs[b]
+				positions[i] = CGPoint(x: x, y: 0)
+				x += ascii.advances[b]
+			}
+			unitX[i + 1] = x
+		}
+		return (unitX, glyphs, positions)
 	}
 
 	private static func fastPath(_ units: [UInt16], _ font: CTFont) -> (unitX: [CGFloat], glyphs: [CGGlyph], positions: [CGPoint])? {
@@ -62,7 +109,7 @@ struct LineLayout {
 		var x: CGFloat = 0
 		for i in 0..<units.count {
 			positions[i] = CGPoint(x: x, y: 0)
-			x += units[i] == 0x09 ? advances[i].width * CGFloat(tabWidth) : advances[i].width
+			x = units[i] == 0x09 ? nextTabStop(x, space: advances[i].width) : x + advances[i].width // tab maps to the space glyph
 			unitX[i + 1] = x
 		}
 		return (unitX, glyphs, positions)
@@ -102,5 +149,19 @@ struct LineLayout {
 		}
 		if lo > 0 && x - self.x(atUnit: lo - 1) < self.x(atUnit: lo) - x { return lo - 1 }
 		return lo
+	}
+}
+
+/// Glyphs and advances of the ASCII range for one font, looked up once.
+struct AsciiGlyphs {
+	var glyphs = [CGGlyph](repeating: 0, count: 128)
+	var advances = [CGFloat](repeating: 0, count: 128)
+
+	init(font: CTFont) {
+		var chars = (0..<128).map { UInt16($0) }
+		_ = CTFontGetGlyphsForCharacters(font, &chars, &glyphs, 128) // control characters stay 0
+		var sizes = [CGSize](repeating: .zero, count: 128)
+		CTFontGetAdvancesForGlyphs(font, .horizontal, glyphs, &sizes, 128)
+		advances = sizes.map(\.width)
 	}
 }
