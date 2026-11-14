@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache: false # no third-party Go modules yet
+
+      - name: Toolchain versions
+        run: |
+          sw_vers
+          xcode-select -p
+          swift --version
+          go version
+
+      - name: Tests (Go vet + tests, Swift tests)
+        run: make test
+
+      # Fails when a measurement exceeds the plan's budgets (8 ms per frame, 2 s for 1M rope edits).
+      # Runners are slower than an M2 but still far below the budget, so this catches real regressions.
+      - name: Editor benchmark
+        run: make bench

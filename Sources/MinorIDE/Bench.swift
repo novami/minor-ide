@@ -95,12 +95,37 @@ enum Bench {
 		}
 		report("1M rope edits", [CACurrentMediaTime() - t])
 
-		NSApp.terminate(nil)
+		exit(checkBudgets() ? 0 : 1)
 	}
 
 	static var lastDraws = (0, 0)
+	/// Worst sample of each measurement, checked against the plan's budgets at the end.
+	static var worst: [String: Double] = [:]
+
+	/// Budgets from docs/PLAN.md: every frame-producing action under 8 ms, 1M rope edits under 2 s.
+	/// Overridable for slower machines: MINORIDE_BENCH_FRAME_MS, MINORIDE_BENCH_ROPE_MS.
+	static func checkBudgets() -> Bool {
+		let env = ProcessInfo.processInfo.environment
+		let frame = (env["MINORIDE_BENCH_FRAME_MS"].flatMap(Double.init) ?? 8) / 1000
+		let rope = (env["MINORIDE_BENCH_ROPE_MS"].flatMap(Double.init) ?? 2000) / 1000
+		let budgets: [(String, Double)] = [
+			("type char", frame), ("type newline", frame), ("backspace", frame),
+			("scroll 40px", frame), ("scroll jump", frame), ("1M rope edits", rope), ("open + first draw", 0.3),
+		]
+		var ok = true
+		for (name, limit) in budgets {
+			guard let value = worst[name] else { continue }
+			if value > limit {
+				print(String(format: "BUDGET FAIL %@: %.2f ms > %.2f ms", name, value * 1000, limit * 1000))
+				ok = false
+			}
+		}
+		print(ok ? "BUDGET OK" : "BUDGET EXCEEDED")
+		return ok
+	}
 
 	static func report(_ name: String, _ samples: [Double]) {
+		worst[name] = samples.max()
 		if let e = (NSApp.delegate as? AppDelegate)?.editor {
 			let draws = (e.drawCount - lastDraws.0, e.drawnLines - lastDraws.1)
 			lastDraws = (e.drawCount, e.drawnLines)
