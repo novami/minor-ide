@@ -34,6 +34,12 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 Pak 1b (vstup, myš, displayLink), 1c (příkazy, hledání), 1d (lexery a zvýraznění).
 
+**Revize plánu 2026-11-14** (pořadí fází se změnilo, další krok ne): nová fáze 2b (otevření souboru, hledání, Git gutter, terminál) před LSP, debugger a testy v MVP (7b), Git rozšířen o konflikty, externí LSP servery (D23), PHP až po aktuální verzi. Opravy, které se týkají už hotového kódu nebo nejbližší práce:
+- zkratky: písmena podle znaku, keyCode jen pro interpunkci (1e); ⌘E zůstává systémové;
+- 1b: klávesy mimo keymapu přes `doCommandBySelector`;
+- důvěra projektu mimo projekt (`trusted.json`), `.minoride/local.json` se v Omezeném režimu nečte;
+- prostředí ze shellu přes `-l -i -c` (D22).
+
 ## Otevřené věci mimo kód
 - **Apple Developer účet** (potřeba pro fázi 2: podepsané aktualizace).
 - **CI**: první běh (macOS 26.7, Xcode 26.6) — testy prošly, benchmark selhal na jednorázových špičkách virtuálního stroje (první stisk 163 ms, otevření za studena 440 ms; p99 byly pod 8 ms). Opraveno zahřátím a profilem `MINORIDE_BENCH_PROFILE=ci` (hlídá p99 ≤ 8 ms a rope ≤ 4 s). Po pushi ověřit, že běh projde.

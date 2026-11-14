@@ -44,7 +44,7 @@ Priorita: **M** = MVP, **P** = později, **N** = zatím ne.
 | | Zpět/vpřed v historii navigace | ✔ | ✔ | ✔ | **M** | vlastní historie |
 | | Search Everywhere (Shift Shift), soubor, symbol | ✔ | ✔ | ✔ | M | vlastní index + LSP `workspace/symbol` |
 | | Struktura souboru (Cmd+F12) | ✔ | ✔ | ✔ | M | LSP `documentSymbol` |
-| | Hledání v souborech | ✔ | ✔ | ✔ | M | ripgrep |
+| | Hledání v souborech | ✔ | ✔ | ✔ | M | vlastní hledání v Go (RE2) |
 | Analýza | Chyby a varování v editoru | ✔ | ✔ | ✔ | **M** | LSP diagnostiky |
 | | PHPStan / Psalm | ✔ | ✔ | rozšíření | **M** | PHPStan jako proces |
 | | staticcheck / go vet / golangci-lint | ✔ | — | ✔ | M | gopls (staticcheck), golangci-lint P |
@@ -54,8 +54,9 @@ Priorita: **M** = MVP, **P** = později, **N** = zatím ne.
 | Formátování | gofmt/goimports, PHP CS Fixer | ✔ | ✔ | ✔ | M | LSP `formatting` + externí nástroj |
 | Databáze | Připojení, prohlížeč schématu, data grid, SQL konzole | ✔ (DataGrip) | ✔ (DataGrip) | rozšíření | **M** | Go sidecar proces |
 | | SQL v PHP řetězcích (language injection) | ✔ | ✔ | — | P | vnořený SQL lexer + schéma |
-| Spouštění | Run konfigurace, testy, coverage | ✔ | ✔ | ✔ | P | `go test -json`, PHPUnit |
-| Debug | Delve / Xdebug | ✔ | ✔ | ✔ | P | DAP (`dlv dap`, vscode-php-debug) |
+| Spouštění | Run konfigurace, testy | ✔ | ✔ | ✔ | **M** | `go test -json`, PHPUnit, Nette Tester (coverage P) |
+| Debug | Delve / Xdebug | ✔ | ✔ | ✔ | **M** | DAP (`dlv dap`, vlastní adaptér DBGp → DAP) |
+| Web | JS/TS, CSS, HTML inteligence | — | ✔ (WebStorm) | ✔ | M | externí LSP servery podle nastavení |
 | VCS | Git gutter, diff, commit, blame | ✔ | ✔ | ✔ | M | `git` CLI |
 | Terminál | Vestavěný terminál | ✔ | ✔ | ✔ | M | SwiftTerm |
 | Frameworky | Laravel/Symfony; Nette přes plugin | — | ✔ | rozšíření | **M** | Nette/Latte/NEON ve vlastním PHP serveru |
