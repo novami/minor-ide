@@ -1,7 +1,7 @@
 /// Latte templates: HTML with `{tags}` (PHP expressions inside, `|filters`), `{* comments *}`
 /// and `n:attributes`. Tags work everywhere, inside attribute values and <script>/<style> too
 /// (a tag starts with "{" followed directly by a letter, $, /, =, _, *, \ or !). Script and
-/// style bodies stay plain text until JS and CSS lexers exist (phase 1f).
+/// style bodies go to the JS and CSS lexers, whose state is kept in `LexState.text`.
 public struct LatteLexer: Lexer {
 	enum Mode: UInt8 {
 		case html = 0, htmlComment, htmlTag, attrDouble, attrSingle, latte, latteComment, nAttrDouble, nAttrSingle, script, style
@@ -12,8 +12,20 @@ public struct LatteLexer: Lexer {
 
 	public init() {}
 
+	static let js = JSLexer()
+	static let css = CSSLexer()
+
+	/// State of the embedded JS or CSS lexer, packed into the Latte state's text.
+	static func embedded(_ text: [UInt8]) -> LexState { LexState(mode: text.first ?? 0, stack: Array(text.dropFirst())) }
+	static func packed(_ s: LexState) -> [UInt8] { [s.mode] + s.stack }
+
 	public func lex(_ line: ArraySlice<UInt8>, state: inout LexState, tokens: inout [Token]) {
 		var s = LineScanner(line)
+		if state.mode == Mode.script.rawValue || state.stack.contains(Mode.script.rawValue) && !state.text.isEmpty {
+			var inner = LatteLexer.embedded(state.text)
+			JSLexer.resetLineModes(&inner)
+			state.text = LatteLexer.packed(inner)
+		}
 		while !s.atEnd {
 			let start = s.pos
 			switch Mode(rawValue: state.mode) ?? .html {
@@ -41,23 +53,42 @@ public struct LatteLexer: Lexer {
 				if !s.atEnd { s.pos += 2; state.pop() }
 				tokens.append(Token(start, s.pos - start, .comment))
 			case .script, .style:
-				let end: StaticString = state.mode == Mode.script.rawValue ? "</script" : "</style"
-				while !s.atEnd && !s.startsIgnoringCase(with: end) && !openLatte(&s, &state, &tokens) { s.pos += 1 }
-				if state.mode == Mode.latte.rawValue || state.mode == Mode.latteComment.rawValue { continue }
-				if !s.atEnd {
-					state.mode = Mode.html.rawValue
-					state.text = []
+				let script = state.mode == Mode.script.rawValue
+				let end: StaticString = script ? "</script" : "</style"
+				// The embedded language runs up to the closing tag or the next Latte tag.
+				var stop = s.pos
+				while stop < s.count && !s.startsIgnoringCase(with: end, at: stop) && !isLatteOpening(s, at: stop) { stop += 1 }
+				if stop > s.pos {
+					var inner = LatteLexer.embedded(state.text)
+					let first = tokens.count
+					if script {
+						LatteLexer.js.lexSegment(s.slice(s.pos, stop), state: &inner, tokens: &tokens)
+					} else {
+						LatteLexer.css.lexSegment(s.slice(s.pos, stop), state: &inner, tokens: &tokens)
+					}
+					for k in first..<tokens.count { tokens[k].start += s.pos }
+					state.text = LatteLexer.packed(inner)
+					s.pos = stop
 				}
+				if s.atEnd { continue }
+				if openLatte(&s, &state, &tokens) { continue }
+				state.mode = Mode.html.rawValue
+				state.text = []
 			}
 		}
 	}
 
 	/// A Latte tag or comment at the position: emits the text before it (from `flushFrom`)
 	/// with `kind`, then the opening, and pushes the tag or comment mode.
+	private func isLatteOpening(_ s: LineScanner, at i: Int) -> Bool {
+		guard i + 1 < s.count, s[i] == 0x7B else { return false }
+		let c = s[i + 1]
+		return Bytes.isIdentStart(c) && c < 0x80 || c == 0x24 || c == 0x2F || c == 0x3D || c == 0x2A || c == 0x5C || c == 0x21
+	}
+
 	private func openLatte(_ s: inout LineScanner, _ state: inout LexState, _ tokens: inout [Token], flushFrom: Int? = nil, kind: TokenKind = .plain) -> Bool {
-		guard s.peek() == 0x7B else { return false }
+		guard isLatteOpening(s, at: s.pos) else { return false }
 		let c = s.peek(1)
-		guard Bytes.isIdentStart(c) && c < 0x80 || c == 0x24 || c == 0x2F || c == 0x3D || c == 0x2A || c == 0x5C || c == 0x21 else { return false }
 		if let from = flushFrom, s.pos > from, kind != .plain { tokens.append(Token(from, s.pos - from, kind)) }
 		let start = s.pos
 		if c == 0x2A {
@@ -122,6 +153,7 @@ public struct LatteLexer: Lexer {
 			tokens.append(Token(start, s.pos - start, .tag))
 			if b == 0x3E && !state.text.isEmpty {
 				state.mode = state.text.count == 6 ? Mode.script.rawValue : Mode.style.rawValue
+				state.text = [0] // embedded lexer at its start state
 			} else {
 				state.mode = Mode.html.rawValue
 				state.text = []

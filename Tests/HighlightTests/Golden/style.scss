@@ -1,0 +1,10 @@
+/* Theme */
+$accent: #ff0;
+@media (max-width: 600px) {
+	.card > a:hover, #main {
+		color: $accent !important;
+		margin: 0 auto 1.5em;
+		background: url("bg.png") rgb(0, 0, 0);
+		&:focus { outline: none; }
+	}
+}

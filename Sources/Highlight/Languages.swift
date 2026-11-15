@@ -37,6 +37,10 @@ public struct SyntaxLanguage: Sendable {
 	                                 quotes: [0x27, 0x22, 0x60], indentAfterColon: false, commentAtState: nil)
 	public static let neon = SyntaxLanguage(name: "NEON", lexer: NEONLexer(), comment: .line("#"), brackets: codeBrackets,
 	                                  quotes: [0x22, 0x27], indentAfterColon: true, commentAtState: nil)
+	public static let javascript = SyntaxLanguage(name: "JavaScript", lexer: JSLexer(), comment: .line("//"), brackets: codeBrackets,
+	                                              quotes: [0x22, 0x27, 0x60], indentAfterColon: false, commentAtState: nil)
+	public static let css = SyntaxLanguage(name: "CSS", lexer: CSSLexer(), comment: .block("/*", "*/"), brackets: codeBrackets,
+	                                       quotes: [0x22, 0x27], indentAfterColon: false, commentAtState: nil)
 	public static let latte = SyntaxLanguage(name: "Latte", lexer: LatteLexer(), comment: .block("{*", "*}"), brackets: codeBrackets,
 	                                   quotes: [0x22, 0x27], indentAfterColon: false, commentAtState: nil)
 }
@@ -54,6 +58,8 @@ public enum Languages {
 		case "sql": return .sql
 		case "neon": return .neon
 		case "latte": return .latte
+		case "js", "mjs", "cjs", "ts", "mts", "jsx", "tsx": return .javascript
+		case "css", "scss": return .css
 		default: return name == "composer.lock" ? .json : nil
 		}
 	}

@@ -61,6 +61,8 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Jazykové příkazy z 1c hotové** (2026-11-15): `Sources/Highlight/Languages.swift` (`SyntaxLanguage`: lexer, komentáře, závorky, uvozovky, odsazení za `:`; komentář podle stavu lexeru — HTML části PHP), `Sources/EditorKit/LanguageCommands.swift`: ⌘/ (Úpravy › Zakomentovat výběr), párování a obalování, přepisování zavíracích znaků, Backspace v prázdném páru, chytrý Enter a zavírací závorka na prázdném řádku. Nic z toho neplatí uvnitř řetězců a komentářů (podle tokenů). Testy `LanguageCommandTests`. Bench BUDGET OK. Folding podle závorek se nedělal: u formátovaného kódu dává totéž co folding podle odsazení (otevřené).
 
+**Z 1f předem hotové lexery JavaScript/TypeScript a CSS/SCSS** (`JSLexer`: šablonové řetězce přes řádky, regex literály, BigInt; `CSSLexer`: selektory, vlastnosti, hodnoty, @pravidla, $proměnné, vnoření přes zásobník) a jejich vložení do `<script>`/`<style>` v Latte (stav vnořeného lexeru je v `LexState.text`, Latte tagy uvnitř fungují). Golden `app.js`, `style.scss`. V PHP souborech se `<script>`/`<style>` zatím nebarví (otevřené).
+
 **Fáze 1c a 1d jsou hotové.** Z 1e předběžně hotový zjednodušený režim: soubor nad 5 MB nebo s řádkem nad 10 000 bajtů se otevře bez zvýraznění (`TextFile.needsSimplifiedMode`); chybí ještě označení v okně a ruční zapnutí zvýraznění.
 
 **Další: fáze 1e (projekt a pracovní prostředí)** podle `docs/PLAN.md` — před začátkem probrat s uživatelem otázky v sekci „Otázky pro uživatele“ níže.

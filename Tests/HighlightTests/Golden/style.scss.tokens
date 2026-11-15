@@ -1,0 +1,25 @@
+1:1 comment /* Theme */
+2:1 variable $accent
+2:10 number #ff0
+3:1 keyword @media
+3:20 number 600px
+4:2 attribute .card
+4:10 tag a
+4:11 keyword :hover
+4:19 attribute #main
+5:3 property color
+5:10 variable $accent
+5:18 keyword !important
+6:3 property margin
+6:11 number 0
+6:18 number 1.5em
+7:3 property background
+7:15 function url
+7:19 string "bg.png"
+7:29 function rgb
+7:33 number 0
+7:36 number 0
+7:39 number 0
+8:3 tag &
+8:4 keyword :focus
+8:13 property outline
