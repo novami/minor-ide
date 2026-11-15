@@ -10,7 +10,10 @@ public struct LatteLexer: Lexer {
 	static let keywords = WordSet("as in instanceof new and or not xor fn function use match default", caseInsensitive: true)
 	static let constants = WordSet("true false null", caseInsensitive: true)
 
-	public init() {}
+	/// False for plain HTML and XML: braces are text, no Latte tags or n:attributes.
+	let latte: Bool
+
+	public init(latte: Bool = true) { self.latte = latte }
 
 	static let js = JSLexer()
 	static let css = CSSLexer()
@@ -81,7 +84,7 @@ public struct LatteLexer: Lexer {
 	/// A Latte tag or comment at the position: emits the text before it (from `flushFrom`)
 	/// with `kind`, then the opening, and pushes the tag or comment mode.
 	private func isLatteOpening(_ s: LineScanner, at i: Int) -> Bool {
-		guard i + 1 < s.count, s[i] == 0x7B else { return false }
+		guard latte, i + 1 < s.count, s[i] == 0x7B else { return false }
 		let c = s[i + 1]
 		return Bytes.isIdentStart(c) && c < 0x80 || c == 0x24 || c == 0x2F || c == 0x3D || c == 0x2A || c == 0x5C || c == 0x21
 	}
@@ -165,7 +168,7 @@ public struct LatteLexer: Lexer {
 		} else if Bytes.isIdentStart(b) || b == 0x40 || b == 0x3A {
 			s.pos += 1
 			while !s.atEnd && (Bytes.isIdent(s.peek()) || s.peek() == 0x2D || s.peek() == 0x3A || s.peek() == 0x2E) { s.pos += 1 }
-			let nAttribute = s.starts(with: "n:", at: start)
+			let nAttribute = latte && s.starts(with: "n:", at: start)
 			tokens.append(Token(start, s.pos - start, nAttribute ? .macro : .attribute))
 			// n:attribute="expression"
 			if nAttribute, s.peek() == 0x3D, s.peek(1) == 0x22 || s.peek(1) == 0x27 {

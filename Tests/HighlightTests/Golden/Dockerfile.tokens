@@ -1,0 +1,14 @@
+1:1 keyword FROM
+1:6 function php
+1:10 number 8.4
+1:13 attribute -fpm
+2:1 comment # comment
+3:1 keyword RUN
+3:5 function apt-get
+3:23 function apt-get
+3:39 attribute -y
+4:2 function unzip
+5:1 keyword ENV
+5:5 property APP_ENV
+6:1 keyword COPY
+6:9 function app

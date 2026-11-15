@@ -1,0 +1,13 @@
+1:1 keyword # MinorIDE
+2:8 keyword **IDE**
+2:20 attribute *Go*
+2:29 string `PHP`
+4:1 keyword -
+4:3 function [Plan]
+4:9 string (docs/PLAN.md)
+5:1 keyword 1.
+6:1 comment > quote
+7:1 string ```go
+8:1 string func main() {}
+9:1 string ```
+10:1 comment <!-- hidden -->

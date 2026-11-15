@@ -41,6 +41,20 @@ public struct SyntaxLanguage: Sendable {
 	                                              quotes: [0x22, 0x27, 0x60], indentAfterColon: false, commentAtState: nil)
 	public static let css = SyntaxLanguage(name: "CSS", lexer: CSSLexer(), comment: .block("/*", "*/"), brackets: codeBrackets,
 	                                       quotes: [0x22, 0x27], indentAfterColon: false, commentAtState: nil)
+	public static let html = SyntaxLanguage(name: "HTML", lexer: LatteLexer(latte: false), comment: .block("<!--", "-->"), brackets: codeBrackets,
+	                                        quotes: [0x22, 0x27], indentAfterColon: false, commentAtState: nil)
+	public static let yaml = SyntaxLanguage(name: "YAML", lexer: NEONLexer(), comment: .line("#"), brackets: codeBrackets,
+	                                        quotes: [0x22, 0x27], indentAfterColon: true, commentAtState: nil)
+	public static let shell = SyntaxLanguage(name: "Shell", lexer: ShellLexer(), comment: .line("#"), brackets: codeBrackets,
+	                                         quotes: [0x22, 0x27, 0x60], indentAfterColon: false, commentAtState: nil)
+	public static let dockerfile = SyntaxLanguage(name: "Dockerfile", lexer: ShellLexer(.dockerfile), comment: .line("#"), brackets: codeBrackets,
+	                                              quotes: [0x22, 0x27], indentAfterColon: false, commentAtState: nil)
+	public static let makefile = SyntaxLanguage(name: "Makefile", lexer: ShellLexer(.makefile), comment: .line("#"), brackets: codeBrackets,
+	                                            quotes: [0x22, 0x27], indentAfterColon: true, commentAtState: nil)
+	public static let env = SyntaxLanguage(name: "Environment", lexer: ShellLexer(.env), comment: .line("#"), brackets: [],
+	                                       quotes: [0x22, 0x27], indentAfterColon: false, commentAtState: nil)
+	public static let markdown = SyntaxLanguage(name: "Markdown", lexer: MarkdownLexer(), comment: .block("<!--", "-->"), brackets: codeBrackets,
+	                                            quotes: [], indentAfterColon: false, commentAtState: nil)
 	public static let latte = SyntaxLanguage(name: "Latte", lexer: LatteLexer(), comment: .block("{*", "*}"), brackets: codeBrackets,
 	                                   quotes: [0x22, 0x27], indentAfterColon: false, commentAtState: nil)
 }
@@ -60,7 +74,18 @@ public enum Languages {
 		case "latte": return .latte
 		case "js", "mjs", "cjs", "ts", "mts", "jsx", "tsx": return .javascript
 		case "css", "scss": return .css
-		default: return name == "composer.lock" ? .json : nil
+		case "html", "htm", "xml", "svg", "xsd", "xsl", "plist", "xlf": return .html
+		case "yaml", "yml": return .yaml
+		case "sh", "bash", "zsh": return .shell
+		case "mk": return .makefile
+		case "md", "markdown": return .markdown
+		case "env" where name.hasPrefix(".env"): return .env
+		default:
+			if name == "composer.lock" { return .json }
+			if name == "Dockerfile" || name.hasPrefix("Dockerfile.") || name.hasSuffix(".dockerfile") { return .dockerfile }
+			if name == "Makefile" || name == "makefile" || name == "GNUmakefile" { return .makefile }
+			if name == ".env" || name.hasPrefix(".env.") { return .env }
+			return nil
 		}
 	}
 

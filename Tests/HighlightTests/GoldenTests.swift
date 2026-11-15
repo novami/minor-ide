@@ -11,7 +11,7 @@ struct GoldenTests {
 
 	static var cases: [String] {
 		((try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? [])
-			.filter { !$0.hasSuffix(".tokens") && !$0.hasPrefix(".") }.sorted()
+			.filter { !$0.hasSuffix(".tokens") && $0 != ".DS_Store" }.sorted()
 	}
 
 	static func render(_ text: String, lexer: any Lexer) -> String {

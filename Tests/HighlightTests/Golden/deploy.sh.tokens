@@ -1,0 +1,46 @@
+1:1 comment #!/bin/bash
+2:1 comment # Deploy script
+3:1 keyword set
+3:5 attribute -euo
+4:1 property NAME
+4:6 string "
+4:7 string app-
+4:11 variable ${ENV:-prod}
+4:23 string "
+5:1 keyword if
+5:6 attribute -f
+5:9 string "
+5:10 variable $HOME
+5:15 string /.config"
+5:28 keyword then
+6:2 function echo
+6:7 string "
+6:8 string Hello 
+6:14 variable $USER
+6:19 escape \n
+6:21 string "
+6:25 function grep
+6:30 attribute -v
+6:33 string '
+6:34 string x'
+6:37 attribute --color
+7:2 function cat
+7:6 string <<EOF
+8:1 string body $NAME
+9:1 string EOF
+10:1 keyword fi
+11:1 keyword for
+11:5 function i
+11:7 keyword in
+11:10 number 1
+11:12 number 2
+11:14 number 3
+11:17 keyword do
+11:20 function rsync
+11:26 attribute -a
+11:37 string "
+11:38 variable $NAME
+11:43 string :/var/www/
+11:53 variable $(date +%F)
+11:64 string "
+11:67 keyword done
