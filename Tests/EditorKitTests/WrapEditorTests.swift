@@ -67,4 +67,25 @@ struct WrapEditorTests {
 		e.setFolds([e.foldRange(headedBy: 0)!])
 		#expect(e.rowCount == 4 && e.line(atY: e.lineHeight * 2.5) == 3)
 	}
+
+	@Test func unwrappedLinesScrollHorizontally() {
+		let e = EditorView(text: "short\n")
+		let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 300, height: 200))
+		scroll.hasHorizontalScroller = true
+		scroll.documentView = e
+		e.updateSize()
+		let narrow = e.frame.width
+		e.moveCaret(to: 0)
+		e.insertText(String(repeating: "x", count: 200), replacementRange: NSRange(location: NSNotFound, length: 0))
+		#expect(e.document.maxColumns == 205 && e.frame.width > narrow * 3)
+		#expect(e.visibleRect.minX > 0) // followed the caret to the right
+		e.doCommand(by: #selector(NSResponder.moveToBeginningOfLine(_:)))
+		#expect(e.visibleRect.minX == 0)
+		var f = FormatSettings()
+		f.maxLineLength = 20
+		e.format = f
+		EditorView.wrapsLines = true
+		defer { EditorView.wrapsLines = false }
+		#expect(e.frame.width == scroll.contentSize.width) // wrapped at 20 columns: fits the window
+	}
 }

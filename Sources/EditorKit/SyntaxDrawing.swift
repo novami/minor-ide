@@ -38,7 +38,10 @@ extension EditorView {
 	/// Text of the rows, coloured by tokens when there is a highlighter. Each row draws the
 	/// glyphs of its units shifted left by the x of its first unit; fallback lines (CTLine)
 	/// draw whole, clipped to the row.
-	func drawText(_ ctx: CGContext, rows: [(line: Int, segment: Int)], highlighter: SyntaxHighlighter?, textColor: CGColor) {
+	func drawText(_ ctx: CGContext, rows: [(line: Int, segment: Int)], highlighter: SyntaxHighlighter?, textColor: CGColor,
+	              xRange: ClosedRange<CGFloat> = -.infinity...(.infinity)) {
+		// Glyphs outside the drawn columns are skipped (a horizontal scroll redraws a strip).
+		let minX = xRange.lowerBound - 4 * lineHeight, maxX = xRange.upperBound
 		let kinds = TokenKind.allCases.count
 		if colorGlyphs.count != kinds {
 			colorGlyphs = Array(repeating: [], count: kinds)
@@ -81,11 +84,13 @@ extension EditorView {
 			}
 			var t = 0
 			for g in units where g < l.glyphs.count {
+				let x = textInset + l.positions[g].x - shift
+				if x < minX { continue }
+				if x > maxX { break }
 				while t < runs.count && runs[t].0.upperBound <= g { t += 1 }
 				let kind = t < runs.count && runs[t].0.lowerBound <= g ? Int(runs[t].1.rawValue) : 0
 				colorGlyphs[kind].append(l.glyphs[g])
-				let p = l.positions[g]
-				colorPositions[kind].append(CGPoint(x: textInset + p.x - shift, y: -baseline))
+				colorPositions[kind].append(CGPoint(x: x, y: -baseline))
 			}
 		}
 		for k in 0..<kinds where !colorGlyphs[k].isEmpty {

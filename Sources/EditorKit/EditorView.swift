@@ -167,16 +167,26 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		setNeedsCaretUpdate()
 	}
 
-	/// Height follows the line count; width follows the scroll view (no horizontal scroll yet).
+	/// Height follows the rows; width is the scroll view's or the widest line's (wrapping:
+	/// the wrap column), whichever is larger, so unwrapped text scrolls horizontally.
 	public func updateSize() {
 		// The gutter (vertical ruler) floats over the clip view and insets it.
-		let width = enclosingScrollView.map { $0.contentSize.width - $0.contentView.contentInsets.left - $0.contentView.contentInsets.right } ?? frame.width
-		let size = NSSize(width: max(0, width), height: CGFloat(rowCount) * lineHeight + lineHeight)
+		let visible = enclosingScrollView.map { $0.contentSize.width - $0.contentView.contentInsets.left - $0.contentView.contentInsets.right } ?? frame.width
+		// Unwrapped: rounded up to 64 columns, so typing at the end of the widest line does
+		// not widen the view (and expose a strip to redraw) with every key.
+		let columns = wraps.map { $0.column + 2 } ?? (document.maxColumns / 64 + 1) * 64
+		let content = textInset + CGFloat(columns) * ascii.advances[0x20] + newlineWidth
+		let size = NSSize(width: max(0, visible, content), height: CGFloat(rowCount) * lineHeight + lineHeight)
 		guard size != frame.size else { return }
-		let widthChanged = size.width != frame.width
+		let oldWidth = frame.width
 		setFrameSize(size)
-		// Layer contents are redrawn only on request (.onSetNeedsDisplay), not on resize.
-		if widthChanged { needsDisplay = true }
+		// Layer contents are redrawn only on request (.onSetNeedsDisplay), not on resize: the
+		// strip a wider frame adds (rows fill the whole width). A longer line widens it while
+		// typing, so the rest is not redrawn.
+		if size.width > oldWidth {
+			let strip = NSRect(x: oldWidth, y: 0, width: size.width - oldWidth, height: size.height).intersection(visibleRect)
+			if !strip.isEmpty { setNeedsDisplay(strip) }
+		}
 	}
 
 	/// The clip view does not resize its document view, so the width follows its frame here
@@ -219,7 +229,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			drawFindMatches(ctx, lines: first...last)
 			drawSelectionBackground(ctx, visible, lines: first...last)
 			highlighter?.prepare(upTo: last, in: rope)
-			drawText(ctx, rows: rows(inY: dirtyRect.minY, dirtyRect.maxY), highlighter: highlighter, textColor: textColor)
+			drawText(ctx, rows: rows(inY: dirtyRect.minY, dirtyRect.maxY), highlighter: highlighter, textColor: textColor,
+			         xRange: dirtyRect.minX...dirtyRect.maxX)
 			if !foldedHeaders.isEmpty { drawFoldPlaceholders(ctx, lines: shown) }
 		}
 		if !markedText.isEmpty, visible.contains(selections.primary) { drawMarkedText(ctx, at: caret) }
@@ -412,8 +423,18 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	func scrollCaretVisible() {
-		let y = point(of: caret, line: rope.line(containing: caret)).y
-		let rect = NSRect(x: 0, y: y, width: bounds.width, height: lineHeight).insetBy(dx: 0, dy: -lineHeight)
+		// A row above and below. Horizontally the view stays put while the caret is inside it
+		// and otherwise jumps a third of its width past the caret (scrolling by one character
+		// per key would redraw every row each time); near the line start it goes to the edge.
+		let p = point(of: caret, line: rope.line(containing: caret))
+		let visible = visibleRect, space = ascii.advances[0x20]
+		var x0 = visible.minX, x1 = visible.maxX
+		if p.x < visible.minX + (visible.minX > 0 ? textInset : 0) || p.x > visible.maxX - 2 * space {
+			let jump = max(4 * space, visible.width / 3)
+			x0 = p.x - jump <= textInset ? 0 : p.x - jump
+			x1 = p.x + jump
+		}
+		let rect = NSRect(x: x0, y: p.y - lineHeight, width: x1 - x0, height: 3 * lineHeight)
 		if !visibleRect.contains(rect) { scrollToVisible(rect) }
 	}
 

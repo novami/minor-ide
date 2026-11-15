@@ -26,6 +26,7 @@ public final class TextDocument {
 		didSet {
 			if format.tabWidth != oldValue.tabWidth {
 				for view in views { view.tabWidthDidChange() }
+				measureWidth()
 			} else if format.maxLineLength != oldValue.maxLineLength {
 				for view in views { view.wrapSettingsChanged() }
 			}
@@ -51,6 +52,37 @@ public final class TextDocument {
 
 	public init(text: String) {
 		rope = Rope(text)
+		measureWidth()
+	}
+
+	/// Columns of the widest line (horizontal scrolling). Edits widen it at once; narrowing
+	/// waits for a full measure off the main thread after a pause in editing.
+	public private(set) var maxColumns = 0
+	private var widthGeneration = 0
+	/// One waiting measure at a time; edits only move its due time (typing must stay cheap).
+	private var widthDue: ContinuousClock.Instant = .now
+	private var widthWaiting = false
+
+	func measureWidth(after delay: Duration = .zero) {
+		widthGeneration += 1
+		widthDue = .now + delay
+		guard !widthWaiting else { return }
+		widthWaiting = true
+		Task { [weak self] in
+			while let due = self?.widthDue, due > .now { try? await Task.sleep(until: due) }
+			guard let self else { return }
+			widthWaiting = false
+			let generation = widthGeneration, rope = rope, tabWidth = format.tabWidth
+			let columns = await Task.detached(priority: .utility) { rope.maxColumns(tabWidth: tabWidth) }.value
+			guard widthGeneration == generation else { return } // edited meanwhile: measured again later
+			setMaxColumns(columns)
+		}
+	}
+
+	private func setMaxColumns(_ columns: Int) {
+		guard columns != maxColumns else { return }
+		maxColumns = columns
+		for view in views { view.updateSize() }
 	}
 
 	func attach(_ view: EditorView) {
@@ -93,6 +125,9 @@ public final class TextDocument {
 		anchors.apply(changes)
 		edit.newLastLine = lastLine + rope.lineCount - edit.oldLines
 		edit.syntaxDirty = highlighter?.edit(firstLine: edit.firstLine, oldLastLine: lastLine, newLastLine: edit.newLastLine, in: rope)
+		let edited = rope.maxColumns(tabWidth: format.tabWidth, lines: edit.firstLine...edit.newLastLine)
+		if edited > maxColumns { setMaxColumns(edited) }
+		measureWidth(after: .seconds(1))
 
 		for view in editors where view !== source {
 			view.didEdit(changes, edit, selections: view.selections.mapped(through: changes), isSource: false)

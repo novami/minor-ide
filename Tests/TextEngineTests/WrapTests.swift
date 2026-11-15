@@ -41,4 +41,11 @@ struct WrapTests {
 			#expect(map == WrapMap(rope: rope, column: 6, tabWidth: 4))
 		}
 	}
+
+	@Test func widestLineInColumns() {
+		let rope = Rope("ab\n\tx\nčeština😀\n" + String(repeating: "y", count: 70_000) + "\nz")
+		#expect(rope.maxColumns(tabWidth: 4) == 70_000) // spans chunks
+		#expect(rope.maxColumns(tabWidth: 4, lines: 0...2) == 8)
+		#expect(rope.maxColumns(tabWidth: 8, lines: 1...1) == 9)
+	}
 }
