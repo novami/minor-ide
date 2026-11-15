@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Line endings, indentation, encoding, .editorconfig and settings files.">
+<title>File format and settings</title>
+<link rel="stylesheet" href="../shared/help.css">
+</head>
+<body>
+<nav><a href="index.html">Help home</a></nav>
+<main>
+<h1>File format and settings</h1>
+<p>The window subtitle shows how the file will be saved, for example <i>LF · 4 spaces · UTF-8</i>. An existing file keeps its line endings and indentation.</p>
+<h2>Format menu</h2>
+<p>Change <b>Line Endings</b>, <b>Indentation</b> and <b>Tab Width</b> of the current file. A file with mixed line endings is shown as <i>Mixed</i> and is unified when saved.</p>
+<h2>Defaults and settings</h2>
+<p>Defaults follow the usual standards of each language (PSR-12 for PHP, gofmt for Go). They can be changed, from lowest to highest priority, in:</p>
+<ol>
+<li>your settings: <b>MinorIDE › Settings…</b> (⌘,) opens <code>settings.json</code>;</li>
+<li>the project: <code>.minoride/settings.json</code> in the project folder;</li>
+<li><code>.editorconfig</code> files.</li>
+</ol>
+<p>Saving is atomic and keeps file permissions and symbolic links.</p>
+</main>
+</body>
+</html>

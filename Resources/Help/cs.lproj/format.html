@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Konce řádků, odsazení, kódování, .editorconfig a soubory nastavení.">
+<title>Formát souborů a nastavení</title>
+<link rel="stylesheet" href="../shared/help.css">
+</head>
+<body>
+<nav><a href="index.html">Obsah nápovědy</a></nav>
+<main>
+<h1>Formát souborů a nastavení</h1>
+<p>Podtitul okna ukazuje, jak se soubor uloží, například <i>LF · 4 mezery · UTF-8</i>. Existující soubor si drží své konce řádků i odsazení.</p>
+<h2>Menu Formát</h2>
+<p>Změní <b>Konce řádků</b>, <b>Odsazení</b> a <b>Šířku tabulátoru</b> aktuálního souboru. Soubor se smíšenými konci řádků se ukáže jako <i>smíšené</i> a při uložení se sjednotí.</p>
+<h2>Výchozí hodnoty a nastavení</h2>
+<p>Výchozí hodnoty odpovídají běžným standardům jazyků (PSR-12 pro PHP, gofmt pro Go). Změnit je můžete, od nejnižší priority po nejvyšší, v:</p>
+<ol>
+<li>uživatelském nastavení: <b>MinorIDE › Nastavení…</b> (⌘,) otevře <code>settings.json</code>;</li>
+<li>projektu: <code>.minoride/settings.json</code> ve složce projektu;</li>
+<li>souborech <code>.editorconfig</code>.</li>
+</ol>
+<p>Ukládání je atomické a zachová práva souboru i symbolické odkazy.</p>
+</main>
+</body>
+</html>

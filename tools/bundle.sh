@@ -20,6 +20,36 @@ cp server/bin/minoride-server "$APP/Contents/Helpers/minoride-server"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/" # drawn by tools/make-icon.swift
 
+# Help Book (Help › MinorIDE Help): pages from Resources/Help, indexed for Help Viewer and menu search.
+HELP="$APP/Contents/Resources/MinorIDE.help/Contents"
+mkdir -p "$HELP/Resources"
+cp -R Resources/Help/* "$HELP/Resources/"
+for d in "$HELP"/Resources/*.lproj; do
+	hiutil -I corespotlight -Caf "$d/MinorIDE.cshelpindex" "$d" 2>/dev/null
+	hiutil -I lsm -Caf "$d/MinorIDE.helpindex" "$d" 2>/dev/null
+done
+cat > "$HELP/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key><string>en</string>
+	<key>CFBundleIdentifier</key><string>cz.novami.minoride.help</string>
+	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+	<key>CFBundleName</key><string>MinorIDE Help</string>
+	<key>CFBundlePackageType</key><string>BNDL</string>
+	<key>CFBundleShortVersionString</key><string>${VERSION}</string>
+	<key>CFBundleSignature</key><string>hbwr</string>
+	<key>CFBundleVersion</key><string>${VERSION}</string>
+	<key>HPDBookAccessPath</key><string>index.html</string>
+	<key>HPDBookCSIndexPath</key><string>MinorIDE.cshelpindex</string>
+	<key>HPDBookIndexPath</key><string>MinorIDE.helpindex</string>
+	<key>HPDBookTitle</key><string>MinorIDE Help</string>
+	<key>HPDBookType</key><string>3</string>
+</dict>
+</plist>
+EOF
+
 # Every Resources/<lang>.lproj becomes a declared localization (new languages need no edit here).
 LOCALIZATIONS=""
 for d in Resources/*.lproj; do LOCALIZATIONS="$LOCALIZATIONS<string>$(basename "$d" .lproj)</string>"; done
@@ -30,6 +60,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key><string>MinorIDE</string>
+	<key>CFBundleHelpBookFolder</key><string>MinorIDE.help</string>
+	<key>CFBundleHelpBookName</key><string>cz.novami.minoride.help</string>
 	<key>CFBundleIconFile</key><string>AppIcon</string>
 	<key>CFBundleIdentifier</key><string>cz.novami.minoride</string>
 	<key>CFBundleName</key><string>MinorIDE</string>
@@ -38,6 +70,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 	<key>CFBundlePackageType</key><string>APPL</string>
 	<key>CFBundleShortVersionString</key><string>${VERSION}</string>
 	<key>CFBundleVersion</key><string>${VERSION}</string>
+	<key>NSHumanReadableCopyright</key><string>© 2026 Michal Novák</string>
 	<key>LSMinimumSystemVersion</key><string>14.0</string>
 	<key>NSHighResolutionCapable</key><true/>
 	<key>NSPrincipalClass</key><string>NSApplication</string>

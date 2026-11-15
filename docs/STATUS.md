@@ -85,6 +85,8 @@ Doplněno po kroku 1e/4b (2026-11-15, na přání uživatele; nahrazení souboru
 
 Známé mezery po kroku 1e/4b: `LatencyMonitor` sleduje jen první část; ruční kontrola (⌥+klik, nahrazení části, dotaz na uložení, lišta disku v části, Uložit jako přes otevřený soubor) zbývá.
 
+**Nápověda, O aplikaci a podpora** (2026-11-15, na přání uživatele): Help Book `MinorIDE.help` (zdroje `Resources/Help/{en,cs}.lproj`, společné `shared/help.css`; `tools/bundle.sh` ho složí, zaindexuje přes `hiutil` a zapíše `CFBundleHelpBook*`), stránky: úvod, soubory a projekty, úpravy, hledání, formát a nastavení, zkratky, zpětná vazba a podpora — popisují jen hotové funkce, při nové funkci doplnit. O aplikaci (`About.swift`): autor Michal Novák, novami.cz, MIT, poděkování testerům (issues na GitHubu), vývojářům (PR z forku) a projektům Swift, Go, SQLite (doplnit při nové závislosti), GitHub Sponsors a BTC adresa. Nápověda › Nahlásit problém…, Podpořit MinorIDE… (okno s tlačítkem Sponsors, QR kódem `bitcoin:` adresy — ověřeno dekódováním — a Kopírovat adresu). Návrh profilu Sponsors v `docs/sponsors.md`, `.github/FUNDING.yml`. Ruční kontrola (Help Viewer, hledání v menu Nápověda, vzhled oken) zbývá.
+
 **Další:** důvěra projektu a Omezený režim, uvítací okno s nedávnými projekty, Nastavení (SwiftUI nad `settings.json`), automatické ukládání a Local History.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.

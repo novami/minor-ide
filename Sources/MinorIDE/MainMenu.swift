@@ -10,7 +10,7 @@ enum MainMenu {
 		let main = NSMenu()
 
 		main.add(submenu: "MinorIDE") { m in
-			m.item(L("About MinorIDE"), #selector(NSApplication.orderFrontStandardAboutPanel(_:)))
+			m.item(L("About MinorIDE"), #selector(AppDelegate.showAbout(_:)), target: target)
 			m.addItem(.separator())
 			m.item(L("Settings…"), #selector(AppDelegate.openUserSettings(_:)), ",", target: target)
 			m.addItem(.separator())
@@ -116,6 +116,9 @@ enum MainMenu {
 
 		main.add(submenu: L("Help")) { m in
 			m.item(L("MinorIDE Help"), #selector(NSApplication.showHelp(_:)), "?")
+			m.addItem(.separator())
+			m.item(L("Report an Issue…"), #selector(AppDelegate.reportIssue(_:)), target: target)
+			m.item(L("Support MinorIDE…"), #selector(AppDelegate.showSupport(_:)), target: target)
 			NSApp.helpMenu = m // AppKit adds the menu search field
 		}
 		return main

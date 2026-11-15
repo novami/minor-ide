@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Open files and folders, use tabs and the project tree, and handle files changed on disk.">
+<title>Files and projects</title>
+<link rel="stylesheet" href="../shared/help.css">
+</head>
+<body>
+<nav><a href="index.html">Help home</a></nav>
+<main>
+<h1>Files and projects</h1>
+<h2>Open a file or a project</h2>
+<p>Choose <b>File › Open…</b> (⌘O) and select a file or a folder. A folder opens as a project: a window with the file tree on the left. You can also drag files to the Dock icon or use <b>Open With</b> in the Finder. Recent files and projects are in <b>File › Open Recent</b>.</p>
+<h2>Tabs</h2>
+<p>Files of a project open as tabs of one window. Switch tabs with ⌃Tab and ⌃⇧Tab. <b>File › Reopen Closed Tab</b> (⇧⌘T) brings back the last closed file. A dot in a tab’s close button means the window has unsaved changes.</p>
+<h2>The file tree</h2>
+<p>Click a file to open it, or select it and press Return. Hold Option (⌥-click or ⌥Return) to open the file in the other part of a split editor. Control-click a file or folder for <b>New File…</b>, <b>New Folder…</b>, <b>Rename…</b>, <b>Move to Trash</b>, <b>Show in Finder</b> and copying its path.</p>
+<p>Show or hide the tree with <b>View › Show Sidebar</b> (⌃⌘S), the right panel with ⌃⌘I and the bottom panel with ⌃`.</p>
+<h2>Files changed on disk</h2>
+<p>When a file changes outside MinorIDE (for example after <code>git checkout</code>) and you have no unsaved changes, it reloads quietly and keeps your cursor. If you have unsaved changes, a bar offers <b>Reload</b>, <b>Keep Mine</b> or <b>Compare</b>. A deleted file stays open; saving creates it again.</p>
+<h2>Binary and large files</h2>
+<p>Binary files are not opened as text; you can view their bytes with <b>Show Hex</b> or preview them in the Finder. Files over 5 MB or with very long lines open without syntax colouring to stay fast.</p>
+</main>
+</body>
+</html>

@@ -2,6 +2,26 @@
    Entries marked "TODO translate" still show English: translate the value and delete the marker.
    Run "make l10n" after changing source strings, "make l10n-check" to verify. */
 
+/* MinorIDE/About.swift */
+"Author: " = "Autor: ";
+"Free and open source under the MIT License." = "Zdarma a s otevřeným kódem pod licencí MIT.";
+"Source code on GitHub" = "Zdrojový kód na GitHubu";
+"Thanks" = "Poděkování";
+"To everyone who tests MinorIDE: please report bugs and ideas as " = "Všem, kdo MinorIDE testují: chyby a nápady prosím hlaste jako ";
+"issues on GitHub" = "issue na GitHubu";
+"To developers: pull requests from your fork are welcome." = "Vývojářům: pull requesty z vašeho forku jsou vítané.";
+"To the open source projects MinorIDE is built with: Swift, Go and SQLite." = "Open source projektům, na kterých MinorIDE stojí: Swift, Go a SQLite.";
+"Support MinorIDE" = "Podpořit MinorIDE";
+"GitHub Sponsors" = "GitHub Sponsors";
+"Bitcoin:" = "Bitcoin:";
+"Enjoying MinorIDE?" = "Líbí se vám MinorIDE?";
+"MinorIDE is free and open source, made by one person in spare time. A small contribution helps keep it fast, native and growing. Thank you!" = "MinorIDE je zdarma a s otevřeným kódem, vyvíjí ho jeden člověk ve volném čase. I malý příspěvek pomůže, aby zůstal rychlý, nativní a dál rostl. Děkuji!";
+"Sponsor on GitHub" = "Podpořit přes GitHub";
+"Or send Bitcoin" = "Nebo pošlete bitcoin";
+"QR code of the Bitcoin address" = "QR kód bitcoinové adresy";
+"Copy Address" = "Kopírovat adresu";
+"Copied" = "Zkopírováno";
+
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "Verze jsou stejné.";
 "Comparison" = "Porovnání";
@@ -167,6 +187,8 @@
 "Bring All to Front" = "Převést vše do popředí";
 "Help" = "Nápověda";
 "MinorIDE Help" = "Nápověda MinorIDE";
+"Report an Issue…" = "Nahlásit problém…";
+"Support MinorIDE…" = "Podpořit MinorIDE…";
 "Clear Menu" = "Vymazat nabídku";
 
 /* MinorIDE/PanelView.swift */

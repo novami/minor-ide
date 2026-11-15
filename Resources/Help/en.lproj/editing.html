@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Multiple cursors, line commands, comments, brackets, code folding and the split editor.">
+<title>Editing</title>
+<link rel="stylesheet" href="../shared/help.css">
+</head>
+<body>
+<nav><a href="index.html">Help home</a></nav>
+<main>
+<h1>Editing</h1>
+<h2>Multiple cursors and selections</h2>
+<ul>
+<li>⌥-click adds a cursor; ⌥-drag selects a column.</li>
+<li><b>Edit › Select Next Occurrence</b> (⌃G) adds the next match of the selection; ⌃⌘G selects all of them.</li>
+<li>Esc returns to a single cursor.</li>
+</ul>
+<h2>Lines</h2>
+<p><b>Duplicate Line</b> (⇧⌘D) and <b>Move Line Up/Down</b> (⌥⌘↑ / ⌥⌘↓) work on every selected line.</p>
+<h2>Comments and brackets</h2>
+<p><b>Comment Selection</b> (⌘/) comments or uncomments the selected lines in the comment style of the language. Brackets and quotes are closed for you, typing a closing character steps over it, and selected text gets wrapped. Return between brackets indents the new line. None of this happens inside strings and comments.</p>
+<h2>Code folding</h2>
+<p>Click the arrow in the gutter, or use <b>View › Code Folding</b>: fold (⌥⌘←), unfold (⌥⌘→), fold all (⌥⇧⌘←) and unfold all (⌥⇧⌘→).</p>
+<h2>Split editor</h2>
+<p><b>View › Split Editor Side by Side</b> or <b>Top and Bottom</b> shows the file twice; each part keeps its own cursor and scroll position. ⌥-click a file in the tree to show another file in the other part. ⌘W closes the focused part; the window title, saving and the Format menu follow the focused part.</p>
+<h2>Syntax colouring</h2>
+<p>Go, PHP, Latte, NEON, SQL, JSON, JavaScript and TypeScript, CSS and SCSS, HTML, XML and SVG, YAML, shell scripts, Dockerfile, Makefile, .env and Markdown. Colours follow light and dark mode.</p>
+</main>
+</body>
+</html>
