@@ -171,6 +171,11 @@
 "Hide Others" = "Hide Others";
 "Show All" = "Show All";
 "Quit MinorIDE" = "Quit MinorIDE";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/main.swift */
+"Quit and Keep Windows" = "Quit and Keep Windows";
+
+/* MinorIDE/MainMenu.swift */
 "File" = "File";
 "New" = "New";
 "Open…" = "Open…";
@@ -336,3 +341,4 @@
 "“%@” is not a text file." = "“%@” is not a text file.";
 "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look." = "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look.";
 "Show Hex" = "Show Hex";
+"Quit and Close All Windows" = "Quit and Close All Windows";

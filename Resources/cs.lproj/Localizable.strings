@@ -174,6 +174,11 @@
 "Hide Others" = "Skrýt ostatní";
 "Show All" = "Zobrazit vše";
 "Quit MinorIDE" = "Ukončit MinorIDE";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/main.swift */
+"Quit and Keep Windows" = "Ukončit a ponechat okna";
+
+/* MinorIDE/MainMenu.swift */
 "File" = "Soubor";
 "New" = "Nový";
 "Open…" = "Otevřít…";
@@ -339,3 +344,4 @@
 "“%@” is not a text file." = "„%@“ není textový soubor.";
 "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look." = "MinorIDE upravuje jen textové soubory. Můžete si prohlédnout jeho bajty nebo náhled ve Finderu přes Quick Look.";
 "Show Hex" = "Zobrazit hex";
+"Quit and Close All Windows" = "Ukončit a zavřít všechna okna";

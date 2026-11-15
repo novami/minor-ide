@@ -83,11 +83,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			FileDocument.history = history
 			Task.detached(priority: .utility) { history.prune() }
 		}
+		let session = Session.take() // read once even when not restored
 		if let file = args.first {
 			open(URL(fileURLWithPath: file))
-		} else if documents.isEmpty {
-			showWelcome(nil)
+		} else if let session {
+			restore(session)
 		}
+		if documents.isEmpty { showWelcome(nil) }
 		NSApp.activate()
 	}
 
@@ -412,6 +414,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		panel.urls.forEach(open)
 	}
 
+	// MARK: Session (macOS setting: Close windows when quitting an application)
+
+	/// System Settings › Desktop & Dock: off = windows are kept (NSQuitAlwaysKeepsWindows).
+	private var keepWindowsSetting: Bool { UserDefaults.standard.bool(forKey: "NSQuitAlwaysKeepsWindows") }
+	/// Quit and Keep Windows / Quit and Close All Windows (⌥⌘Q) turns the setting around once.
+	private var invertKeepWindows = false
+
+	@objc func quitTogglingKeepWindows(_ sender: Any?) {
+		invertKeepWindows = true
+		NSApp.terminate(sender)
+		invertKeepWindows = false // quitting was cancelled
+	}
+
+	func applicationWillTerminate(_ notification: Notification) {
+		guard !utilityMode else { return }
+		let windows = documents.compactMap { doc -> Session.Window? in
+			guard doc.project != nil || doc.url != nil else { return nil } // untitled windows are not kept
+			return Session.Window(project: doc.project?.url.path, file: doc.url?.path)
+		}
+		let front = current.flatMap { $0.url?.path ?? $0.project?.url.path }
+		try? Session(windows: windows, front: front, restore: keepWindowsSetting != invertKeepWindows).save()
+	}
+
+	/// Reopens projects and files in their order; the window that was in front comes last.
+	private func restore(_ session: Session) {
+		for window in session.windows {
+			if let project = window.project { openProject(URL(fileURLWithPath: project)) }
+			if let file = window.file { open(URL(fileURLWithPath: file)) }
+		}
+		if let front = session.front { open(URL(fileURLWithPath: front)) }
+	}
+
 	/// Window › Welcome to MinorIDE; also at launch with nothing to open.
 	@objc func showWelcome(_ sender: Any?) {
 		WelcomeWindow.shared.target = self
@@ -465,6 +499,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	func validateMenuItem(_ item: NSMenuItem) -> Bool {
 		if item.action == #selector(reopenClosedTab(_:)) { return !closedFiles.isEmpty }
+		if item.action == #selector(quitTogglingKeepWindows(_:)) {
+			item.title = keepWindowsSetting ? L("Quit and Close All Windows") : L("Quit and Keep Windows")
+			return true
+		}
 		let needsDocument: Set<Selector?> = [#selector(saveDocument(_:)), #selector(saveDocumentAs(_:)),
 		                                    #selector(setLineEnding(_:)), #selector(setIndent(_:)), #selector(setTabWidth(_:))]
 		guard let doc = current else { return !needsDocument.contains(item.action) }

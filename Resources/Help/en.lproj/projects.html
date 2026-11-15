@@ -24,6 +24,8 @@
 <h2><a name="restricted-mode"></a>Restricted Mode</h2>
 <p>A project you open for the first time is in Restricted Mode, shown by a bar above the editor. Git, language servers, tools such as PHPStan, run configurations and the debugger can run code from a project’s files and settings, so MinorIDE doesn’t start them for the project, and it doesn’t read <code>.minoride/local.json</code>. Editing, colouring and search work as usual.</p>
 <p>If you trust the project’s authors, choose <b>Trust Project…</b> in the bar or in the File menu. MinorIDE remembers the choice for the folder outside the project, so a downloaded repository cannot trust itself. <b>File › Restrict Project</b> takes the trust back.</p>
+<h2>Windows after quitting</h2>
+<p>MinorIDE follows <b>Close windows when quitting an application</b> in System Settings › Desktop &amp; Dock. When it is off, the projects and files you had open come back the next time you open MinorIDE (untitled windows don’t). Hold Option in the MinorIDE menu for <b>Quit and Keep Windows</b> or <b>Quit and Close All Windows</b> to do the opposite once.</p>
 <h2>Saving automatically</h2>
 <p>Turn on <b>Save files automatically</b> in <b>MinorIDE › Settings…</b> (⌘,), tab <b>General</b>. Edited files are then saved when you switch to another tab, window or app. A file that changed on disk meanwhile is not saved automatically, so you don’t overwrite someone else’s changes; untitled files are not saved either.</p>
 <h2>Local History</h2>

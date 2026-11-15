@@ -23,6 +23,8 @@ enum MainMenu {
 			m.item(L("Show All"), #selector(NSApplication.unhideAllApplications(_:)))
 			m.addItem(.separator())
 			m.item(L("Quit MinorIDE"), #selector(NSApplication.terminate(_:)), "q")
+			// Title set in validateMenuItem: the opposite of the macOS setting for this quit.
+			m.item(L("Quit and Keep Windows"), #selector(AppDelegate.quitTogglingKeepWindows(_:)), "q", [.command, .option], target: target).isAlternate = true
 		}
 
 		main.add(submenu: L("File")) { m in
