@@ -1,0 +1,22 @@
+{* Layout template
+   with a comment over lines *}
+{block content}
+<h1 n:if="$title" class="title {$cls}">{$title|upper}</h1>
+<ul>
+	<li n:foreach="$items as $item" data-id="{$item->id}">{$item->name|truncate:20}</li>
+</ul>
+{if count($items) > 0 && $user->isLoggedIn()}
+	<a href="{link Product:show, id: $item->id}">{_'Show'}</a>
+{elseif !$x}
+	{include 'parts/empty.latte', title: null}
+{/if}
+<!-- html comment {$x} -->
+<script>
+	let data = {$data};
+	function f() { return 1; }
+</script>
+<style>
+	.a { color: red; }
+</style>
+&nbsp;{var $total = 10.5}
+{/block}

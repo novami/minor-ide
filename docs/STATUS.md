@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1d/2)
+**Poslední aktualizace:** 2026-11-15 (1d/3)
 
 ## Kde jsme
 
@@ -57,7 +57,9 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1d, krok 2 hotový** (2026-11-15): lexery `PHPLexer` (HTML kolem s tagy, atributy, entitami a komentáři; `<?php`/`<?=` i uvnitř hodnot atributů přes zásobník režimů; řetězce přes víc řádků, interpolace `$var`, `{$…}`, `$a->b`; heredoc/nowdoc s ukončovačem ve stavu; doc komentáře s `@tagy`; atributy `#[…]`; jména s namespace; PascalCase = typ, VELKÁ = konstanta), `SQLLexer` (MySQL/PostgreSQL, '' a \' v řetězcích, placeholdery ?, :name, $1), `NEONLexer` (klíče, @služby, %parametry%, entity, ''' víceřádkové řetězce). `WordSet` až 24 bajtů. Golden vzorky `sample.php`, `schema.sql`, `config.neon`.
 
-**Další: fáze 1d, krok 3 — Latte** (HTML s `{tagy}`, `n:atributy`, PHP výrazy uvnitř tagů, `{* komentáře *}`, `<script>`/`<style>` jako vnořený JS/CSS přes zásobník režimů), pak kontrola rozpočtu přelexování (< 1 ms na běžný řádek) a uzavření 1d.
+**Fáze 1d, krok 3 hotový — fáze 1d je hotová** (2026-11-15): `LatteLexer` (HTML, `{tagy}` s výrazy a `|filtry`, `{* komentáře *}` přes řádky, `n:atributy` s výrazem v hodnotě, tagy i v hodnotách atributů, HTML komentářích a ve `<script>`/`<style>`; obsah skriptů a stylů zatím prostý text — JS/CSS lexery jsou v 1f). Golden `layout.latte`. Rozpočet přelexování: psaní v Go p99 0,19 ms včetně kreslení (bench `type char go`).
+
+**Další: jazykové příkazy odložené z 1c** (teď nad lexerem): komentáře ⌘/ (řádkové i blokové podle jazyka), párování a obalování závorkami a uvozovkami (ne uvnitř řetězců a komentářů), chytré odsazení (Enter za `{`/`(`/`[` a `:` v NEON přidá úroveň, `}` ji ubere), folding podle závorek. Potom fáze 1e (projekt a pracovní prostředí).
 
 Známé mezery po kroku 1d/1: téma se nedá změnit v nastavení (jen vestavěné světlé/tmavé); tokeny viditelných řádků se lexují při každém kreslení (bez cache, v rozpočtu); po editaci s limitem 2000 řádků se zbytek dopočítá na pozadí až po 300 ms; Uložit jako s jinou příponou nezmění jazyk.
 

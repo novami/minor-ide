@@ -8,6 +8,7 @@ public enum Languages {
 		case "php", "phtml", "phpt", "inc": return PHPLexer()
 		case "sql": return SQLLexer()
 		case "neon": return NEONLexer()
+		case "latte": return LatteLexer()
 		case "json", "jsonc", "code-workspace": return JSONLexer()
 		default:
 			if name == "composer.lock" { return JSONLexer() }
