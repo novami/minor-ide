@@ -18,9 +18,14 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 	private let findBar: FindBar
 	var findBarView: FindBar { findBar }
 
-	init(text: String, url: URL?, format: FormatSettings) {
+	/// The folder this window belongs to; its windows are tabs of one window group.
+	let project: Project?
+	private(set) var sidebar: ProjectSidebar?
+
+	init(text: String, url: URL?, format: FormatSettings, project: Project? = nil) {
 		self.url = url
 		self.format = format
+		self.project = project
 		window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 800),
 		                  styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
 		let scroll = NSScrollView(frame: window.contentView!.bounds)
@@ -45,9 +50,32 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		content.distribution = .fill
 		scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
 		findBar.setContentHuggingPriority(.required, for: .vertical)
-		window.contentView = content
+		if let project {
+			// Sidebar and editor in a split view controller (HIG sidebar, View › Show Sidebar).
+			let sidebar = ProjectSidebar(project: project)
+			self.sidebar = sidebar
+			let split = NSSplitViewController()
+			let side = NSViewController()
+			side.view = sidebar
+			let main = NSViewController()
+			main.view = content
+			let sideItem = NSSplitViewItem(sidebarWithViewController: side)
+			sideItem.minimumThickness = 180
+			sideItem.canCollapse = true
+			split.addSplitViewItem(sideItem)
+			split.addSplitViewItem(NSSplitViewItem(viewController: main))
+			split.splitView.autosaveName = "ProjectSidebar"
+			window.contentViewController = split
+			window.setContentSize(NSSize(width: 1300, height: 800))
+			window.tabbingMode = .preferred
+			window.tabbingIdentifier = "project:" + project.url.path
+		} else {
+			window.contentView = content
+		}
 		window.isReleasedWhenClosed = false
 		super.init()
+		sidebar?.onOpen = { url in (NSApp.delegate as? AppDelegate)?.open(url) }
+		if let url { sidebar?.reveal(url) }
 		window.delegate = self
 		editor.onChange = { [weak self] in
 			guard let self else { return }
@@ -71,13 +99,13 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 
 	/// Opens a file: decodes it, keeps its line endings, and resolves indentation from
 	/// language defaults, user and project settings, .editorconfig and the file itself.
-	static func open(_ url: URL) throws -> DocumentWindow {
+	static func open(_ url: URL, project: Project? = nil) throws -> DocumentWindow {
 		let data = try Data(contentsOf: url)
 		let loaded = TextFile.load(data)
 		let resolved = Self.resolve(path: url.path, detected: loaded.detected)
 		var format = resolved.settings
 		format.charset = loaded.charset
-		let doc = DocumentWindow(text: loaded.text, url: url, format: format)
+		let doc = DocumentWindow(text: loaded.text, url: url, format: format, project: project)
 		// Large and minified files open without colouring (plan: simplified mode).
 		doc.editor.language = TextFile.needsSimplifiedMode(data) ? nil : Languages.language(forPath: url.path)
 		doc.resolved = resolved
@@ -121,6 +149,13 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 			}
 			placed = true
 		}
+		window.makeKeyAndOrderFront(nil)
+		window.makeFirstResponder(editor)
+	}
+
+	/// Shows a window just added as a tab (the tab group keeps its place, no centring).
+	func showAsTab() {
+		placed = true
 		window.makeKeyAndOrderFront(nil)
 		window.makeFirstResponder(editor)
 	}
@@ -243,6 +278,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		let eol = mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
 		window.title = "\(name) — \(eol) · \(indent) · \(format.charset.rawValue.uppercased())"
 		window.representedURL = url
+		window.tab.title = project.map { url == nil ? $0.name : name } ?? name
 	}
 
 	// MARK: Closing

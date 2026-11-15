@@ -90,6 +90,7 @@
 "Convert Indentation" = "Convert Indentation";
 "Tab Width" = "Tab Width";
 "View" = "View";
+"Show Sidebar" = "Show Sidebar";
 "Code Folding" = "Code Folding";
 "Fold" = "Fold";
 "Unfold" = "Unfold";
@@ -103,3 +104,6 @@
 "Help" = "Help";
 "MinorIDE Help" = "MinorIDE Help";
 "Clear Menu" = "Clear Menu";
+
+/* MinorIDE/ProjectSidebar.swift */
+"Project Files" = "Project Files";

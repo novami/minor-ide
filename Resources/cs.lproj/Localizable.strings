@@ -93,6 +93,7 @@
 "Convert Indentation" = "Převést odsazení";
 "Tab Width" = "Šířka tabulátoru";
 "View" = "Zobrazení";
+"Show Sidebar" = "Zobrazit boční panel";
 "Code Folding" = "Sbalování kódu";
 "Fold" = "Sbalit";
 "Unfold" = "Rozbalit";
@@ -106,3 +107,6 @@
 "Help" = "Nápověda";
 "MinorIDE Help" = "Nápověda MinorIDE";
 "Clear Menu" = "Vymazat nabídku";
+
+/* MinorIDE/ProjectSidebar.swift */
+"Project Files" = "Soubory projektu";

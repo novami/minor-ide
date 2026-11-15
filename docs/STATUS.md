@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1c jazykové příkazy)
+**Poslední aktualizace:** 2026-11-15 (1e/1)
 
 ## Kde jsme
 
@@ -65,7 +65,11 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1c a 1d jsou hotové.** Z 1e předběžně hotový zjednodušený režim: soubor nad 5 MB nebo s řádkem nad 10 000 bajtů se otevře bez zvýraznění (`TextFile.needsSimplifiedMode`); chybí ještě označení v okně a ruční zapnutí zvýraznění.
 
-**Další: fáze 1e (projekt a pracovní prostředí)** podle `docs/PLAN.md` — před začátkem probrat s uživatelem otázky v sekci „Otázky pro uživatele“ níže.
+**Fáze 1e, krok 1 hotový** (2026-11-15): `docs/keymap.md`; projektové okno: Soubor › Otevřít… bere i složky (i Nedávné a Finder), `Project.swift` (strom sdílený taby, rozbalené složky, sledování přes FSEvents → přenačtení načtených složek), `ProjectSidebar.swift` (zdrojový seznam `NSOutlineView`, líné načítání, klik nebo Return otevře soubor, `reveal` vybere otevřený soubor), `MinorCore/FileTree.swift` (složky první, řazení jako Finder, skryté `.git`, `.DS_Store`). Soubory projektu se otevírají jako nativní taby jedné skupiny oken (`tabbingIdentifier` podle projektu), prázdný editor projektu ustoupí prvnímu souboru, poslední zavřené okno projekt ukončí. Zobrazení › Zobrazit boční panel ⌃⌘S. Test `FileTreeTests`. `MINORIDE_OPEN=<soubor> --snapshot <png> <složka>` uloží i celé okno.
+
+**Další: fáze 1e, krok 2** — důvěra projektu a Omezený režim (`trusted.json` mimo projekt, sheet při prvním otevření neznámé složky), Nedávné projekty v uvítacím okně, „Znovu otevřít zavřený tab“, indikace neuložených změn v tabu; pak Nastavení (SwiftUI nad `settings.json`), stavový řádek, změna souboru na disku, binární soubory, automatické ukládání a Local History.
+
+Známé mezery po kroku 1e/1: každý tab má vlastní strom (sdílí model a rozbalení při vytvoření, ne průběžně); vybraný soubor ve stromu se při přepnutí tabu nemění; strom nemá kontextové menu (nový soubor, přejmenovat, smazat, ukázat ve Finderu); split editoru není (s nativními taby se řeší zvlášť); `vendor/` se jen nerozbaluje, jinak se chová jako ostatní složky; ruční kontrola okna s projektem zbývá.
 
 Známé mezery po jazykových příkazech: zavírací znak se přepíše vždy, když je hned za kurzorem (i když ho editor sám nevložil); ⌘/ na české klávesnici vyžaduje Shift (řeší keymapa v 1e); u neukončeného řetězce na konci řádku se Enter za `{` uvnitř něj odsadí; párování nejde vypnout (nastavení v 1e).
 

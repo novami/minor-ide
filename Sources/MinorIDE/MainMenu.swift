@@ -84,6 +84,8 @@ enum MainMenu {
 		}
 
 		main.add(submenu: L("View")) { m in
+			m.item(L("Show Sidebar"), #selector(NSSplitViewController.toggleSidebar(_:)), "s", [.command, .control])
+			m.addItem(.separator())
 			let folding = m.item(L("Code Folding"), nil)
 			folding.submenu = NSMenu(title: L("Code Folding"))
 			let left = String(UnicodeScalar(UInt16(NSLeftArrowFunctionKey))!), right = String(UnicodeScalar(UInt16(NSRightArrowFunctionKey))!)
