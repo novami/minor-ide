@@ -69,4 +69,17 @@ final class LayerTests {
 		display()
 		#expect(gutter.drawCount > draws)
 	}
+
+	@Test func latencyMonitorTimesKeyToCommit() {
+		let monitor = LatencyMonitor(view: e)
+		e.latencyMonitor = monitor
+		let key = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+		                           windowNumber: window.windowNumber, context: nil, characters: "x", charactersIgnoringModifiers: "x",
+		                           isARepeat: false, keyCode: 7)!
+		e.keyDown(with: key)
+		RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05)) // the pass ends with the commit
+		#expect(e.rope.string(in: 0..<1) == "x")
+		#expect(monitor.commits.count == 1)
+		#expect(monitor.commits.allSatisfy { $0 >= 0 && $0 < 1 })
+	}
 }

@@ -35,6 +35,16 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		super.init()
 		window.delegate = self
 		editor.onChange = { [weak self] in self?.markEdited() }
+		if ProcessInfo.processInfo.environment["MINORIDE_LATENCY"] == "1" {
+			let monitor = LatencyMonitor(view: editor)
+			monitor.onFrame = { [weak monitor] _ in
+				guard let frames = monitor?.frames, frames.count % 100 == 0 else { return }
+				let last = frames.suffix(100).sorted()
+				print(String(format: "key to frame (last 100): p50 %.2f ms, p99 %.2f ms, max %.2f ms",
+				             last[50] * 1000, last[98] * 1000, last[99] * 1000))
+			}
+			editor.latencyMonitor = monitor
+		}
 		editor.updateSize()
 		updateTitle()
 	}

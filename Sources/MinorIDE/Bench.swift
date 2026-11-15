@@ -94,6 +94,8 @@ enum Bench {
 		}
 		report("scroll jump", samples)
 
+		keyToFrame(editor)
+
 		// Raw rope throughput, independent of drawing.
 		var rope = Rope(text)
 		var rng = UInt64(1)
@@ -112,6 +114,47 @@ enum Bench {
 		exit(checkBudgets() ? 0 : 1)
 	}
 
+	/// Real key events through the window and run loop: key to Core Animation commit, and
+	/// key to the display frame that shows it (display link, quantized to the refresh rate).
+	static func keyToFrame(_ editor: EditorView) {
+		guard let window = editor.window else { return }
+		NSApp.activate()
+		window.orderFrontRegardless()
+		_ = NSApp.nextEvent(matching: .any, until: Date(timeIntervalSinceNow: 0.1), inMode: .default, dequeue: false)
+		guard window.occlusionState.contains(.visible) else {
+			// AppKit skips drawing and display links pause for occluded windows.
+			print("key to frame: skipped, window not visible (display off or screen locked)")
+			return
+		}
+		let monitor = LatencyMonitor(view: editor)
+		editor.latencyMonitor = monitor
+		defer { editor.latencyMonitor = nil }
+		var framesShown = true
+		for i in 0..<320 {
+			let key = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+			                           windowNumber: window.windowNumber, context: nil, characters: "x", charactersIgnoringModifiers: "x",
+			                           isARepeat: false, keyCode: 7)!
+			window.sendEvent(key)
+			// Run the loop until the edit is committed and, while frames come, shown.
+			let deadline = Date(timeIntervalSinceNow: 0.5)
+			while monitor.commits.count <= i || (framesShown && monitor.frames.count <= i), Date() < deadline {
+				if let e = NSApp.nextEvent(matching: .any, until: Date(timeIntervalSinceNow: 0.002), inMode: .default, dequeue: true) {
+					NSApp.sendEvent(e)
+				}
+			}
+			if monitor.frames.count <= i { framesShown = false }
+		}
+		report("key to commit", Array(monitor.commits.dropFirst(20))) // first keys warm up
+		if framesShown {
+			frameInterval = monitor.frameInterval
+			print(String(format: "  [display frame %.2f ms]", monitor.frameInterval * 1000))
+			report("key to frame", Array(monitor.frames.dropFirst(20)))
+		} else {
+			print("key to frame: skipped, no display frames (window occluded, display off or screen locked)")
+		}
+	}
+
+	static var frameInterval: Double?
 	static var lastDraws = (0, 0)
 	/// Worst sample of each measurement, checked against the plan's budgets at the end.
 	/// p99 and worst sample of each measurement, checked against the plan's budgets at the end.
@@ -131,6 +174,13 @@ enum Bench {
 			if !ci { checks.append((name + " max", worst[name], 0.016)) }
 		}
 		checks.append(("1M rope edits", worst["1M rope edits"], ci ? 4.0 : 2.0))
+		// Keystroke latency: the app's part within the frame budget; on screen at most one
+		// display frame later (the frame boundary is not the editor's to move).
+		checks.append(("key to commit p99", p99["key to commit"], 0.008))
+		if let frame = frameInterval {
+			checks.append(("key to frame p99", p99["key to frame"], 0.008 + frame))
+			if !ci { checks.append(("key to frame max", worst["key to frame"], 0.016 + frame)) }
+		}
 		if !ci { checks.append(("open + first draw", worst["open + first draw"], 0.3)) }
 
 		var ok = true

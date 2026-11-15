@@ -72,6 +72,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	var caretsDirty = true
 	/// Lines whose carets are in `caretLayer`; a scroll past them rebuilds the path.
 	var caretLines = 0..<0
+	/// Measures key-to-frame latency when set (benchmark, MINORIDE_LATENCY=1).
+	public var latencyMonitor: LatencyMonitor?
 	/// Line numbers, drawn in the scroll view's vertical ruler.
 	public internal(set) weak var gutter: GutterView?
 
@@ -416,6 +418,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	// MARK: Input
 
 	public override func keyDown(with event: NSEvent) {
+		latencyMonitor?.keyDown(at: event.timestamp)
 		if !(inputContext?.handleEvent(event) ?? false) {
 			interpretKeyEvents([event])
 		}
