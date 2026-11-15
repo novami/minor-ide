@@ -6,7 +6,15 @@ import TextEngine
 @MainActor
 public final class FindController {
 	/// The editor that gets the selected match (the focused pane of a split).
-	public var editor: EditorView
+	/// A pane showing another file drops the old file's highlights and searches again.
+	public var editor: EditorView {
+		didSet {
+			guard editor.document !== oldValue.document else { return }
+			for view in oldValue.document.views { view.setFindMatches([]) }
+			invalidate()
+			if showsHighlights { refresh() } else { onUpdate?() }
+		}
+	}
 	public var query = FindQuery(text: "") {
 		didSet { if query != oldValue { refresh() } }
 	}

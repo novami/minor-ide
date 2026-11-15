@@ -23,6 +23,10 @@ extension ProjectSidebar: NSMenuDelegate {
 			item.representedObject = node
 			menu.addItem(item)
 		}
+		if !node.isDirectory {
+			add(L("Open in Split Editor"), #selector(openInSplit(_:)))
+			menu.addItem(.separator())
+		}
 		add(L("New File…"), #selector(newFile(_:)))
 		add(L("New Folder…"), #selector(newFolder(_:)))
 		if node !== project.root {
@@ -125,6 +129,11 @@ extension ProjectSidebar: NSMenuDelegate {
 		} catch {
 			fail(error.localizedDescription)
 		}
+	}
+
+	@objc private func openInSplit(_ sender: Any?) {
+		guard let node = node(sender) else { return }
+		onOpenInSplit?(node.url)
 	}
 
 	@objc private func showInFinder(_ sender: Any?) {

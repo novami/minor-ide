@@ -8,6 +8,8 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 	let outline = NSOutlineView()
 	/// Opens a file (the window puts it in a tab).
 	var onOpen: ((URL) -> Void)?
+	/// Opens a file in the other pane of the editor (⌥-click, ⌥-Return, context menu).
+	var onOpenInSplit: ((URL) -> Void)?
 	/// A file or folder was renamed (open windows follow it).
 	var onMoved: ((URL, URL) -> Void)?
 	private var restoring = false
@@ -77,13 +79,17 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 
 	@objc private func clicked(_ sender: Any?) {
 		guard let node = outline.item(atRow: outline.clickedRow) as? FileNode, !node.isDirectory else { return }
-		onOpen?(node.url)
+		open(node.url, inSplit: NSApp.currentEvent?.modifierFlags.contains(.option) == true)
+	}
+
+	func open(_ url: URL, inSplit: Bool) {
+		if inSplit { onOpenInSplit?(url) } else { onOpen?(url) }
 	}
 
 	// Return opens the selected file too.
 	override func keyDown(with event: NSEvent) {
 		if event.keyCode == 36, let node = outline.item(atRow: outline.selectedRow) as? FileNode, !node.isDirectory {
-			onOpen?(node.url)
+			open(node.url, inSplit: event.modifierFlags.contains(.option))
 		} else {
 			super.keyDown(with: event)
 		}

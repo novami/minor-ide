@@ -16,6 +16,16 @@
 "Speech" = "Speech";
 "Start Speaking" = "Start Speaking";
 "Stop Speaking" = "Stop Speaking";
+"The file was deleted from disk. Saving creates it again." = "The file was deleted from disk. Saving creates it again.";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
+"OK" = "OK";
+
+/* MinorIDE/DocumentWindow.swift */
+"The file changed on disk." = "The file changed on disk.";
+"Reload" = "Reload";
+"Keep Mine" = "Keep Mine";
+"Compare" = "Compare";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Show Bottom Panel" = "Show Bottom Panel";
@@ -28,16 +38,6 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Hide Right Panel" = "Hide Right Panel";
-"The file was deleted from disk. Saving creates it again." = "The file was deleted from disk. Saving creates it again.";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
-"OK" = "OK";
-
-/* MinorIDE/DocumentWindow.swift */
-"The file changed on disk." = "The file changed on disk.";
-"Reload" = "Reload";
-"Keep Mine" = "Keep Mine";
-"Compare" = "Compare";
 "%@ (on disk)" = "%@ (on disk)";
 "%@ (in the editor)" = "%@ (in the editor)";
 "Untitled" = "Untitled";
@@ -175,6 +175,7 @@
 "Project Files" = "Project Files";
 
 /* MinorIDE/SidebarMenu.swift */
+"Open in Split Editor" = "Open in Split Editor";
 "New File…" = "New File…";
 "New Folder…" = "New Folder…";
 "Rename…" = "Rename…";

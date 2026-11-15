@@ -27,6 +27,7 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Sbalit / Rozbalit | ⌥⌘← / ⌥⌘→ | Zobrazení › Sbalování kódu |
 | Sbalit vše / Rozbalit vše | ⌥⇧⌘← / ⌥⇧⌘→ | Zobrazení › Sbalování kódu |
 | Rozdělit editor vedle sebe / pod sebe | — | Zobrazení |
+| Otevřít soubor ze stromu ve druhé části | ⌥+klik, ⌥Return | kontextové menu stromu |
 | Zavřít část rozděleného editoru | ⌘W (zavírací tlačítko zavře okno) | Soubor › Zavřít |
 | Celá obrazovka | ⌃⌘F | Zobrazení |
 | Minimalizovat | ⌘M | Okno |

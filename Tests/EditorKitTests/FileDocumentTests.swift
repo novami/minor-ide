@@ -1,0 +1,54 @@
+import AppKit
+import Foundation
+import Testing
+import TextEngine
+@testable import EditorKit
+
+/// One document per file, shared by editors in any window; edited flag, saving and disk changes.
+@MainActor
+struct FileDocumentTests {
+	private func tempFile(_ text: String) throws -> URL {
+		let dir = FileManager.default.temporaryDirectory.appendingPathComponent("FileDocumentTests-\(UUID().uuidString)")
+		try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+		let url = dir.appendingPathComponent("a.go")
+		try Data(text.utf8).write(to: url)
+		return url
+	}
+
+	@Test func oneDocumentPerFileAcrossEditors() throws {
+		let url = try tempFile("package a\n")
+		let doc = try FileDocument.load(url)
+		#expect(try FileDocument.load(URL(fileURLWithPath: url.deletingLastPathComponent().path + "/./a.go")) === doc)
+		let a = EditorView(document: doc.text), b = EditorView(document: doc.text)
+		a.setSelections(SelectionSet(caret: 0))
+		a.insertText("// ", replacementRange: NSRange(location: NSNotFound, length: 0))
+		#expect(b.rope.string == "// package a\n")
+		#expect(doc.isEdited)
+
+		try doc.write(to: url)
+		#expect(!doc.isEdited)
+		#expect(try String(contentsOf: url, encoding: .utf8) == "// package a\n")
+	}
+
+	@Test func diskChangeReloadsCleanAndNotifiesEdited() throws {
+		let url = try tempFile("one\n")
+		let doc = try FileDocument.load(url)
+		let view = EditorView(document: doc.text)
+		try Data("two\n".utf8).write(to: url)
+		try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(5)], ofItemAtPath: url.path)
+		doc.checkDisk()
+		#expect(view.rope.string == "two\n") // quiet reload
+		#expect(!doc.isEdited && doc.diskNotice == nil)
+
+		view.setSelections(SelectionSet(caret: 0))
+		view.insertText("x", replacementRange: NSRange(location: NSNotFound, length: 0))
+		try Data("three\n".utf8).write(to: url)
+		try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(10)], ofItemAtPath: url.path)
+		doc.checkDisk()
+		#expect(doc.diskNotice == .changed)
+		#expect(view.rope.string == "xtwo\n") // unsaved text kept until the user chooses
+		doc.keepMine()
+		doc.checkDisk()
+		#expect(doc.diskNotice == nil)
+	}
+}

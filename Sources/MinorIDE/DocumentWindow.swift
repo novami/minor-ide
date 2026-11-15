@@ -4,51 +4,61 @@ import Highlight
 import MinorCore
 import TextEngine
 
-/// One editor window bound to a file (or untitled). Holds what is needed to save the file
-/// back in its own conventions: line ending, charset and the lines as loaded.
+/// One editor window (a tab of a project window): one or two panes (split), each showing
+/// a file. Title, saving and the Format menu follow the focused pane.
 @MainActor
 final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMenuItemValidation {
 	let window: EditorWindow
-	/// The first editor pane; `splitEditor` is the second one of a split.
-	let editor: EditorView
-	var splitEditor: EditorView?
+	/// Panes in the order of the split view; at least one.
+	var panes: [EditorPane]
 	let editorSplit = NSSplitView()
-	private(set) var url: URL?
-	private(set) var format: FormatSettings
-	private(set) var resolved: ResolvedFormat?
-	private var originalLines: Set<Substring> = []
-	private(set) var mixedLineEndings = false
 	let find: FindController
 	private let findBar: FindBar
 	var findBarView: FindBar { findBar }
 
 	/// The folder this window belongs to; its windows are tabs of one window group.
 	let project: Project?
-	private let diskBanner = DiskBanner()
-	/// Modification date and size of the file as last loaded or saved.
-	private var diskStamp: FileStamp?
 	private var compareWindow: CompareWindow?
 	private(set) var sidebar: ProjectSidebar?
 	/// Split items of a project window: sidebar, right panel (an AppKit inspector item), bottom panel.
 	private var panels: (side: NSSplitViewItem, inspector: NSSplitViewItem, bottom: NSSplitViewItem)?
 	private var panelSplitViews: [NSSplitView] = []
 
-	init(text: String, url: URL?, format: FormatSettings, project: Project? = nil) {
-		self.url = url
-		self.format = format
+	/// The first pane's editor; `splitEditor` is the second pane's.
+	var editor: EditorView { panes[0].editor }
+	var splitEditor: EditorView? { panes.count > 1 ? panes[1].editor : nil }
+	var focusedPane: EditorPane { panes.first { $0.editor === find.editor } ?? panes[0] }
+	/// The file of the focused pane.
+	var document: FileDocument { focusedPane.document }
+	var url: URL? { document.url }
+	var format: FormatSettings { document.format }
+	var mixedLineEndings: Bool { document.mixedLineEndings }
+	/// Files shown in this window, each once.
+	var documents: [FileDocument] {
+		panes.reduce(into: []) { list, pane in if !list.contains(where: { $0 === pane.document }) { list.append(pane.document) } }
+	}
+
+	func pane(showing url: URL) -> EditorPane? {
+		panes.first { $0.document.url?.standardizedFileURL == url.standardizedFileURL }
+	}
+
+	convenience init(text: String, project: Project? = nil) {
+		self.init(document: FileDocument(text: text), project: project)
+	}
+
+	init(document: FileDocument, project: Project? = nil) {
 		self.project = project
 		window = EditorWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 800),
 		                  styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
-		let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init) ?? 13
-		editor = EditorView(text: text, font: .monospacedSystemFont(ofSize: size, weight: .regular))
-		editor.format = format
+		let first = EditorPane(document: document, font: Self.editorFont)
+		panes = [first]
 		editorSplit.dividerStyle = .thin
 		editorSplit.isVertical = true
-		editorSplit.addSubview(Self.makeScrollView(for: editor))
-		find = FindController(editor: editor)
+		editorSplit.addSubview(first.view)
+		find = FindController(editor: first.editor)
 		findBar = FindBar(controller: find)
 		findBar.isHidden = true
-		let content = NSStackView(views: [diskBanner, findBar, editorSplit])
+		let content = NSStackView(views: [findBar, editorSplit])
 		content.orientation = .vertical
 		content.spacing = 0
 		content.alignment = .width
@@ -57,7 +67,6 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		// A split view has no width of its own; .width alignment alone leaves it at zero.
 		editorSplit.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 		findBar.setContentHuggingPriority(.required, for: .vertical)
-		diskBanner.setContentHuggingPriority(.required, for: .vertical)
 		if let project {
 			// Sidebar and editor in a split view controller (HIG sidebar, View › Show Sidebar).
 			let sidebar = ProjectSidebar(project: project)
@@ -115,70 +124,43 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		window.toolbar = toolbar
 		window.toolbarStyle = .unified
 		sidebar?.onOpen = { url in (NSApp.delegate as? AppDelegate)?.open(url) }
+		sidebar?.onOpenInSplit = { [weak self] url in
+			guard let self else { return }
+			(NSApp.delegate as? AppDelegate)?.open(url, inSplitOf: self)
+		}
 		sidebar?.onMoved = { from, to in (NSApp.delegate as? AppDelegate)?.filesMoved(from: from, to: to) }
-		if let url { sidebar?.reveal(url) }
+		if let url = document.url { sidebar?.reveal(url) }
 		observePanels()
 		window.delegate = self
-		configure(editor)
+		configure(first)
 		window.closesPane = { [weak self] in self?.closeFocusedPane() ?? false }
-		editor.document.onChange = { [weak self] in
-			guard let self else { return }
-			markEdited()
-			if findBar.isHidden { find.invalidate() } else { find.refresh(delay: .milliseconds(100)) }
-		}
+		NotificationCenter.default.addObserver(self, selector: #selector(documentStateChanged(_:)),
+		                                       name: FileDocument.stateDidChange, object: nil)
 		findBar.onClose = { [weak self] in self?.hideFindBar() }
 		if ProcessInfo.processInfo.environment["MINORIDE_LATENCY"] == "1" {
-			let monitor = LatencyMonitor(view: editor)
+			let monitor = LatencyMonitor(view: first.editor)
 			monitor.onFrame = { [weak monitor] _ in
 				guard let frames = monitor?.frames, frames.count % 100 == 0 else { return }
 				let last = frames.suffix(100).sorted()
 				print(String(format: "key to frame (last 100): p50 %.2f ms, p99 %.2f ms, max %.2f ms",
 				             last[50] * 1000, last[98] * 1000, last[99] * 1000))
 			}
-			editor.latencyMonitor = monitor
+			first.editor.latencyMonitor = monitor
 		}
-		editor.updateSize()
+		first.editor.updateSize()
 		updateTitle()
 	}
 
-	/// Opens a file: decodes it, keeps its line endings, and resolves indentation from
-	/// language defaults, user and project settings, .editorconfig and the file itself.
-	static func open(_ url: URL, project: Project? = nil) throws -> DocumentWindow {
-		let data = try Data(contentsOf: url)
-		let loaded = TextFile.load(data)
-		let resolved = Self.resolve(path: url.path, detected: loaded.detected)
-		var format = resolved.settings
-		format.charset = loaded.charset
-		let doc = DocumentWindow(text: loaded.text, url: url, format: format, project: project)
-		// Large and minified files open without colouring (plan: simplified mode).
-		doc.editor.language = TextFile.needsSimplifiedMode(data) ? nil : Languages.language(forPath: url.path)
-		doc.resolved = resolved
-		doc.originalLines = loaded.originalLines
-		doc.diskStamp = FileStamp(url)
-		doc.mixedLineEndings = loaded.detected.mixedLineEndings
-		doc.updateTitle()
-		return doc
+	static var editorFont: NSFont {
+		let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init) ?? 13
+		return .monospacedSystemFont(ofSize: size, weight: .regular)
 	}
 
-	static func resolve(path: String, detected: DetectedFormat?) -> ResolvedFormat {
-		let project = projectRoot(for: path).flatMap {
-			SettingsFile.load(URL(fileURLWithPath: $0).appendingPathComponent(".minoride/settings.json"))
-		}
-		return FormatResolver.resolve(path: path, user: SettingsFile.load(SettingsFile.userURL), project: project,
-		                              editorConfig: EditorConfig.properties(forFile: path), detected: detected)
-	}
-
-	/// Nearest parent with .git, composer.json or go.mod.
-	static func projectRoot(for path: String) -> String? {
-		var dir = (path as NSString).deletingLastPathComponent
-		let fm = FileManager.default
-		while dir != "/" && !dir.isEmpty {
-			for marker in [".git", "composer.json", "go.mod", ".minoride"] where fm.fileExists(atPath: dir + "/" + marker) {
-				return dir
-			}
-			dir = (dir as NSString).deletingLastPathComponent
-		}
-		return nil
+	/// Title, edited dot and disk bars follow the files of the panes.
+	@objc private func documentStateChanged(_ notification: Notification) {
+		guard let doc = notification.object as? FileDocument, panes.contains(where: { $0.document === doc }) else { return }
+		for pane in panes where pane.document === doc { updateBanner(pane) }
+		updateTitle()
 	}
 
 	private var placed = false
@@ -195,7 +177,12 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			placed = true
 		}
 		window.makeKeyAndOrderFront(nil)
-		window.makeFirstResponder(editor)
+		window.makeFirstResponder(find.editor)
+	}
+
+	/// Moves the focus to the pane showing `url`.
+	func focus(_ url: URL) {
+		if let pane = pane(showing: url) { window.makeFirstResponder(pane.editor) }
 	}
 
 	/// Shows a window just added as a tab (the tab group keeps its place, no centring).
@@ -222,18 +209,29 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		return menu
 	}
 
-	/// The file was renamed or its folder moved: follow it without touching the text.
-	func fileMoved(to newURL: URL) {
-		url = newURL
-		diskStamp = FileStamp(newURL)
-		updateTitle()
-	}
-
 	// MARK: Changes on disk
 
 	func windowDidBecomeKey(_ notification: Notification) {
 		applyPanels()
-		checkDisk()
+		documents.forEach { $0.checkDisk() }
+	}
+
+	/// Shows the pane's bar when its file changed or vanished on disk while it has unsaved changes.
+	func updateBanner(_ pane: EditorPane) {
+		let doc = pane.document
+		guard doc.diskNotice != pane.shownNotice else { return }
+		pane.shownNotice = doc.diskNotice
+		switch doc.diskNotice {
+		case nil: pane.banner.isHidden = true
+		case .deleted:
+			pane.banner.show(L("The file was deleted from disk. Saving creates it again."), [(L("OK"), { doc.dismissDiskNotice() }, true)])
+		case .changed:
+			pane.banner.show(L("The file changed on disk."), [
+				(L("Reload"), { doc.reload() }, true),
+				(L("Keep Mine"), { doc.keepMine() }, true),
+				(L("Compare"), { [weak self] in self?.compareWithDisk(doc) }, false),
+			])
+		}
 	}
 
 	// MARK: Panels
@@ -293,86 +291,28 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		return true
 	}
 
-	/// Compares the file with the version loaded or saved: unchanged windows reload quietly
-	/// (keeping the caret and scroll position), edited ones get a bar to choose.
-	func checkDisk() {
-		guard let url else { return }
-		guard let now = FileStamp(url) else {
-			guard diskStamp != nil else { return }
-			diskStamp = nil
-			markEdited() // saving recreates the file
-			diskBanner.show(L("The file was deleted from disk. Saving creates it again."), [(L("OK"), {}, true)])
-			return
-		}
-		guard now != diskStamp else { return }
-		if !window.isDocumentEdited {
-			reload()
-		} else {
-			diskBanner.show(L("The file changed on disk."), [
-				(L("Reload"), { [weak self] in self?.reload() }, true),
-				(L("Keep Mine"), { [weak self] in self?.diskStamp = now }, true),
-				(L("Compare"), { [weak self] in self?.compareWithDisk() }, false),
-			])
-		}
-	}
-
 	/// Diff of the file on disk against the editor's text, in its own window.
-	func compareWithDisk() {
-		guard let url, let data = try? Data(contentsOf: url) else { return }
-		let disk = TextFile.load(data, fallback: format.charset).text
+	func compareWithDisk(_ doc: FileDocument) {
+		guard let url = doc.url, let disk = doc.diskText() else { return }
 		let name = url.lastPathComponent
-		let compare = CompareWindow(title: name, old: disk, new: editor.rope.string,
+		let compare = CompareWindow(title: name, old: disk, new: doc.text.rope.string,
 		                            oldLabel: L("%@ (on disk)", name), newLabel: L("%@ (in the editor)", name))
 		compare.onClose = { [weak self] in self?.compareWindow = nil }
 		compareWindow = compare
 	}
 
-	/// Replaces the text with the file on disk as one undoable step.
-	func reload() {
-		guard let url, let data = try? Data(contentsOf: url) else { return }
-		let loaded = TextFile.load(data, fallback: format.charset)
-		let selections = editor.selections
-		let origin = editor.visibleRect.origin
-		if loaded.text != editor.rope.string {
-			editor.replace([(0..<editor.rope.byteCount, loaded.text)])
-			let end = editor.rope.byteCount
-			editor.setSelections(selections.map { s in
-				Selection(anchor: editor.rope.scalarBoundary(atOrBefore: min(s.anchor, end)),
-				          head: editor.rope.scalarBoundary(atOrBefore: min(s.head, end)))
-			})
-			editor.scroll(origin)
-		}
-		originalLines = loaded.originalLines
-		mixedLineEndings = loaded.detected.mixedLineEndings
-		diskStamp = FileStamp(url)
-		diskBanner.isHidden = true
-		window.isDocumentEdited = false
-		editor.sealUndo()
-		updateTitle()
-	}
+	// MARK: Format changes (Format menu, the focused pane's file)
 
-	// MARK: Format changes (Format menu)
-
-	func setLineEnding(_ eol: LineEnding) {
-		guard format.lineEnding != eol || mixedLineEndings else { return }
-		format.lineEnding = eol
-		mixedLineEndings = false
-		markEdited()
-		updateTitle()
-	}
+	func setLineEnding(_ eol: LineEnding) { document.setLineEnding(eol) }
 
 	func setIndent(style: IndentStyle, size: Int) {
+		var format = document.format
 		format.indentStyle = style
 		format.indentSize = size
-		editor.format = format
-		updateTitle()
+		document.format = format
 	}
 
-	func setTabWidth(_ width: Int) {
-		format.tabWidth = width
-		editor.format = format
-		updateTitle()
-	}
+	func setTabWidth(_ width: Int) { document.format.tabWidth = width }
 
 	// MARK: Find (Edit › Find; the window delegate is in the responder chain of the editor and the bar)
 
@@ -391,7 +331,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	func hideFindBar() {
 		findBar.isHidden = true
 		find.showsHighlights = false
-		window.makeFirstResponder(editor)
+		window.makeFirstResponder(find.editor)
 	}
 
 	@objc func showFind(_ sender: Any?) { showFindBar(replace: false) }
@@ -415,41 +355,37 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	}
 
 	@objc func useSelectionForReplace(_ sender: Any?) {
-		let s = editor.selections.primary
+		let s = find.editor.selections.primary
 		guard !s.isEmpty else { return }
-		find.replacement = editor.rope.string(in: s.range)
+		find.replacement = find.editor.rope.string(in: s.range)
 		findBar.syncFromController()
 	}
 
 	// MARK: Saving
 
 	@discardableResult
-	func save() -> Bool {
-		guard let url else { return saveAs() }
-		return write(to: url)
-	}
+	func save() -> Bool { save(document) }
 
 	@discardableResult
-	func saveAs() -> Bool {
-		let panel = NSSavePanel()
-		panel.nameFieldStringValue = url?.lastPathComponent ?? L("Untitled")
-		if let dir = url?.deletingLastPathComponent() { panel.directoryURL = dir }
-		guard panel.runModal() == .OK, let chosen = panel.url else { return false }
-		url = chosen
-		return write(to: chosen)
+	func saveAs() -> Bool { saveAs(document) }
+
+	private func save(_ doc: FileDocument) -> Bool {
+		guard let url = doc.url else { return saveAs(doc) }
+		return write(doc, to: url)
 	}
 
-	private func write(to url: URL) -> Bool {
+	private func saveAs(_ doc: FileDocument) -> Bool {
+		let panel = NSSavePanel()
+		panel.nameFieldStringValue = doc.url?.lastPathComponent ?? L("Untitled")
+		if let dir = doc.url?.deletingLastPathComponent() { panel.directoryURL = dir }
+		guard panel.runModal() == .OK, let chosen = panel.url else { return false }
+		return write(doc, to: chosen)
+	}
+
+	private func write(_ doc: FileDocument, to url: URL) -> Bool {
 		do {
-			try TextFile.write(TextFile.save(editor.rope.string, settings: format, originalLines: originalLines), to: url)
-			// Saved content becomes the new baseline for "trim modified lines".
-			originalLines = Set(editor.rope.string.split(separator: "\n", omittingEmptySubsequences: false))
-			window.isDocumentEdited = false
-			diskStamp = FileStamp(url)
-			diskBanner.isHidden = true
-			editor.sealUndo()
+			try doc.write(to: url)
 			NSDocumentController.shared.noteNewRecentDocumentURL(url)
-			updateTitle()
 			return true
 		} catch {
 			NSAlert(error: error).beginSheetModal(for: window)
@@ -457,32 +393,32 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 	}
 
-	/// Runs on every keystroke: touch the window only on the first change (setting the title
-	/// each time cost 0.09 ms per key).
-	private func markEdited() {
-		guard !window.isDocumentEdited else { return }
-		window.isDocumentEdited = true
-	}
-
 	/// Title shows what will be written: e.g. "User.php — LF · 4 spaces · UTF-8".
 	func updateTitle() {
-		let name = url?.lastPathComponent ?? L("Untitled")
+		let doc = document, format = doc.format
+		let name = doc.url?.lastPathComponent ?? L("Untitled")
 		let indent = format.indentStyle == .tab ? L("Tabs (%d)", format.tabWidth) : LP("%d spaces", one: "%d space", format.indentSize)
-		let eol = mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
+		let eol = doc.mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
 		window.title = name
 		window.subtitle = "\(eol) · \(indent) · \(format.charset.rawValue.uppercased())"
-		window.representedURL = url
-		window.tab.title = project.map { url == nil ? $0.name : name } ?? name
+		window.representedURL = doc.url
+		window.tab.title = project.map { doc.url == nil ? $0.name : name } ?? name
+		if window.isDocumentEdited != doc.isEdited { window.isDocumentEdited = doc.isEdited }
 	}
 
 	// MARK: Closing
 
+	/// An edited file asks before it closes with its last editor.
+	func needsConfirm(_ doc: FileDocument, closing editors: [EditorView]) -> Bool {
+		doc.isEdited && doc.text.views.allSatisfy { view in editors.contains { $0 === view } }
+	}
+
 	/// HIG save dialog as a sheet: Save (default) / Cancel / Don't Save. Completion gets true
-	/// when the window may close.
-	func confirmClose(_ completion: @escaping (Bool) -> Void) {
-		guard window.isDocumentEdited else { return completion(true) }
+	/// when the file may close.
+	func confirmSave(_ doc: FileDocument, _ completion: @escaping (Bool) -> Void) {
+		if let url = doc.url { focus(url) }
 		let alert = NSAlert()
-		alert.messageText = L("Do you want to save the changes made to the document “%@”?", url?.lastPathComponent ?? L("Untitled"))
+		alert.messageText = L("Do you want to save the changes made to the document “%@”?", doc.url?.lastPathComponent ?? L("Untitled"))
 		alert.informativeText = L("Your changes will be lost if you don’t save them.")
 		alert.addButton(withTitle: L("Save"))
 		alert.addButton(withTitle: L("Cancel"))
@@ -493,9 +429,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			MainActor.assumeIsolated {
 				guard let self else { return completion(false) }
 				switch response {
-				case .alertFirstButtonReturn: completion(self.save())
+				case .alertFirstButtonReturn: completion(self.save(doc))
 				case .alertThirdButtonReturn:
-					self.window.isDocumentEdited = false
+					doc.discardChanges()
 					completion(true)
 				default: completion(false)
 				}
@@ -503,25 +439,37 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 	}
 
+	/// Asks about each edited file no other window shows; true when the window may close.
+	func confirmClose(_ completion: @escaping (Bool) -> Void) {
+		let editors = panes.map(\.editor)
+		confirmEach(documents.filter { needsConfirm($0, closing: editors) }[...], completion)
+	}
+
+	/// Asks about every edited file of the window (quitting).
+	func confirmEdited(_ completion: @escaping (Bool) -> Void) {
+		confirmEach(documents.filter(\.isEdited)[...], completion)
+	}
+
+	private func confirmEach(_ docs: ArraySlice<FileDocument>, _ completion: @escaping (Bool) -> Void) {
+		guard let doc = docs.first else { return completion(true) }
+		confirmSave(doc) { [weak self] ok in
+			guard ok, let self else { return completion(false) }
+			confirmEach(docs.dropFirst(), completion)
+		}
+	}
+
 	func windowShouldClose(_ sender: NSWindow) -> Bool {
-		guard window.isDocumentEdited else { return true }
+		let editors = panes.map(\.editor)
+		guard documents.contains(where: { needsConfirm($0, closing: editors) }) else { return true }
 		confirmClose { [weak self] ok in
 			if ok { self?.window.close() }
 		}
 		return false
 	}
-}
 
-/// Identity of a file version on disk: modification date and size.
-struct FileStamp: Equatable {
-	let date: Date?
-	let size: Int?
-
-	init?(_ url: URL) {
-		guard let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
-		      values.contentModificationDate != nil else { return nil }
-		date = values.contentModificationDate
-		size = values.fileSize
+	/// Editors of a closed window stop following their files at once (the file may stay open elsewhere).
+	func windowWillClose(_ notification: Notification) {
+		for pane in panes { pane.document.text.detach(pane.editor) }
 	}
 }
 

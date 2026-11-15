@@ -13,7 +13,32 @@ final class EditorWindow: NSWindow {
 	}
 }
 
-/// The editor of a window split in two panes over one document (View › Split Editor).
+/// One part of a window's editor: a file's editor with the bar for changes on disk above it.
+@MainActor
+final class EditorPane {
+	let document: FileDocument
+	let editor: EditorView
+	let banner = DiskBanner()
+	/// Notice the banner shows, so repeated state changes do not rebuild it.
+	var shownNotice: FileDocument.DiskNotice?
+	let view: NSStackView
+
+	init(document: FileDocument, font: NSFont) {
+		self.document = document
+		editor = EditorView(document: document.text, font: font)
+		let scroll = DocumentWindow.makeScrollView(for: editor)
+		scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
+		banner.setContentHuggingPriority(.required, for: .vertical)
+		view = NSStackView(views: [banner, scroll])
+		view.orientation = .vertical
+		view.spacing = 0
+		view.alignment = .width
+		view.distribution = .fill
+	}
+}
+
+/// The editor of a window split in two panes (View › Split Editor); each pane shows a file,
+/// the same one or another.
 extension DocumentWindow {
 	static func makeScrollView(for editor: EditorView) -> NSScrollView {
 		let scroll = NSScrollView()
@@ -30,42 +55,106 @@ extension DocumentWindow {
 	@objc func splitEditorTopAndBottom(_ sender: Any?) { split(vertical: false) }
 	@objc func closeEditorSplit(_ sender: Any?) { _ = closeFocusedPane() }
 
-	/// Opens the second pane on the focused pane's position, or changes the direction of an open split.
+	/// Opens the second pane on the focused pane's file and position, or changes the direction of an open split.
 	func split(vertical: Bool) {
 		editorSplit.isVertical = vertical
-		let opening = splitEditor == nil
-		if opening {
-			let second = EditorView(document: editor.document, font: editor.font)
-			configure(second)
-			editorSplit.addSubview(Self.makeScrollView(for: second))
-			splitEditor = second
-		}
-		editorSplit.layoutSubtreeIfNeeded()
-		let total = vertical ? editorSplit.bounds.width : editorSplit.bounds.height
-		editorSplit.setPosition(((total - editorSplit.dividerThickness) / 2).rounded(), ofDividerAt: 0)
-		editorSplit.layoutSubtreeIfNeeded()
-		guard let second = splitEditor else { return }
-		if opening { second.adoptViewState(of: find.editor) }
-		window.makeFirstResponder(second)
+		guard panes.count == 1 else { return centerDivider() }
+		let second = addPane(document)
+		second.editor.adoptViewState(of: find.editor)
+		window.makeFirstResponder(second.editor)
 	}
 
-	/// Closes the focused pane; false without a split. The first editor stays (the window is
-	/// bound to it) and takes the position of the second pane when the first one closes.
+	/// Shows `doc` in the other pane (⌥-click in the project tree), splitting side by side
+	/// when the editor is not split yet.
+	func openInSplit(_ doc: FileDocument) {
+		guard panes.count > 1 else {
+			let pane = addPane(doc)
+			if doc === panes[0].document { pane.editor.adoptViewState(of: panes[0].editor) }
+			window.makeFirstResponder(pane.editor)
+			return
+		}
+		let focused = focusedPane
+		guard let other = panes.first(where: { $0 !== focused }) else { return }
+		if other.document === doc { return showPane(other) }
+		let replace = { [weak self] in
+			guard let self, let index = panes.firstIndex(where: { $0 === other }) else { return }
+			let pane = makePane(doc)
+			pane.view.frame = other.view.frame
+			editorSplit.replaceSubview(other.view, with: pane.view)
+			other.document.text.detach(other.editor)
+			panes[index] = pane
+			showPane(pane)
+		}
+		if needsConfirm(other.document, closing: [other.editor]) {
+			confirmSave(other.document) { ok in if ok { replace() } }
+		} else {
+			replace()
+		}
+	}
+
+	private func showPane(_ pane: EditorPane) {
+		window.makeFirstResponder(pane.editor)
+		if let url = pane.document.url { sidebar?.reveal(url) }
+	}
+
+	private func makePane(_ doc: FileDocument) -> EditorPane {
+		let pane = EditorPane(document: doc, font: editor.font)
+		configure(pane)
+		return pane
+	}
+
+	/// Adds the second pane with the divider in the middle.
+	private func addPane(_ doc: FileDocument) -> EditorPane {
+		let pane = makePane(doc)
+		editorSplit.addSubview(pane.view)
+		panes.append(pane)
+		centerDivider()
+		return pane
+	}
+
+	private func centerDivider() {
+		editorSplit.layoutSubtreeIfNeeded()
+		let total = editorSplit.isVertical ? editorSplit.bounds.width : editorSplit.bounds.height
+		editorSplit.setPosition(((total - editorSplit.dividerThickness) / 2).rounded(), ofDividerAt: 0)
+		editorSplit.layoutSubtreeIfNeeded()
+	}
+
+	/// Closes the focused pane (asking to save a file no other editor shows); false without a split.
 	func closeFocusedPane() -> Bool {
-		guard let second = splitEditor else { return false }
-		if find.editor !== second { editor.adoptViewState(of: second) }
-		second.enclosingScrollView?.removeFromSuperview()
-		editor.document.detach(second)
-		splitEditor = nil
-		find.editor = editor
-		window.makeFirstResponder(editor)
+		guard panes.count > 1 else { return false }
+		let pane = focusedPane
+		let close = { [weak self] in
+			guard let self, panes.count > 1, panes.contains(where: { $0 === pane }) else { return }
+			pane.view.removeFromSuperview()
+			pane.document.text.detach(pane.editor)
+			panes.removeAll { $0 === pane }
+			find.editor = panes[0].editor
+			window.makeFirstResponder(panes[0].editor)
+			updateTitle()
+		}
+		if needsConfirm(pane.document, closing: [pane.editor]) {
+			confirmSave(pane.document) { ok in if ok { close() } }
+		} else {
+			close()
+		}
 		return true
 	}
 
-	/// Settings shared by both panes.
-	func configure(_ pane: EditorView) {
-		pane.setAccessibilityLabel(L("Editor"))
-		pane.contextMenuProvider = { _ in DocumentWindow.contextMenu() }
-		pane.onFocus = { [weak self] focused in self?.find.editor = focused }
+	/// Settings shared by all panes.
+	func configure(_ pane: EditorPane) {
+		let editor = pane.editor
+		editor.setAccessibilityLabel(L("Editor"))
+		editor.contextMenuProvider = { _ in DocumentWindow.contextMenu() }
+		editor.onFocus = { [weak self] focused in
+			guard let self else { return }
+			find.editor = focused
+			updateTitle()
+		}
+		// Matches follow the text of the focused pane's file, whichever editor changed it.
+		editor.onTextChange = { [weak self, weak editor] in
+			guard let self, editor === find.editor else { return }
+			if findBarView.isHidden { find.invalidate() } else { find.refresh(delay: .milliseconds(100)) }
+		}
+		updateBanner(pane)
 	}
 }

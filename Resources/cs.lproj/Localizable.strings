@@ -17,6 +17,16 @@
 "Speech" = "Řeč";
 "Start Speaking" = "Začít mluvit";
 "Stop Speaking" = "Přestat mluvit";
+"The file was deleted from disk. Saving creates it again." = "Soubor byl z disku smazán. Uložením se vytvoří znovu.";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
+"OK" = "OK";
+
+/* MinorIDE/DocumentWindow.swift */
+"The file changed on disk." = "Soubor se na disku změnil.";
+"Reload" = "Přenačíst";
+"Keep Mine" = "Ponechat moje";
+"Compare" = "Porovnat";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Show Bottom Panel" = "Zobrazit spodní panel";
@@ -29,16 +39,6 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Hide Right Panel" = "Skrýt pravý panel";
-"The file was deleted from disk. Saving creates it again." = "Soubor byl z disku smazán. Uložením se vytvoří znovu.";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
-"OK" = "OK";
-
-/* MinorIDE/DocumentWindow.swift */
-"The file changed on disk." = "Soubor se na disku změnil.";
-"Reload" = "Přenačíst";
-"Keep Mine" = "Ponechat moje";
-"Compare" = "Porovnat";
 "%@ (on disk)" = "%@ (na disku)";
 "%@ (in the editor)" = "%@ (v editoru)";
 "Untitled" = "Bez názvu";
@@ -178,6 +178,7 @@
 "Project Files" = "Soubory projektu";
 
 /* MinorIDE/SidebarMenu.swift */
+"Open in Split Editor" = "Otevřít v rozděleném editoru";
 "New File…" = "Nový soubor…";
 "New Folder…" = "Nová složka…";
 "Rename…" = "Přejmenovat…";

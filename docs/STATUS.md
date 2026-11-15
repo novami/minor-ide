@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1e/3)
+**Poslední aktualizace:** 2026-11-15 (1e/4b)
 
 ## Kde jsme
 
@@ -77,9 +77,13 @@ Binární soubory (2026-11-15): NUL v prvních 8 KB (kromě UTF-16 s BOM) → ne
 
 **Fáze 1e, krok 4a hotový — split editoru** (2026-11-15, rozhodnutí uživatele: sdílený model, max. 2 části): `Sources/EditorKit/TextDocument.swift` drží rope, historii Zpět (společná pro obě části), kotvy, formát, jazyk a zvýraznění (i dolexování na pozadí) a `onChange`; `EditorView(document:)` má vlastní výběry, sbalení, posun a cache. Editace jde přes `TextDocument.apply`: všechny pohledy `willEdit`, změna ropu, pak `didEdit` (ostatní pohledy posunou výběry přes `ChangeSet`, jen zdroj rozbaluje a posouvá ke kurzoru). `EditorView(text:)` zůstává jako zkratka, vlastnosti `rope`/`history`/`format`/`language`/`highlighter` přeposílají do dokumentu. Okno: `Sources/MinorIDE/EditorSplit.swift` (`NSSplitView` uvnitř stacku, Zobrazení › Rozdělit editor vedle sebe / pod sebe / Zavřít rozdělení editoru; ⌘W zavře zaměřenou část, zavírací tlačítko okno — `EditorWindow.performClose` podle odesílatele; hledání jde do zaměřené části, zvýraznění shod ve všech). Test `TextDocumentTests`. Bench BUDGET OK (psaní p99 0,07 ms). `MINORIDE_SPLIT=right|down` se `--snapshot` vypíše rámy částí.
 
-Známé mezery po kroku 1e/4a: druhá část ukazuje jen stejný soubor (otevření jiného souboru projektu v ní potřebuje registr dokumentů podle URL sdílený okny — krok 4b); pasivní část při vložení řádků nad viditelnou oblastí neudrží posun; rozdělení se neukládá; ruční kontrola (myš, fokus, ⌘W, tmavý režim) zbývá.
+Známé mezery po kroku 1e/4a: pasivní část při vložení řádků nad viditelnou oblastí neudrží posun; rozdělení se neukládá; ruční kontrola (myš, fokus, ⌘W, tmavý režim) zbývá.
 
-**Další: fáze 1e, krok 4b** — registr `TextDocument` podle URL (jeden model na soubor pro taby, split, LSP), v druhé části otevřít jiný soubor projektu; pak důvěra projektu a Omezený režim, uvítací okno s nedávnými projekty, Nastavení (SwiftUI nad `settings.json`), automatické ukládání a Local History.
+**Fáze 1e, krok 4b hotový — jiný soubor ve druhé části** (2026-11-15, rozhodnutí uživatele: ⌥+klik / ⌥+Return ve stromu a kontextové menu „Otevřít v rozděleném editoru“; název tabu, podtitul, tečka neuložených změn, ⌘S a menu Formát podle zaměřené části): `Sources/EditorKit/FileDocument.swift` — jeden dokument na cestu (slabý registr, `FileDocument.load`), drží `TextDocument`, URL, formát, původní řádky, razítko z disku, příznak upraveno a upozornění z disku (`DiskNotice`), změny hlásí notifikací `stateDidChange`; kontrola disku, přenačtení (zachová výběry a posun všech pohledů), Ponechat moje, zápis. `DocumentWindow` má `panes: [EditorPane]` (`EditorSplit.swift`: editor + vlastní lišta změny na disku), soubor otevřený jinde se sdílí (stejná historie Zpět), klik na soubor, který už je v některé části, ji zaměří. Zavření části, nahrazení druhé části i okna se ptá na uložení jen u souboru, který jiný editor neukazuje; ukončení aplikace se na sdílený soubor ptá jednou. `FindController.editor` při přechodu na jiný soubor smaže staré zvýraznění a hledá znovu. `FileStamp` čte atributy přes `FileManager` (hodnoty `URL.resourceValues` jsou v cache). Test `FileDocumentTests`. Bench BUDGET OK (psaní p99 0,10 ms).
+
+Známé mezery po kroku 1e/4b: Uložit jako na cestu jiného otevřeného dokumentu ho vyřadí z registru (dva modely jednoho souboru); zvýraznění hledání z jednoho okna se ukáže i v jiném okně se stejným souborem; tečka neuložených změn na tabu ukazuje jen zaměřenou část; strom při přepnutí části nevybere její soubor (jen při ⌥+kliku); `LatencyMonitor` sleduje jen první část; ruční kontrola (⌥+klik, nahrazení části, dotaz na uložení, lišta disku v části) zbývá.
+
+**Další:** důvěra projektu a Omezený režim, uvítací okno s nedávnými projekty, Nastavení (SwiftUI nad `settings.json`), automatické ukládání a Local History.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 

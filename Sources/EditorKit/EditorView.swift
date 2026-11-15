@@ -483,6 +483,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// After the document changed: sets the selections and repaints as little as possible.
 	/// Only the editor that made the edit unfolds around and scrolls to its carets.
 	func didEdit(_ changes: ChangeSet, _ edit: TextDocument.Edit, selections newSelections: SelectionSet, isSource: Bool) {
+		defer { onTextChange?() }
 		let firstLine = edit.firstLine, lastLine = edit.lastLine, oldLines = edit.oldLines, sameLines = edit.sameLines
 		if !findMatches.isEmpty { findMatches = changes.mapUntouched(findMatches) }
 		var foldsChanged = false
@@ -608,6 +609,9 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			return rope.offset(ofLine: line)..<(line + 1 < rope.lineCount ? rope.offset(ofLine: line + 1) : rope.byteCount)
 		}
 	}
+
+	/// Called after every change of the text, whichever editor made it.
+	public var onTextChange: (() -> Void)?
 
 	/// Called when the editor gets keyboard focus (the active pane of a split).
 	public var onFocus: ((EditorView) -> Void)?

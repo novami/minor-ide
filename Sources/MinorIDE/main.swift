@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	/// Untitled window (also used by the benchmark).
 	func openWindow(text: String, title: String) {
-		add(DocumentWindow(text: text, url: nil, format: FormatSettings()))
+		add(DocumentWindow(text: text))
 	}
 
 	/// Opens a file or a folder (project), or brings its window to front when already open.
@@ -81,22 +81,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	func open(_ url: URL) {
 		let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
 		if isFolder { return openProject(url) }
-		if let existing = documents.first(where: { $0.url?.standardizedFileURL == url.standardizedFileURL }) {
+		if let existing = documents.first(where: { $0.pane(showing: url) != nil }) {
 			existing.show()
+			existing.focus(url)
 			return
 		}
+		guard let file = loadText(url) else { return }
+		let project = projects.first { $0.contains(url) }
+		let doc = DocumentWindow(document: file, project: project)
+		if let project { addTab(doc, in: project) } else { add(doc) }
+		NSDocumentController.shared.noteNewRecentDocumentURL(url)
+	}
+
+	/// Opens a file of the project in the other pane of `window`'s editor.
+	func open(_ url: URL, inSplitOf window: DocumentWindow) {
+		guard let file = loadText(url) else { return }
+		window.openInSplit(file)
+		NSDocumentController.shared.noteNewRecentDocumentURL(url)
+	}
+
+	/// The open document of a file, or the file loaded; nil (after telling the user) for a
+	/// binary file or a read error.
+	private func loadText(_ url: URL) -> FileDocument? {
+		if let open = FileDocument.document(for: url) { return open }
 		if let handle = try? FileHandle(forReadingFrom: url) {
 			let head = (try? handle.read(upToCount: 8192)) ?? Data()
 			try? handle.close()
-			if TextFile.looksBinary(head) { return refuseBinary(url) }
+			if TextFile.looksBinary(head) {
+				refuseBinary(url)
+				return nil
+			}
 		}
-		let project = projects.first { $0.contains(url) }
 		do {
-			let doc = try DocumentWindow.open(url, project: project)
-			if let project { addTab(doc, in: project) } else { add(doc) }
-			NSDocumentController.shared.noteNewRecentDocumentURL(url)
+			return try FileDocument.load(url)
 		} catch {
 			NSAlert(error: error).runModal()
+			return nil
 		}
 	}
 
@@ -132,10 +152,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	private var projects: [Project] = []
 
-	/// Windows of renamed files (or files in a renamed folder) follow the new path.
+	/// Renamed files (or files in a renamed folder) follow the new path.
 	func filesMoved(from old: URL, to new: URL) {
 		let oldPath = old.standardizedFileURL.path
-		for doc in documents {
+		for doc in FileDocument.all {
 			guard let path = doc.url?.standardizedFileURL.path else { continue }
 			if path == oldPath {
 				doc.fileMoved(to: new)
@@ -149,10 +169,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	private func watchLooseFiles() {
 		looseWatcher?.stop()
-		let folders = Set(documents.filter { $0.project == nil }.compactMap { $0.url?.deletingLastPathComponent().path })
-		looseWatcher = FileWatcher(paths: Array(folders)) { [weak self] paths in
-			let changed = Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
-			self?.documents.filter { $0.project == nil && ($0.url.map { changed.contains($0.standardizedFileURL.path) } ?? false) }.forEach { $0.checkDisk() }
+		let files = documents.filter { $0.project == nil }.flatMap(\.documents)
+		let folders = Set(files.compactMap { $0.url?.deletingLastPathComponent().path })
+		looseWatcher = FileWatcher(paths: Array(folders)) { paths in
+			Self.checkDisk(changed: paths)
 		}
 	}
 	/// Files of closed windows, newest last (File › Reopen Closed Tab).
@@ -166,7 +186,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	}
 
 	func applicationDidBecomeActive(_ notification: Notification) {
-		documents.forEach { $0.checkDisk() } // git checkout or another editor while away
+		FileDocument.all.forEach { $0.checkDisk() } // git checkout or another editor while away
 	}
 
 	/// Opens a folder in a project window with the file tree; an empty editor until a file
@@ -178,13 +198,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return
 		}
 		let project = Project(root: root)
-		project.onFiles = { [weak self] paths in
-			let changed = Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
-			self?.documents.filter { $0.url.map { changed.contains($0.standardizedFileURL.path) } ?? false }.forEach { $0.checkDisk() }
-		}
+		project.onFiles = { paths in Self.checkDisk(changed: paths) }
 		projects.append(project)
-		add(DocumentWindow(text: "", url: nil, format: FormatSettings(), project: project))
+		add(DocumentWindow(text: "", project: project))
 		NSDocumentController.shared.noteNewRecentDocumentURL(root)
+	}
+
+	/// Open files among `paths` (FSEvents) compare themselves with the disk.
+	private static func checkDisk(changed paths: [String]) {
+		let changed = Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
+		FileDocument.all.filter { $0.url.map { changed.contains($0.standardizedFileURL.path) } ?? false }.forEach { $0.checkDisk() }
 	}
 
 	/// Adds a file's window as a tab of the project's window group.
@@ -197,7 +220,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		host.window.addTabbedWindow(doc.window, ordered: .above)
 		doc.showAsTab()
 		// The empty editor a project opens with gives way to the first file.
-		if host.url == nil && !host.window.isDocumentEdited && host.editor.rope.isEmpty { host.window.close() }
+		if host.panes.count == 1 && host.url == nil && !host.document.isEdited && host.editor.rope.isEmpty { host.window.close() }
 	}
 
 	private func add(_ doc: DocumentWindow) {
@@ -375,19 +398,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	/// Asks about unsaved documents one by one, each as a sheet on its window.
 	func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-		let edited = documents.filter { $0.window.isDocumentEdited }
+		let edited = documents.filter { window in window.documents.contains(where: \.isEdited) }
 		guard !edited.isEmpty, !utilityMode else { return .terminateNow } // benchmark windows are scratch
 		confirmNext(edited[...])
 		return .terminateLater
 	}
 
+	/// Each window asks about its edited files; a file shown in several windows is asked once
+	/// (Don't Save clears its edited flag, Save saves it).
 	private func confirmNext(_ remaining: ArraySlice<DocumentWindow>) {
 		guard let doc = remaining.first else {
 			NSApp.reply(toApplicationShouldTerminate: true)
 			return
 		}
+		guard doc.documents.contains(where: \.isEdited) else { return confirmNext(remaining.dropFirst()) }
 		doc.show()
-		doc.confirmClose { [weak self] ok in
+		doc.confirmEdited { [weak self] ok in
 			if ok {
 				self?.confirmNext(remaining.dropFirst())
 			} else {
