@@ -11,6 +11,7 @@ import MinorCore
 //        MINORIDE_FIND=<query> with --snapshot opens Find and Replace and saves the bar too
 //        MINORIDE_FOLD=<line> with --snapshot folds the region headed by that line
 //        MINORIDE_SPLIT=right|down with --snapshot splits the editor and prints the pane frames
+//        MINORIDE_WELCOME=1 with --snapshot saves the welcome window and prints its frames
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
@@ -50,6 +51,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			Bench.run(self)
 			return
 		}
+		if args.first == "--snapshot", args.count >= 2, ProcessInfo.processInfo.environment["MINORIDE_WELCOME"] != nil {
+			showWelcome(nil)
+			WelcomeWindow.shared.snapshot(to: args[args.startIndex + 1])
+			NSApp.terminate(nil)
+			return
+		}
 		if args.first == "--snapshot", args.count >= 2 {
 			if let file = args.dropFirst(2).first {
 				open(URL(fileURLWithPath: file))
@@ -64,7 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		if let file = args.first {
 			open(URL(fileURLWithPath: file))
 		} else if documents.isEmpty {
-			newDocument(nil)
+			showWelcome(nil)
 		}
 		NSApp.activate()
 	}
@@ -229,6 +236,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		doc.show(after: previous)
 		observeClose(doc)
 		if doc.project == nil && doc.url != nil { watchLooseFiles() }
+		WelcomeWindow.shared.close() // after the new window shows, so the app does not quit
 	}
 
 	private func observeClose(_ doc: DocumentWindow) {
@@ -330,6 +338,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		panel.canChooseDirectories = true
 		guard panel.runModal() == .OK else { return }
 		panel.urls.forEach(open)
+	}
+
+	/// Window › Welcome to MinorIDE; also at launch with nothing to open.
+	@objc func showWelcome(_ sender: Any?) {
+		WelcomeWindow.shared.target = self
+		WelcomeWindow.shared.show()
+	}
+
+	/// Dock icon clicked with no window open.
+	func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+		if !flag && !utilityMode { showWelcome(nil) }
+		return false
 	}
 
 	@objc func openRecent(_ sender: NSMenuItem) {

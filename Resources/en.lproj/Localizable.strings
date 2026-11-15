@@ -195,6 +195,11 @@
 "Window" = "Window";
 "Minimize" = "Minimize";
 "Zoom" = "Zoom";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/WelcomeWindow.swift */
+"Welcome to MinorIDE" = "Welcome to MinorIDE";
+
+/* MinorIDE/MainMenu.swift */
 "Bring All to Front" = "Bring All to Front";
 "Help" = "Help";
 "MinorIDE Help" = "MinorIDE Help";
@@ -223,7 +228,7 @@
 "Rename…" = "Rename…";
 "Move to Trash" = "Move to Trash";
 
-/* MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+/* MinorIDE/SidebarMenu.swift, MinorIDE/WelcomeWindow.swift, MinorIDE/main.swift */
 "Show in Finder" = "Show in Finder";
 
 /* MinorIDE/SidebarMenu.swift */
@@ -235,6 +240,14 @@
 "The file could not be created." = "The file could not be created.";
 "New folder name:" = "New folder name:";
 "New name:" = "New name:";
+
+/* MinorIDE/WelcomeWindow.swift */
+"Version %@" = "Version %@";
+"Open Folder or File…" = "Open Folder or File…";
+"New File" = "New File";
+"Recent Projects and Files" = "Recent Projects and Files";
+"No Recent Projects" = "No Recent Projects";
+"Open" = "Open";
 
 /* MinorIDE/main.swift */
 "“%@” is not a text file." = "“%@” is not a text file.";

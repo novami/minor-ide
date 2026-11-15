@@ -112,6 +112,8 @@ enum MainMenu {
 			m.item(L("Minimize"), #selector(NSWindow.performMiniaturize(_:)), "m")
 			m.item(L("Zoom"), #selector(NSWindow.performZoom(_:)))
 			m.addItem(.separator())
+			m.item(L("Welcome to MinorIDE"), #selector(AppDelegate.showWelcome(_:)), "1", [.command, .shift], target: target)
+			m.addItem(.separator())
 			m.item(L("Bring All to Front"), #selector(NSApplication.arrangeInFront(_:)))
 			NSApp.windowsMenu = m // AppKit appends the window list
 		}

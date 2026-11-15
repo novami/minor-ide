@@ -31,6 +31,7 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Zavřít část rozděleného editoru | ⌘W (zavírací tlačítko zavře okno) | Soubor › Zavřít |
 | Celá obrazovka | ⌃⌘F | Zobrazení |
 | Minimalizovat | ⌘M | Okno |
+| Uvítací okno | ⇧⌘1 | Okno |
 | Nápověda | ⌘? | Nápověda |
 
 Taby jsou nativní taby oken macOS (rozhodnutí 2026-11-15): Zobrazit další/předchozí tab
