@@ -133,6 +133,11 @@ extension EditorView {
 		setSelections(SelectionSet(matches.map { Selection(anchor: $0.lowerBound, head: $0.upperBound) }, primary: primary))
 	}
 
+	/// Jump to Selection (⌘J) from the menu; the key binding route goes through doCommand.
+	@objc public override func centerSelectionInVisibleArea(_ sender: Any?) {
+		doCommand(by: #selector(NSResponder.centerSelectionInVisibleArea(_:)))
+	}
+
 	/// Rewrites the leading whitespace of every line to the current indent style: a tab
 	/// counts as one level, `indentSize` spaces as one level, leftover spaces stay (alignment).
 	@objc public func convertIndentation(_ sender: Any?) {

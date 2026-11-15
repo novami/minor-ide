@@ -22,6 +22,33 @@
 "%d spaces|few" = "%d mezery";
 "%d spaces|other" = "%d mezer";
 
+/* MinorIDE/FindBar.swift */
+"Match Case" = "Rozlišovat velikost písmen";
+"Whole Word" = "Celá slova";
+"Regular Expression" = "Regulární výraz";
+"Preserve Case" = "Zachovat velikost písmen";
+
+/* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
+"Find" = "Najít";
+
+/* MinorIDE/FindBar.swift */
+"Replace" = "Nahradit";
+
+/* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
+"Find Previous" = "Najít předchozí";
+"Find Next" = "Najít další";
+
+/* MinorIDE/FindBar.swift */
+"Done" = "Hotovo";
+"All" = "Vše";
+"Replace All" = "Nahradit vše";
+"Invalid pattern" = "Neplatný výraz";
+"Not found" = "Nenalezeno";
+"%d of %d" = "%d z %d";
+"%d matches|one" = "%d výskyt";
+"%d matches|few" = "%d výskyty";
+"%d matches|other" = "%d výskytů";
+
 /* MinorIDE/MainMenu.swift */
 "About MinorIDE" = "O aplikaci MinorIDE";
 "Settings…" = "Nastavení…";
@@ -48,10 +75,11 @@
 "Duplicate Line" = "Duplikovat řádek";
 "Move Line Up" = "Přesunout řádek nahoru";
 "Move Line Down" = "Přesunout řádek dolů";
-"Find" = "Najít";
 "Find…" = "Najít…";
-"Find Next" = "Najít další";
-"Find Previous" = "Najít předchozí";
+"Find and Replace…" = "Najít a nahradit…";
+"Use Selection for Find" = "Použít výběr pro hledání";
+"Use Selection for Replace" = "Použít výběr pro nahrazení";
+"Jump to Selection" = "Přejít na výběr";
 "Format" = "Formát";
 "Line Endings" = "Konce řádků";
 "LF (macOS, Unix)" = "LF (macOS, Unix)";

@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1c/1)
+**Poslední aktualizace:** 2026-11-15 (1c/2)
 
 ## Kde jsme
 
@@ -47,7 +47,13 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Rozhodnutí uživatele:** komentáře, párování závorek, chytré odsazení a folding podle závorek až po 1d nad lexerem; hledání vlastní lištou (zapsáno v plánu u 1c).
 
-**Další: fáze 1c, krok 2 — Hledat/nahradit v souboru** (vlastní lišta nad editorem ve stylu systémové: regex, velikost písmen, celé slovo, zachování velikosti; zvýraznění ve vrstvě pozadí; ⌘F, ⌘G, ⇧⌘G, ⌘E, ⌥⌘F; menu Najít teď volá `performTextFinderAction`, přepojit). **Krok 3:** folding podle odsazení (mapa zobrazených řádků navržená i pro zalamování v 1f).
+**Fáze 1c, krok 2 hotový** (2026-11-15): Hledat/nahradit v souboru. `Sources/TextEngine/Find.swift` (`FindQuery`: regex přes `NSRegularExpression`, velikost písmen, celá slova, šablony $1 \n \t, zachování velikosti; `ChangeSet.mapUntouched` posune zvýraznění přes editace), `Sources/EditorKit/FindController.swift` (hledání mimo hlavní vlákno nad snímkem ropu, generace zahodí staré výsledky, Nahradit a najít, Nahradit vše jako jeden krok Zpět), `Sources/MinorIDE/FindBar.swift` (lišta nad editorem: pole, počet „3 z 12“, Aa / W / .* / AB, ‹ ›, Hotovo; druhý řádek Nahradit, Vše), akce v `DocumentWindow` (delegát okna je v responder chainu editoru i lišty), menu Úpravy › Najít: ⌘F, ⌥⌘F, ⌘G, ⇧⌘G, ⌘E, ⇧⌘E, ⌘J; sdílená schránka hledání macOS. Testy `FindTests`, `FindControllerTests`. `make bench` BUDGET OK (psaní p99 0,10 ms). `MINORIDE_FIND=<dotaz>` se `--snapshot` otevře lištu (ovládací prvky AppKit na macOS 27 kreslí přes hostované vrstvy, `cacheDisplay` je nevykreslí; rozložení ověřeno výpisem rámců).
+
+**Další: fáze 1c, krok 3 — folding podle odsazení** (mapa zobrazených řádků v EditorKit navržená i pro zalamování v 1f; složené oblasti jako bajtové rozsahy, které jdou s editacemi, editace uvnitř je rozbalí; trojúhelníky v gutteru, „…“ za řádkem; příkazy Sbalit ⌥⌘←, Rozbalit ⌥⌘→, Sbalit vše, Rozbalit vše).
+
+Známé mezery po kroku 1c/2: lišta hledání nebyla vyzkoušena ručně (Return/Shift+Return/Esc, fokus, vzhled v tmavém režimu) — obrazovka byla zamčená; hledání pustí regex nad celým textem (10 MB ≈ desítky ms mimo hlavní vlákno, bez limitu počtu shod); stav „3 z 12“ se neaktualizuje při ručním posunu kurzoru; regex v jednom nahrazení vidí jen řádky shody (look-behind přes začátek řádku nefunguje); vlastní lišta, ne `NSTextFinder` (rozhodnutí uživatele).
+
+Poučení: výjimka Objective-C v `init` okna (omezení mezi pohledy bez společného předka) se nezobrazí, AppKit ji spolkne a otevření okna skončí potichu — benchmark pak „visí“.
 
 Známé mezery po kroku 1c/1: kotvy na řádku prohozeném při přesunu se sbalí (kotvy v přesouvaném bloku jdou s ním); ⌃G hledá jen s rozlišením velikosti písmen; ⌃⌘G nad 10 MB s častým slovem vytvoří desítky tisíc výběrů bez limitu; keymapa (`docs/keymap.md`) až v 1e.
 

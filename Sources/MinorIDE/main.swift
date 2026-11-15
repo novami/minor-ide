@@ -8,6 +8,7 @@ import MinorCore
 //        MinorIDE --bench       runs the editor spike benchmark and prints results
 //        MinorIDE --snapshot <png> [file]   renders the editor to a PNG (visual check)
 //        MINORIDE_FONT_SIZE=40 enlarges the font, useful with --snapshot
+//        MINORIDE_FIND=<query> with --snapshot opens Find and Replace and saves the bar too
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
@@ -104,6 +105,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	/// ruler's content inset), plus the caret layer that cacheDisplay skips.
 	func snapshot(to path: String) {
 		guard let view = editor.enclosingScrollView else { return }
+		// MINORIDE_FIND=<query> opens Find and Replace first and also saves the bar as <png>-find.png.
+		if let query = ProcessInfo.processInfo.environment["MINORIDE_FIND"], let doc = documents.last {
+			doc.showFindBar(replace: true)
+			doc.find.origin = 0
+			doc.find.query.text = query
+			doc.findBarView.syncFromController()
+			let deadline = Date().addingTimeInterval(2)
+			while doc.find.matches.isEmpty && Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.01)) }
+			doc.findBarView.updateStatus()
+			doc.window.displayIfNeeded()
+			let bar = doc.findBarView
+			if let rep = bar.bitmapImageRepForCachingDisplay(in: bar.bounds) {
+				bar.cacheDisplay(in: bar.bounds, to: rep)
+				try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path.replacingOccurrences(of: ".png", with: "-find.png")))
+			}
+		}
 		editor.window?.makeFirstResponder(editor)
 		editor.window?.displayIfNeeded()
 		guard let canvas = view.bitmapImageRepForCachingDisplay(in: view.bounds),

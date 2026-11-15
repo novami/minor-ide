@@ -20,6 +20,32 @@
 "%d spaces|one" = "%d space";
 "%d spaces|other" = "%d spaces";
 
+/* MinorIDE/FindBar.swift */
+"Match Case" = "Match Case";
+"Whole Word" = "Whole Word";
+"Regular Expression" = "Regular Expression";
+"Preserve Case" = "Preserve Case";
+
+/* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
+"Find" = "Find";
+
+/* MinorIDE/FindBar.swift */
+"Replace" = "Replace";
+
+/* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
+"Find Previous" = "Find Previous";
+"Find Next" = "Find Next";
+
+/* MinorIDE/FindBar.swift */
+"Done" = "Done";
+"All" = "All";
+"Replace All" = "Replace All";
+"Invalid pattern" = "Invalid pattern";
+"Not found" = "Not found";
+"%d of %d" = "%d of %d";
+"%d matches|one" = "%d match";
+"%d matches|other" = "%d matches";
+
 /* MinorIDE/MainMenu.swift */
 "About MinorIDE" = "About MinorIDE";
 "Settings…" = "Settings…";
@@ -46,10 +72,11 @@
 "Duplicate Line" = "Duplicate Line";
 "Move Line Up" = "Move Line Up";
 "Move Line Down" = "Move Line Down";
-"Find" = "Find";
 "Find…" = "Find…";
-"Find Next" = "Find Next";
-"Find Previous" = "Find Previous";
+"Find and Replace…" = "Find and Replace…";
+"Use Selection for Find" = "Use Selection for Find";
+"Use Selection for Replace" = "Use Selection for Replace";
+"Jump to Selection" = "Jump to Selection";
 "Format" = "Format";
 "Line Endings" = "Line Endings";
 "LF (macOS, Unix)" = "LF (macOS, Unix)";

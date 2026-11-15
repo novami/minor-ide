@@ -19,5 +19,21 @@
 			<string>%d spaces</string>
 		</dict>
 	</dict>
+	<key>%d matches</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d match</string>
+			<key>other</key>
+			<string>%d matches</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

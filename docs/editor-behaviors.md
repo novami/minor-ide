@@ -26,3 +26,15 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 
 ## Odsazení
 - [x] „Převést odsazení“ (Formát › Odsazení): tabulátor = úroveň, `indentSize` mezer = úroveň, zbylé mezery zůstanou (zarovnání) — `LineCommandTests.convertIndentationBothWays`
+
+## Hledat a nahradit (⌘F, ⌥⌘F, ⌘G, ⇧⌘G, ⌘E, ⇧⌘E, ⌘J)
+- [x] Prostý text bez rozlišení velikosti písmen, volby Aa (velikost), W (celá slova), .* (regex; ^ a $ na hranicích řádků) — `FindTests`
+- [x] Neplatný regex hlásí „Neplatný výraz“, prázdné shody se přeskočí — `FindTests.regexAnchorsAtLinesAndReportsErrors`
+- [x] Nahrazení regexem rozvine $1 a \n, \t; prostý text bere šablonu doslova — `FindTests.replacementsExpandGroupsAndEscapes`
+- [x] Zachování velikosti písmen (VELKÁ, Velká, malá) — `FindTests.preserveCaseFollowsMatch`
+- [x] Psaní do pole vybere první shodu od místa, kde hledání začalo; ⌘G/⇧⌘G jdou dokola — `FindControllerTests.incrementalFindSelectsFromOriginAndWraps`
+- [x] Nahradit vybranou shodu a přejít na další; Nahradit vše je jeden krok Zpět — `FindControllerTests.replaceAndFindThenReplaceAllIsOneUndo`
+- [x] Zvýraznění shod jdou s editací, se zavřenou lištou zmizí — `FindControllerTests.highlightsFollowTypingAndHideWithBar`
+- [x] Hledá se mimo hlavní vlákno nad snímkem ropu; novější dotaz nebo editace starší výsledek zahodí
+- [ ] Sdílená schránka hledání macOS (⌘E v jiné aplikaci → ⌘G tady) — ruční kontrola (zbývá)
+- [ ] Lišta: Return další, Shift+Return předchozí, Esc zavře a vrátí fokus editoru — ruční kontrola (zbývá)

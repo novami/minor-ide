@@ -76,6 +76,15 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	var accessibilityClientSeen = false
 	/// Measures key-to-frame latency when set (benchmark, MINORIDE_LATENCY=1).
 	public var latencyMonitor: LatencyMonitor?
+	/// Find results, sorted; highlighted under the text. They follow edits until the next search.
+	public private(set) var findMatches: [Range<Int>] = []
+
+	public func setFindMatches(_ matches: [Range<Int>]) {
+		guard matches != findMatches else { return }
+		findMatches = matches
+		needsDisplay = true
+	}
+
 	/// Line numbers, drawn in the scroll view's vertical ruler.
 	public internal(set) weak var gutter: GutterView?
 
@@ -154,6 +163,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 		if first <= last {
 			drawnLines += last - first + 1
+			drawFindMatches(ctx, lines: first...last)
 			drawSelectionBackground(ctx, visible, lines: first...last)
 			drawBatch(ctx, color: textColor, lines: first...last) { line in (layout(line), textInset) }
 		}
@@ -183,6 +193,27 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			return (n, rightEdge - n.width)
 		}
 		numberCache.trim(keep: (first - 300)...(last + 300), limit: 1500)
+	}
+
+	private func drawFindMatches(_ ctx: CGContext, lines: ClosedRange<Int>) {
+		guard !findMatches.isEmpty else { return }
+		let start = rope.offset(ofLine: lines.lowerBound), end = rope.lineRange(lines.upperBound).upperBound
+		// First match ending in the drawn lines.
+		var lo = 0, hi = findMatches.count
+		while lo < hi {
+			let mid = (lo + hi) / 2
+			if findMatches[mid].upperBound < start { lo = mid + 1 } else { hi = mid }
+		}
+		ctx.setFillColor(NSColor.findHighlightColor.withAlphaComponent(0.45).cgColor)
+		for m in findMatches[lo...] {
+			guard m.lowerBound <= end else { break }
+			let lowerLine = rope.line(containing: m.lowerBound), upperLine = rope.line(containing: m.upperBound)
+			for line in max(lowerLine, lines.lowerBound)...min(upperLine, lines.upperBound) {
+				let x0 = line == lowerLine ? x(of: m.lowerBound, line: line) : textInset
+				let x1 = line == upperLine ? x(of: m.upperBound, line: line) : textInset + layout(line).width + newlineWidth
+				ctx.fill(CGRect(x: x0, y: CGFloat(line) * lineHeight, width: max(0, x1 - x0), height: lineHeight))
+			}
+		}
 	}
 
 	/// Current-line highlight under carets, then selected ranges.
@@ -359,6 +390,11 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		apply(ChangeSet([(range, text)]), kind: .other) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
 	}
 
+	/// Applies several replacements as one undo step; selections follow the edit.
+	public func replace(_ edits: [(Range<Int>, String)]) {
+		apply(ChangeSet(edits), kind: .other) { selections.mapped(through: $0) }
+	}
+
 	/// Replaces every selection with its own text; carets end after the new text.
 	private func replaceSelections(_ kind: EditKind = .other, _ text: (Selection) -> String) {
 		replaceSelections(kind) { s in (s.range, text(s)) }
@@ -395,6 +431,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 		changes.apply(to: &rope)
 		anchors.apply(changes)
+		if !findMatches.isEmpty { findMatches = changes.mapUntouched(findMatches) }
 		selections = selectionsAfter(changes)
 		goalXs = nil
 		setNeedsCaretUpdate()

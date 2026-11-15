@@ -13,6 +13,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 	private(set) var resolved: ResolvedFormat?
 	private var originalLines: Set<Substring> = []
 	private(set) var mixedLineEndings = false
+	let find: FindController
+	private let findBar: FindBar
+	var findBarView: FindBar { findBar }
 
 	init(text: String, url: URL?, format: FormatSettings) {
 		self.url = url
@@ -31,11 +34,26 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		editor.setAccessibilityLabel(L("Editor"))
 		scroll.documentView = editor
 		GutterView.install(for: editor)
-		window.contentView = scroll
+		find = FindController(editor: editor)
+		findBar = FindBar(controller: find)
+		findBar.isHidden = true
+		let content = NSStackView(views: [findBar, scroll])
+		content.orientation = .vertical
+		content.spacing = 0
+		content.alignment = .width
+		content.distribution = .fill
+		scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
+		findBar.setContentHuggingPriority(.required, for: .vertical)
+		window.contentView = content
 		window.isReleasedWhenClosed = false
 		super.init()
 		window.delegate = self
-		editor.onChange = { [weak self] in self?.markEdited() }
+		editor.onChange = { [weak self] in
+			guard let self else { return }
+			markEdited()
+			if findBar.isHidden { find.invalidate() } else { find.refresh(delay: .milliseconds(100)) }
+		}
+		findBar.onClose = { [weak self] in self?.hideFindBar() }
 		if ProcessInfo.processInfo.environment["MINORIDE_LATENCY"] == "1" {
 			let monitor = LatencyMonitor(view: editor)
 			monitor.onFrame = { [weak monitor] _ in
@@ -124,6 +142,53 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		format.tabWidth = width
 		editor.format = format
 		updateTitle()
+	}
+
+	// MARK: Find (Edit › Find; the window delegate is in the responder chain of the editor and the bar)
+
+	func showFindBar(replace: Bool) {
+		if find.query.text.isEmpty, let text = FindPasteboard.read() { find.query.text = text }
+		let opening = findBar.isHidden
+		findBar.isHidden = false
+		findBar.showsReplace = replace
+		find.showsHighlights = true
+		if opening { find.refresh() }
+		findBar.syncFromController()
+		window.makeFirstResponder(findBar.findField)
+		findBar.findField.currentEditor()?.selectAll(nil)
+	}
+
+	func hideFindBar() {
+		findBar.isHidden = true
+		find.showsHighlights = false
+		window.makeFirstResponder(editor)
+	}
+
+	@objc func showFind(_ sender: Any?) { showFindBar(replace: false) }
+	@objc func showFindAndReplace(_ sender: Any?) { showFindBar(replace: true) }
+	@objc func findNextMatch(_ sender: Any?) { findAgain(forward: true) }
+	@objc func findPreviousMatch(_ sender: Any?) { findAgain(forward: false) }
+
+	private func findAgain(forward: Bool) {
+		if let text = FindPasteboard.read(), findBar.isHidden, text != find.query.text {
+			find.query.text = text // another app changed the shared query
+		}
+		guard !find.query.text.isEmpty else { return showFindBar(replace: false) }
+		if find.matches.isEmpty && find.error == nil { find.refresh() }
+		Task { await find.findNext(forward: forward) }
+	}
+
+	@objc func useSelectionForFind(_ sender: Any?) {
+		find.useSelection()
+		FindPasteboard.write(find.query.text)
+		findBar.syncFromController()
+	}
+
+	@objc func useSelectionForReplace(_ sender: Any?) {
+		let s = editor.selections.primary
+		guard !s.isEmpty else { return }
+		find.replacement = editor.rope.string(in: s.range)
+		findBar.syncFromController()
 	}
 
 	// MARK: Saving

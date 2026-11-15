@@ -53,9 +53,13 @@ enum MainMenu {
 			m.addItem(.separator())
 			let find = m.item(L("Find"), nil)
 			find.submenu = NSMenu(title: L("Find"))
-			find.submenu!.item(L("Find…"), #selector(NSResponder.performTextFinderAction(_:)), "f").tag = NSTextFinder.Action.showFindInterface.rawValue
-			find.submenu!.item(L("Find Next"), #selector(NSResponder.performTextFinderAction(_:)), "g").tag = NSTextFinder.Action.nextMatch.rawValue
-			find.submenu!.item(L("Find Previous"), #selector(NSResponder.performTextFinderAction(_:)), "g", [.command, .shift]).tag = NSTextFinder.Action.previousMatch.rawValue
+			find.submenu!.item(L("Find…"), #selector(DocumentWindow.showFind(_:)), "f")
+			find.submenu!.item(L("Find and Replace…"), #selector(DocumentWindow.showFindAndReplace(_:)), "f", [.command, .option])
+			find.submenu!.item(L("Find Next"), #selector(DocumentWindow.findNextMatch(_:)), "g")
+			find.submenu!.item(L("Find Previous"), #selector(DocumentWindow.findPreviousMatch(_:)), "g", [.command, .shift])
+			find.submenu!.item(L("Use Selection for Find"), #selector(DocumentWindow.useSelectionForFind(_:)), "e")
+			find.submenu!.item(L("Use Selection for Replace"), #selector(DocumentWindow.useSelectionForReplace(_:)), "e", [.command, .shift])
+			find.submenu!.item(L("Jump to Selection"), #selector(NSResponder.centerSelectionInVisibleArea(_:)), "j")
 		}
 
 		main.add(submenu: L("Format")) { m in
