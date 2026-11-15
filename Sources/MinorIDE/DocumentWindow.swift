@@ -7,7 +7,7 @@ import TextEngine
 /// One editor window bound to a file (or untitled). Holds what is needed to save the file
 /// back in its own conventions: line ending, charset and the lines as loaded.
 @MainActor
-final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
+final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMenuItemValidation {
 	let window: NSWindow
 	let editor: EditorView
 	private(set) var url: URL?
@@ -26,6 +26,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 	private var diskStamp: FileStamp?
 	private var compareWindow: CompareWindow?
 	private(set) var sidebar: ProjectSidebar?
+	/// Split items of a project window: sidebar, inspector (right), bottom panel.
+	private var panels: (side: NSSplitViewItem, inspector: NSSplitViewItem, bottom: NSSplitViewItem)?
+	private var panelSplitViews: [NSSplitView] = []
 
 	init(text: String, url: URL?, format: FormatSettings, project: Project? = nil) {
 		self.url = url
@@ -68,9 +71,33 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 			let sideItem = NSSplitViewItem(sidebarWithViewController: side)
 			sideItem.minimumThickness = 180
 			sideItem.canCollapse = true
+			// Editor above the bottom panel (terminal).
+			let center = NSSplitViewController()
+			center.splitView.isVertical = false
+			center.splitView.dividerStyle = .thin
+			let editorItem = NSSplitViewItem(viewController: main)
+			editorItem.minimumThickness = 120
+			center.addSplitViewItem(editorItem)
+			let bottom = NSViewController()
+			bottom.view = PanelView.bottom()
+			let bottomItem = NSSplitViewItem(viewController: bottom)
+			bottomItem.canCollapse = true
+			bottomItem.minimumThickness = 100
+			bottomItem.holdingPriority = .defaultLow + 10 // the editor takes window resizes
+			center.addSplitViewItem(bottomItem)
+			center.splitView.autosaveName = "ProjectBottomPanel"
+			// Database and server browsers on the right.
+			let inspector = NSViewController()
+			inspector.view = PanelView.inspector()
+			let inspectorItem = NSSplitViewItem(inspectorWithViewController: inspector)
+			inspectorItem.minimumThickness = 240
+			inspectorItem.canCollapse = true
 			split.addSplitViewItem(sideItem)
-			split.addSplitViewItem(NSSplitViewItem(viewController: main))
+			split.addSplitViewItem(NSSplitViewItem(viewController: center))
+			split.addSplitViewItem(inspectorItem)
 			split.splitView.autosaveName = "ProjectSidebar"
+			panels = (sideItem, inspectorItem, bottomItem)
+			panelSplitViews = [split.splitView, center.splitView]
 			window.contentViewController = split
 			window.setContentSize(NSSize(width: 1300, height: 800))
 			window.tabbingMode = .preferred
@@ -91,6 +118,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 		sidebar?.onOpen = { url in (NSApp.delegate as? AppDelegate)?.open(url) }
 		sidebar?.onMoved = { from, to in (NSApp.delegate as? AppDelegate)?.filesMoved(from: from, to: to) }
 		if let url { sidebar?.reveal(url) }
+		observePanels()
 		window.delegate = self
 		editor.contextMenuProvider = { _ in DocumentWindow.contextMenu() }
 		editor.onChange = { [weak self] in
@@ -203,7 +231,54 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 
 	// MARK: Changes on disk
 
-	func windowDidBecomeKey(_ notification: Notification) { checkDisk() }
+	func windowDidBecomeKey(_ notification: Notification) {
+		applyPanels()
+		checkDisk()
+	}
+
+	// MARK: Panels
+
+	/// Which panels are hidden is shared by all project windows, so switching tabs keeps the layout.
+	private static let panelKeys = (side: "PanelSidebarHidden", inspector: "PanelInspectorHidden", bottom: "PanelBottomHidden")
+
+	private func observePanels() {
+		guard let panels else { return }
+		applyPanels()
+		// Split views post this after collapsing or expanding an item.
+		for view in panelSplitViews {
+			NotificationCenter.default.addObserver(self, selector: #selector(panelsResized(_:)),
+			                                       name: NSSplitView.didResizeSubviewsNotification, object: view)
+		}
+	}
+
+	@objc private func panelsResized(_ notification: Notification) {
+		guard let panels, window.isKeyWindow else { return }
+		let d = UserDefaults.standard
+		d.set(panels.side.isCollapsed, forKey: Self.panelKeys.side)
+		d.set(panels.inspector.isCollapsed, forKey: Self.panelKeys.inspector)
+		d.set(panels.bottom.isCollapsed, forKey: Self.panelKeys.bottom)
+	}
+
+	private func applyPanels() {
+		guard let panels else { return }
+		let d = UserDefaults.standard
+		for (item, key) in [(panels.side, Self.panelKeys.side), (panels.inspector, Self.panelKeys.inspector), (panels.bottom, Self.panelKeys.bottom)] {
+			let hidden = d.bool(forKey: key)
+			if item.isCollapsed != hidden { item.isCollapsed = hidden }
+		}
+	}
+
+	@objc func toggleBottomPanel(_ sender: Any?) {
+		guard let item = panels?.bottom else { return }
+		item.animator().isCollapsed.toggle()
+	}
+
+	func validateMenuItem(_ item: NSMenuItem) -> Bool {
+		guard item.action == #selector(toggleBottomPanel(_:)) else { return true }
+		guard let bottom = panels?.bottom else { return false }
+		item.title = bottom.isCollapsed ? L("Show Bottom Panel") : L("Hide Bottom Panel")
+		return true
+	}
 
 	/// Compares the file with the version loaded or saved: unchanged windows reload quietly
 	/// (keeping the caret and scroll position), edited ones get a bar to choose.
@@ -441,9 +516,12 @@ struct FileStamp: Equatable {
 
 extension DocumentWindow {
 	static let findItem = NSToolbarItem.Identifier("find")
+	static let bottomPanelItem = NSToolbarItem.Identifier("bottomPanel")
 
 	func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-		(project == nil ? [] : [.toggleSidebar, .sidebarTrackingSeparator]) + [.flexibleSpace, Self.findItem]
+		project == nil ? [.flexibleSpace, Self.findItem]
+			: [.toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, Self.findItem, Self.bottomPanelItem,
+			   .inspectorTrackingSeparator, .flexibleSpace, .toggleInspector]
 	}
 
 	func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -451,6 +529,16 @@ extension DocumentWindow {
 	}
 
 	func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+		if id == Self.bottomPanelItem {
+			let item = NSToolbarItem(itemIdentifier: id)
+			item.label = L("Bottom Panel")
+			item.toolTip = L("Show or hide the bottom panel")
+			item.image = NSImage(systemSymbolName: "rectangle.bottomthird.inset.filled", accessibilityDescription: L("Bottom Panel"))
+			item.action = #selector(toggleBottomPanel(_:))
+			item.target = self
+			item.isBordered = true
+			return item
+		}
 		guard id == Self.findItem else { return nil }
 		let item = NSToolbarItem(itemIdentifier: id)
 		item.label = L("Find")

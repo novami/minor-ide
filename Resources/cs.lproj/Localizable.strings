@@ -20,6 +20,12 @@
 "Speech" = "Řeč";
 "Start Speaking" = "Začít mluvit";
 "Stop Speaking" = "Přestat mluvit";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Show Bottom Panel" = "Zobrazit spodní panel";
+
+/* MinorIDE/DocumentWindow.swift */
+"Hide Bottom Panel" = "Skrýt spodní panel";
 "The file was deleted from disk. Saving creates it again." = "Soubor byl z disku smazán. Uložením se vytvoří znovu.";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
@@ -46,6 +52,12 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Neukládat";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
+"Bottom Panel" = "Spodní panel";
+
+/* MinorIDE/DocumentWindow.swift */
+"Show or hide the bottom panel" = "Zobrazit nebo skrýt spodní panel";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
 "Find" = "Najít";
@@ -122,6 +134,7 @@
 "Tab Width" = "Šířka tabulátoru";
 "View" = "Zobrazení";
 "Show Sidebar" = "Zobrazit boční panel";
+"Show Inspector" = "Zobrazit inspektor";
 "Code Folding" = "Sbalování kódu";
 "Fold" = "Sbalit";
 "Unfold" = "Rozbalit";
@@ -135,6 +148,18 @@
 "Help" = "Nápověda";
 "MinorIDE Help" = "Nápověda MinorIDE";
 "Clear Menu" = "Vymazat nabídku";
+
+/* MinorIDE/PanelView.swift */
+"Database" = "Databáze";
+"No Databases" = "Žádné databáze";
+"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Tady se zobrazí připojení k databázím MySQL, MariaDB, PostgreSQL a SQLite.";
+"Server" = "Server";
+"No Servers" = "Žádné servery";
+"Files on servers connected over SFTP or FTPS will appear here." = "Tady se zobrazí soubory na serverech připojených přes SFTP nebo FTPS.";
+"Inspector" = "Inspektor";
+"Terminal" = "Terminál";
+"No Terminal" = "Žádný terminál";
+"A terminal in the project folder will appear here." = "Tady se zobrazí terminál ve složce projektu.";
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Soubory projektu";

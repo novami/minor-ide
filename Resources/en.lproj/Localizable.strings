@@ -19,6 +19,12 @@
 "Speech" = "Speech";
 "Start Speaking" = "Start Speaking";
 "Stop Speaking" = "Stop Speaking";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Show Bottom Panel" = "Show Bottom Panel";
+
+/* MinorIDE/DocumentWindow.swift */
+"Hide Bottom Panel" = "Hide Bottom Panel";
 "The file was deleted from disk. Saving creates it again." = "The file was deleted from disk. Saving creates it again.";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
@@ -45,6 +51,12 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Don’t Save";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
+"Bottom Panel" = "Bottom Panel";
+
+/* MinorIDE/DocumentWindow.swift */
+"Show or hide the bottom panel" = "Show or hide the bottom panel";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
 "Find" = "Find";
@@ -119,6 +131,7 @@
 "Tab Width" = "Tab Width";
 "View" = "View";
 "Show Sidebar" = "Show Sidebar";
+"Show Inspector" = "Show Inspector";
 "Code Folding" = "Code Folding";
 "Fold" = "Fold";
 "Unfold" = "Unfold";
@@ -132,6 +145,18 @@
 "Help" = "Help";
 "MinorIDE Help" = "MinorIDE Help";
 "Clear Menu" = "Clear Menu";
+
+/* MinorIDE/PanelView.swift */
+"Database" = "Database";
+"No Databases" = "No Databases";
+"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here.";
+"Server" = "Server";
+"No Servers" = "No Servers";
+"Files on servers connected over SFTP or FTPS will appear here." = "Files on servers connected over SFTP or FTPS will appear here.";
+"Inspector" = "Inspector";
+"Terminal" = "Terminal";
+"No Terminal" = "No Terminal";
+"A terminal in the project folder will appear here." = "A terminal in the project folder will appear here.";
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Project Files";
