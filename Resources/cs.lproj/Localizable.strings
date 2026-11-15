@@ -26,6 +26,12 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Hide Bottom Panel" = "Skrýt spodní panel";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Show Right Panel" = "Zobrazit pravý panel";
+
+/* MinorIDE/DocumentWindow.swift */
+"Hide Right Panel" = "Skrýt pravý panel";
 "The file was deleted from disk. Saving creates it again." = "Soubor byl z disku smazán. Uložením se vytvoří znovu.";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
@@ -52,6 +58,12 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Neukládat";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
+"Right Panel" = "Pravý panel";
+
+/* MinorIDE/DocumentWindow.swift */
+"Show or hide the right panel" = "Zobrazit nebo skrýt pravý panel";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
 "Bottom Panel" = "Spodní panel";
@@ -134,7 +146,6 @@
 "Tab Width" = "Šířka tabulátoru";
 "View" = "Zobrazení";
 "Show Sidebar" = "Zobrazit boční panel";
-"Show Inspector" = "Zobrazit inspektor";
 "Code Folding" = "Sbalování kódu";
 "Fold" = "Sbalit";
 "Unfold" = "Rozbalit";
@@ -156,7 +167,6 @@
 "Server" = "Server";
 "No Servers" = "Žádné servery";
 "Files on servers connected over SFTP or FTPS will appear here." = "Tady se zobrazí soubory na serverech připojených přes SFTP nebo FTPS.";
-"Inspector" = "Inspektor";
 "Terminal" = "Terminál";
 "No Terminal" = "Žádný terminál";
 "A terminal in the project folder will appear here." = "Tady se zobrazí terminál ve složce projektu.";

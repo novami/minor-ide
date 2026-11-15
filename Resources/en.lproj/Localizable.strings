@@ -25,6 +25,12 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Hide Bottom Panel" = "Hide Bottom Panel";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Show Right Panel" = "Show Right Panel";
+
+/* MinorIDE/DocumentWindow.swift */
+"Hide Right Panel" = "Hide Right Panel";
 "The file was deleted from disk. Saving creates it again." = "The file was deleted from disk. Saving creates it again.";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
@@ -51,6 +57,12 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Don’t Save";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
+"Right Panel" = "Right Panel";
+
+/* MinorIDE/DocumentWindow.swift */
+"Show or hide the right panel" = "Show or hide the right panel";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
 "Bottom Panel" = "Bottom Panel";
@@ -131,7 +143,6 @@
 "Tab Width" = "Tab Width";
 "View" = "View";
 "Show Sidebar" = "Show Sidebar";
-"Show Inspector" = "Show Inspector";
 "Code Folding" = "Code Folding";
 "Fold" = "Fold";
 "Unfold" = "Unfold";
@@ -153,7 +164,6 @@
 "Server" = "Server";
 "No Servers" = "No Servers";
 "Files on servers connected over SFTP or FTPS will appear here." = "Files on servers connected over SFTP or FTPS will appear here.";
-"Inspector" = "Inspector";
 "Terminal" = "Terminal";
 "No Terminal" = "No Terminal";
 "A terminal in the project folder will appear here." = "A terminal in the project folder will appear here.";

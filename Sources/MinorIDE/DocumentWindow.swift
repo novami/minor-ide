@@ -26,7 +26,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	private var diskStamp: FileStamp?
 	private var compareWindow: CompareWindow?
 	private(set) var sidebar: ProjectSidebar?
-	/// Split items of a project window: sidebar, inspector (right), bottom panel.
+	/// Split items of a project window: sidebar, right panel (an AppKit inspector item), bottom panel.
 	private var panels: (side: NSSplitViewItem, inspector: NSSplitViewItem, bottom: NSSplitViewItem)?
 	private var panelSplitViews: [NSSplitView] = []
 
@@ -268,15 +268,26 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 	}
 
+	@objc func toggleRightPanel(_ sender: Any?) {
+		guard let item = panels?.inspector else { return }
+		item.animator().isCollapsed.toggle()
+	}
+
 	@objc func toggleBottomPanel(_ sender: Any?) {
 		guard let item = panels?.bottom else { return }
 		item.animator().isCollapsed.toggle()
 	}
 
 	func validateMenuItem(_ item: NSMenuItem) -> Bool {
-		guard item.action == #selector(toggleBottomPanel(_:)) else { return true }
-		guard let bottom = panels?.bottom else { return false }
-		item.title = bottom.isCollapsed ? L("Show Bottom Panel") : L("Hide Bottom Panel")
+		switch item.action {
+		case #selector(toggleBottomPanel(_:)):
+			guard let bottom = panels?.bottom else { return false }
+			item.title = bottom.isCollapsed ? L("Show Bottom Panel") : L("Hide Bottom Panel")
+		case #selector(toggleRightPanel(_:)):
+			guard let right = panels?.inspector else { return false }
+			item.title = right.isCollapsed ? L("Show Right Panel") : L("Hide Right Panel")
+		default: break
+		}
 		return true
 	}
 
@@ -517,11 +528,12 @@ struct FileStamp: Equatable {
 extension DocumentWindow {
 	static let findItem = NSToolbarItem.Identifier("find")
 	static let bottomPanelItem = NSToolbarItem.Identifier("bottomPanel")
+	static let rightPanelItem = NSToolbarItem.Identifier("rightPanel")
 
 	func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
 		project == nil ? [.flexibleSpace, Self.findItem]
 			: [.toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, Self.findItem, Self.bottomPanelItem,
-			   .inspectorTrackingSeparator, .flexibleSpace, .toggleInspector]
+			   .inspectorTrackingSeparator, .flexibleSpace, Self.rightPanelItem]
 	}
 
 	func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -529,6 +541,16 @@ extension DocumentWindow {
 	}
 
 	func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+		if id == Self.rightPanelItem {
+			let item = NSToolbarItem(itemIdentifier: id)
+			item.label = L("Right Panel")
+			item.toolTip = L("Show or hide the right panel")
+			item.image = NSImage(systemSymbolName: "sidebar.right", accessibilityDescription: L("Right Panel"))
+			item.action = #selector(toggleRightPanel(_:))
+			item.target = self
+			item.isBordered = true
+			return item
+		}
 		if id == Self.bottomPanelItem {
 			let item = NSToolbarItem(itemIdentifier: id)
 			item.label = L("Bottom Panel")

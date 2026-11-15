@@ -87,7 +87,7 @@ enum MainMenu {
 
 		main.add(submenu: L("View")) { m in
 			m.item(L("Show Sidebar"), #selector(NSSplitViewController.toggleSidebar(_:)), "s", [.command, .control])
-			m.item(L("Show Inspector"), #selector(NSSplitViewController.toggleInspector(_:)), "i", [.command, .control])
+			m.item(L("Show Right Panel"), #selector(DocumentWindow.toggleRightPanel(_:)), "i", [.command, .control])
 			KeyboardLayout.bind(m.item(L("Show Bottom Panel"), #selector(DocumentWindow.toggleBottomPanel(_:)), "`", .control), keyCode: UInt16(kVK_ANSI_Grave))
 			m.addItem(.separator())
 			let folding = m.item(L("Code Folding"), nil)

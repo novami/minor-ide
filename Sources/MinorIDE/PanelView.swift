@@ -91,7 +91,7 @@ final class PanelView: NSView {
 }
 
 extension PanelView {
-	/// Right panel: database and server browsers (phases 6 and 6b fill them).
+	/// Right panel (an AppKit inspector item): database and server browsers (phases 6 and 6b fill them).
 	static func inspector() -> PanelView {
 		PanelView(sections: [
 			Section(title: L("Database"), symbol: "cylinder.split.1x2",
@@ -100,7 +100,7 @@ extension PanelView {
 			Section(title: L("Server"), symbol: "server.rack",
 			        emptyTitle: L("No Servers"),
 			        emptyText: L("Files on servers connected over SFTP or FTPS will appear here.")),
-		], label: L("Inspector"), defaultsKey: "InspectorSection")
+		], label: L("Right Panel"), defaultsKey: "InspectorSection")
 	}
 
 	/// Bottom panel: terminal (phase 2b).
