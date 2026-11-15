@@ -261,6 +261,10 @@
 "General" = "General";
 "Formatting" = "Formatting";
 "Tools" = "Tools";
+"Font" = "Font";
+"System Monospaced" = "System Monospaced";
+"Size" = "Size";
+"On displays without Retina, Menlo keeps accents and other thin strokes sharper than the system font." = "On displays without Retina, Menlo keeps accents and other thin strokes sharper than the system font.";
 "Detect indentation from the file" = "Detect indentation from the file";
 "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise.";
 "Save files automatically" = "Save files automatically";

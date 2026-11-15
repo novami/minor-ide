@@ -224,10 +224,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		if let url { sidebar?.reveal(url) }
 	}
 
-	static var editorFont: NSFont {
-		let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init) ?? 13
-		return .monospacedSystemFont(ofSize: size, weight: .regular)
-	}
+	static var editorFont: NSFont { EditorView.editorFont }
 
 	/// Title, edited dot and disk bars follow the files of the panes.
 	@objc private func documentStateChanged(_ notification: Notification) {

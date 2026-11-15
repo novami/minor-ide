@@ -125,6 +125,8 @@ Známé mezery po zalamování: ⌥+tažení (sloupec) a přístupnost počítaj
 
 **Vyhlazování písma** (2026-11-15, nahlášeno uživatelem): na displeji bez Retiny byly háčky a čárky slabší než písmena. Editor a gutter teď kreslí s vyhlazováním písma jako systémové textové pohledy (`EditorView.smoothFonts`; vypne ho `AppleFontSmoothing = 0`). Ověřeno kreslením do neprůhledné vrstvy Core Animation; snímek `--snapshot` (`cacheDisplay`) vyhlazování neukazuje, potvrzení na obrazovce zbývá.
 
+**Písmo editoru** (2026-11-15, rozhodnutí uživatele: volba v Nastavení): ztlumená diakritika na displeji 1080p při 1× není chyba kreslení — SF Mono 13 má háčky a čárky tenčí než pixel (měřeno ~50–70 % sytosti), Menlo je kreslí plně. Nastavení › Obecné: Písmo (systémové neproporcionální + nainstalované neproporcionální rodiny) a Velikost; `settings.json` `"font_family"`, `"font_size"`. `EditorKit/EditorFont.swift`: `EditorView.editorFont` (globální, notifikace), `setFont` přepočítá metriky, gutter, zalomení a kurzory otevřených editorů. `MINORIDE_FONT_SIZE` má přednost; `--snapshot` uživatelské písmo nepoužívá. Test `EditorFontTests`, bench BUDGET OK.
+
 **Další krok (1f):** sticky header s aktuální funkcí, pak plná přístupnost (čtení po znacích/slovech/řádcích, Zvýšit kontrast, Omezit pohyb) a systémové textové funkce (Vyhledat ⌃⌘D, přetažení textu, výběr emoji).
 
 **Fáze 1e:** z plánu zbývá ruční kontrola nových oken (uvítání, Nastavení, Místní historie, automatické ukládání, obnova, stavový řádek); `.minoride/local.json` až s prvním uživatelem (servery v 6b).

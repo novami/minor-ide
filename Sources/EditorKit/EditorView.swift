@@ -30,19 +30,29 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		set { document.format = newValue }
 	}
 
+	/// Takes `font` and its metrics; cached layouts and goal columns were measured in the old one.
+	func adoptFont(_ font: NSFont) {
+		let m = Self.metrics(font)
+		(self.font, ctFont, ascent, lineHeight, gutterWidth, newlineWidth, textAttributes, ascii) =
+			(font, font as CTFont, m.ascent, m.lineHeight, m.gutterWidth, m.newlineWidth, m.attributes, m.ascii)
+		layoutCache.removeAll()
+		numberCache.removeAll()
+		goalXs = nil
+	}
+
 	func tabWidthDidChange() {
 		layoutCache.removeAll()
 		needsDisplay = true
 		wrapSettingsChanged()
 	}
 
-	public let font: NSFont
-	let ctFont: CTFont
-	public let lineHeight: CGFloat
-	let ascent: CGFloat
-	let gutterWidth: CGFloat
+	public private(set) var font: NSFont
+	private(set) var ctFont: CTFont
+	public private(set) var lineHeight: CGFloat
+	private(set) var ascent: CGFloat
+	private(set) var gutterWidth: CGFloat
 	let textInset: CGFloat = 8
-	let newlineWidth: CGFloat
+	private(set) var newlineWidth: CGFloat
 	private var markedText = ""
 	/// Text removed by ⌃K, inserted back by ⌃Y.
 	private var killBuffer = ""
@@ -62,10 +72,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	private var layoutCache = LayoutCache()
 	private var numberCache = LayoutCache()
-	private let ascii: AsciiGlyphs
+	private var ascii: AsciiGlyphs
 	private var batchGlyphs: [CGGlyph] = []
 	private var batchPositions: [CGPoint] = []
-	let textAttributes: [NSAttributedString.Key: Any]
+	private(set) var textAttributes: [NSAttributedString.Key: Any]
 
 	/// Number of draw passes, drawn lines and time spent in draw(_:), for benchmarks.
 	public internal(set) var drawCount = 0
@@ -90,6 +100,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// Soft wrap points while wrapping is on (`wrapsLines`), nil otherwise.
 	public internal(set) var wraps: WrapMap?
 	var wrapObserver: (any NSObjectProtocol)?
+	var fontObserver: (any NSObjectProtocol)?
 	/// Header lines of folds, drawn with a placeholder after the text.
 	var foldedHeaders: Set<Int> = []
 
@@ -132,15 +143,9 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// An editor of `document`; several editors of one document make a split view.
 	public init(document: TextDocument, font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)) {
 		self.document = document
-		self.font = font
-		ctFont = font as CTFont
-		ascent = ceil(CTFontGetAscent(font))
-		lineHeight = ceil(CTFontGetAscent(font) + CTFontGetDescent(font) + CTFontGetLeading(font)) + 3
-		let digitWidth = ("0" as NSString).size(withAttributes: [.font: font]).width
-		gutterWidth = ceil(digitWidth * 7) + 16
-		newlineWidth = ceil(digitWidth / 2)
-		textAttributes = [.font: font, .foregroundColor: NSColor.textColor]
-		ascii = AsciiGlyphs(font: font as CTFont)
+		let m = Self.metrics(font)
+		(self.font, ctFont, ascent, lineHeight, gutterWidth, newlineWidth, textAttributes, ascii) =
+			(font, font as CTFont, m.ascent, m.lineHeight, m.gutterWidth, m.newlineWidth, m.attributes, m.ascii)
 		super.init(frame: .zero)
 		wantsLayer = true
 		layerContentsRedrawPolicy = .onSetNeedsDisplay
@@ -149,6 +154,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		updateTokenColors()
 		document.attach(self)
 		observeWrapSetting()
+		observeFontSetting()
 	}
 
 	@available(*, unavailable)

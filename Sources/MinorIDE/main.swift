@@ -66,6 +66,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		}
 		if args.first == "--snapshot", args.count >= 2 {
 			EditorView.wrapsLines = ProcessInfo.processInfo.environment["MINORIDE_WRAP"] != nil
+			let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init)
+			EditorView.editorFont = EditorView.font(family: nil, size: size.map { CGFloat($0) }) // not the user's settings
 			if let file = args.dropFirst(2).first {
 				open(URL(fileURLWithPath: file))
 			} else {
@@ -272,7 +274,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	/// Settings every editor shares (settings.json in Application Support).
 	static func loadEditorSettings() {
-		EditorView.wrapsLines = SettingsFile.load(SettingsFile.userURL)?.wrapLines ?? false
+		let settings = SettingsFile.load(SettingsFile.userURL)
+		EditorView.wrapsLines = settings?.wrapLines ?? false
+		let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init) ?? settings?.fontSize
+		EditorView.editorFont = EditorView.font(family: settings?.fontFamily, size: size.map { CGFloat($0) })
 	}
 
 	/// View › Wrap Lines: switches wrapping in every editor and keeps it in settings.json.
