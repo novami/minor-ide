@@ -12,6 +12,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
 
 	func show() {
 		store.load()
+		if ToolsModel.shared.checks.isEmpty { ToolsModel.shared.refresh() }
 		if window == nil { window = makeWindow() }
 		window?.makeKeyAndOrderFront(nil)
 	}
@@ -29,6 +30,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
 		}
 		add(GeneralSettingsView(store: store), L("General"), "gearshape")
 		add(FormatSettingsView(store: store), L("Formatting"), "text.alignleft")
+		add(ToolsSettingsView(model: ToolsModel.shared), L("Tools"), "hammer")
 		tabs.title = tabs.tabViewItems.first?.label
 		let window = NSWindow(contentViewController: tabs) // its title follows tabs.title
 		window.styleMask = [.titled, .closable]
@@ -43,7 +45,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
 	func snapshot(tab: Int, to path: String) {
 		show()
 		(window?.contentViewController as? NSTabViewController)?.selectedTabViewItemIndex = tab
-		let deadline = Date().addingTimeInterval(1) // SwiftUI lays out on the next run loop turns
+		let deadline = Date().addingTimeInterval(tab == 2 ? 8 : 1) // SwiftUI layout; tool checks run in the background
 		while Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
 		guard let window, let content = window.contentView else { return }
 		window.displayIfNeeded()

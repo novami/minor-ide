@@ -77,6 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		}
 		watchUserSettings()
 		observeFocusForAutoSave()
+		ToolsModel.shared.loadEnvironment() // D22: PATH of the login shell, for tools started later
 		if !utilityMode {
 			let history = LocalHistory()
 			FileDocument.history = history

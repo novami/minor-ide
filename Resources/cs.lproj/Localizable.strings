@@ -144,7 +144,11 @@
 "All" = "Vše";
 "Replace All" = "Nahradit vše";
 "Invalid pattern" = "Neplatný výraz";
+
+/* MinorIDE/FindBar.swift, MinorIDE/ToolsSettings.swift */
 "Not found" = "Nenalezeno";
+
+/* MinorIDE/FindBar.swift */
 "%d of %d" = "%d z %d";
 "%d matches|one" = "%d výskyt";
 "%d matches|few" = "%d výskyty";
@@ -253,6 +257,7 @@
 /* MinorIDE/SettingsWindow.swift */
 "General" = "Obecné";
 "Formatting" = "Formát";
+"Tools" = "Nástroje";
 "Detect indentation from the file" = "Rozpoznat odsazení ze souboru";
 "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "Existující soubor si ponechá odsazení, které používá, pokud .editorconfig nebo nastavení projektu neříká jinak.";
 "Save files automatically" = "Ukládat soubory automaticky";
@@ -301,6 +306,26 @@
 "The file could not be created." = "Soubor se nepodařilo vytvořit.";
 "New folder name:" = "Název nové složky:";
 "New name:" = "Nový název:";
+
+/* MinorIDE/ToolsSettings.swift */
+"Git integration" = "Integrace Gitu";
+"Install the Command Line Tools: xcode-select --install" = "Nainstalujte Command Line Tools: xcode-select --install";
+"Go language features" = "Funkce pro jazyk Go";
+"Install Go from go.dev or with Homebrew: brew install go" = "Nainstalujte Go z go.dev nebo přes Homebrew: brew install go";
+"Go code intelligence" = "Inteligence kódu Go";
+"Go debugging" = "Ladění Go";
+"PHPStan and formatters" = "PHPStan a formátovače";
+"Optional: PHP code intelligence in MinorIDE works without it." = "Volitelné: inteligence kódu PHP v MinorIDE funguje i bez něj.";
+"SSH, SFTP and tunnels" = "SSH, SFTP a tunely";
+"Part of macOS." = "Součást macOS.";
+"Synchronization with servers" = "Synchronizace se servery";
+"PHP in a container" = "PHP v kontejneru";
+"Optional." = "Volitelné.";
+"Your shell’s PATH could not be read, so MinorIDE looks in /opt/homebrew/bin, /usr/local/bin and ~/go/bin too." = "PATH z vašeho shellu se nepodařilo načíst, MinorIDE proto hledá i v /opt/homebrew/bin, /usr/local/bin a ~/go/bin.";
+"Tools are found with the PATH of your login shell. A missing tool only turns off what needs it." = "Nástroje se hledají podle PATH z vašeho přihlašovacího shellu. Chybějící nástroj vypne jen to, co ho potřebuje.";
+"Check Again" = "Zkontrolovat znovu";
+"Installed" = "Nainstalováno";
+"%@ (needs %@)" = "%@ (potřeba %@)";
 
 /* MinorIDE/WelcomeWindow.swift */
 "Version %@" = "Verze %@";

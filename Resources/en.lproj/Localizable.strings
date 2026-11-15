@@ -142,7 +142,11 @@
 "All" = "All";
 "Replace All" = "Replace All";
 "Invalid pattern" = "Invalid pattern";
+
+/* MinorIDE/FindBar.swift, MinorIDE/ToolsSettings.swift */
 "Not found" = "Not found";
+
+/* MinorIDE/FindBar.swift */
 "%d of %d" = "%d of %d";
 "%d matches|one" = "%d match";
 "%d matches|other" = "%d matches";
@@ -250,6 +254,7 @@
 /* MinorIDE/SettingsWindow.swift */
 "General" = "General";
 "Formatting" = "Formatting";
+"Tools" = "Tools";
 "Detect indentation from the file" = "Detect indentation from the file";
 "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise.";
 "Save files automatically" = "Save files automatically";
@@ -298,6 +303,26 @@
 "The file could not be created." = "The file could not be created.";
 "New folder name:" = "New folder name:";
 "New name:" = "New name:";
+
+/* MinorIDE/ToolsSettings.swift */
+"Git integration" = "Git integration";
+"Install the Command Line Tools: xcode-select --install" = "Install the Command Line Tools: xcode-select --install";
+"Go language features" = "Go language features";
+"Install Go from go.dev or with Homebrew: brew install go" = "Install Go from go.dev or with Homebrew: brew install go";
+"Go code intelligence" = "Go code intelligence";
+"Go debugging" = "Go debugging";
+"PHPStan and formatters" = "PHPStan and formatters";
+"Optional: PHP code intelligence in MinorIDE works without it." = "Optional: PHP code intelligence in MinorIDE works without it.";
+"SSH, SFTP and tunnels" = "SSH, SFTP and tunnels";
+"Part of macOS." = "Part of macOS.";
+"Synchronization with servers" = "Synchronization with servers";
+"PHP in a container" = "PHP in a container";
+"Optional." = "Optional.";
+"Your shell’s PATH could not be read, so MinorIDE looks in /opt/homebrew/bin, /usr/local/bin and ~/go/bin too." = "Your shell’s PATH could not be read, so MinorIDE looks in /opt/homebrew/bin, /usr/local/bin and ~/go/bin too.";
+"Tools are found with the PATH of your login shell. A missing tool only turns off what needs it." = "Tools are found with the PATH of your login shell. A missing tool only turns off what needs it.";
+"Check Again" = "Check Again";
+"Installed" = "Installed";
+"%@ (needs %@)" = "%@ (needs %@)";
 
 /* MinorIDE/WelcomeWindow.swift */
 "Version %@" = "Version %@";
