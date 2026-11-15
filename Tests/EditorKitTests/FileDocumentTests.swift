@@ -51,4 +51,20 @@ struct FileDocumentTests {
 		doc.checkDisk()
 		#expect(doc.diskNotice == nil)
 	}
+
+	@Test func saveAsOverOpenFileLeavesOneDocument() throws {
+		let url = try tempFile("old\n")
+		let open = try FileDocument.load(url)
+		let other = FileDocument(text: "new\n")
+		var replaced: ObjectIdentifier?
+		let observer = NotificationCenter.default.addObserver(forName: FileDocument.didReplace, object: open, queue: nil) { note in
+			let id = (note.userInfo?[FileDocument.replacementKey] as AnyObject?).map(ObjectIdentifier.init)
+			MainActor.assumeIsolated { replaced = id }
+		}
+		defer { NotificationCenter.default.removeObserver(observer) }
+		try other.write(to: url)
+		#expect(try FileDocument.load(url) === other)
+		#expect(replaced == ObjectIdentifier(other))
+		#expect(open.url == nil)
+	}
 }

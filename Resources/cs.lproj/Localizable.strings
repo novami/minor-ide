@@ -42,6 +42,16 @@
 "%@ (on disk)" = "%@ (na disku)";
 "%@ (in the editor)" = "%@ (v editoru)";
 "Untitled" = "Bez názvu";
+"“%@” is open with unsaved changes. Do you want to replace it?" = "Soubor „%@“ je otevřený s neuloženými změnami. Chcete ho nahradit?";
+"Its unsaved changes will be lost." = "Jeho neuložené změny se ztratí.";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift */
+"Replace" = "Nahradit";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Zrušit";
+
+/* MinorIDE/DocumentWindow.swift */
 "Tabs (%d)" = "tabulátory: %d";
 "Mixed → %@" = "smíšené → %@";
 "Do you want to save the changes made to the document “%@”?" = "Chcete uložit změny provedené v dokumentu „%@“?";
@@ -49,9 +59,6 @@
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Save" = "Uložit";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Zrušit";
 
 /* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Neukládat";
@@ -84,7 +91,6 @@
 "Whole Word" = "Celá slova";
 "Regular Expression" = "Regulární výraz";
 "Preserve Case" = "Zachovat velikost písmen";
-"Replace" = "Nahradit";
 
 /* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
 "Find Previous" = "Najít předchozí";

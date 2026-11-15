@@ -1,7 +1,7 @@
 import AppKit
 import TextEngine
 
-/// Find and replace in one document; selections go to `editor`, highlights to all its editors. Searches run off the main thread on a snapshot of the
+/// Find and replace in one document; selections go to `editor`, highlights to its editors in the same window. Searches run off the main thread on a snapshot of the
 /// rope; a newer query or edit discards older results.
 @MainActor
 public final class FindController {
@@ -10,7 +10,7 @@ public final class FindController {
 	public var editor: EditorView {
 		didSet {
 			guard editor.document !== oldValue.document else { return }
-			for view in oldValue.document.views { view.setFindMatches([]) }
+			for view in oldValue.document.views where view.window === oldValue.window { view.setFindMatches([]) }
 			invalidate()
 			if showsHighlights { refresh() } else { onUpdate?() }
 		}
@@ -39,8 +39,9 @@ public final class FindController {
 		self.editor = editor
 	}
 
+	/// Only editors in the find bar's window: each window has its own find.
 	private func highlight(_ ranges: [Range<Int>]) {
-		for view in editor.document.views { view.setFindMatches(ranges) }
+		for view in editor.document.views where view.window === editor.window { view.setFindMatches(ranges) }
 	}
 
 	/// Index of the match the primary selection covers.

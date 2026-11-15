@@ -14,6 +14,11 @@ public final class FileDocument {
 	/// Posted (object: the document) when the URL, format, edited flag or disk notice changes.
 	public static let stateDidChange = Notification.Name("FileDocumentStateDidChange")
 
+	/// Posted (object: the old document, `replacementKey`: the new one) when a document is
+	/// saved over the path of another open one; editors of the old one switch to the new one.
+	public static let didReplace = Notification.Name("FileDocumentDidReplace")
+	public static let replacementKey = "replacement"
+
 	public let text: TextDocument
 	public private(set) var url: URL?
 	/// Indentation, line ending and charset used when saving.
@@ -76,7 +81,13 @@ public final class FileDocument {
 	private func register() {
 		guard let url else { return }
 		Self.registry = Self.registry.filter { $0.value.document != nil && $0.value.document !== self }
+		let replaced = Self.registry[Self.key(url)]?.document
 		Self.registry[Self.key(url)] = Entry(document: self)
+		if let replaced {
+			replaced.url = nil
+			replaced.isEdited = false // its file now holds this document's text
+			NotificationCenter.default.post(name: Self.didReplace, object: replaced, userInfo: [Self.replacementKey: self])
+		}
 	}
 
 	public static func resolve(path: String, detected: DetectedFormat?) -> ResolvedFormat {

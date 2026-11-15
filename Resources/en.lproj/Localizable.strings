@@ -41,6 +41,16 @@
 "%@ (on disk)" = "%@ (on disk)";
 "%@ (in the editor)" = "%@ (in the editor)";
 "Untitled" = "Untitled";
+"“%@” is open with unsaved changes. Do you want to replace it?" = "“%@” is open with unsaved changes. Do you want to replace it?";
+"Its unsaved changes will be lost." = "Its unsaved changes will be lost.";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift */
+"Replace" = "Replace";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Cancel";
+
+/* MinorIDE/DocumentWindow.swift */
 "Tabs (%d)" = "Tabs (%d)";
 "Mixed → %@" = "Mixed → %@";
 "Do you want to save the changes made to the document “%@”?" = "Do you want to save the changes made to the document “%@”?";
@@ -48,9 +58,6 @@
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Save" = "Save";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Cancel";
 
 /* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Don’t Save";
@@ -82,7 +89,6 @@
 "Whole Word" = "Whole Word";
 "Regular Expression" = "Regular Expression";
 "Preserve Case" = "Preserve Case";
-"Replace" = "Replace";
 
 /* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
 "Find Previous" = "Find Previous";

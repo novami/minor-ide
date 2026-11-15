@@ -136,6 +136,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		window.closesPane = { [weak self] in self?.closeFocusedPane() ?? false }
 		NotificationCenter.default.addObserver(self, selector: #selector(documentStateChanged(_:)),
 		                                       name: FileDocument.stateDidChange, object: nil)
+		NotificationCenter.default.addObserver(self, selector: #selector(documentReplaced(_:)),
+		                                       name: FileDocument.didReplace, object: nil)
 		findBar.onClose = { [weak self] in self?.hideFindBar() }
 		if ProcessInfo.processInfo.environment["MINORIDE_LATENCY"] == "1" {
 			let monitor = LatencyMonitor(view: first.editor)
@@ -149,6 +151,18 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 		first.editor.updateSize()
 		updateTitle()
+	}
+
+	/// Another document was saved over this window's file: its panes show that document.
+	@objc private func documentReplaced(_ notification: Notification) {
+		guard let old = notification.object as? FileDocument,
+		      let new = notification.userInfo?[FileDocument.replacementKey] as? FileDocument else { return }
+		for pane in panes where pane.document === old { replacePane(pane, with: new) }
+	}
+
+	/// Selects the focused pane's file in the project tree.
+	func revealInSidebar() {
+		if let url { sidebar?.reveal(url) }
 	}
 
 	static var editorFont: NSFont {
@@ -213,6 +227,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 	func windowDidBecomeKey(_ notification: Notification) {
 		applyPanels()
+		revealInSidebar()
 		documents.forEach { $0.checkDisk() }
 	}
 
@@ -379,6 +394,15 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		panel.nameFieldStringValue = doc.url?.lastPathComponent ?? L("Untitled")
 		if let dir = doc.url?.deletingLastPathComponent() { panel.directoryURL = dir }
 		guard panel.runModal() == .OK, let chosen = panel.url else { return false }
+		// One model per file: the open document of that path gives way to this one.
+		if let other = FileDocument.document(for: chosen), other !== doc, other.isEdited {
+			let alert = NSAlert()
+			alert.messageText = L("“%@” is open with unsaved changes. Do you want to replace it?", chosen.lastPathComponent)
+			alert.informativeText = L("Its unsaved changes will be lost.")
+			alert.addButton(withTitle: L("Replace"))
+			alert.addButton(withTitle: L("Cancel"))
+			guard alert.runModal() == .alertFirstButtonReturn else { return false }
+		}
 		return write(doc, to: chosen)
 	}
 
@@ -403,7 +427,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		window.subtitle = "\(eol) · \(indent) · \(format.charset.rawValue.uppercased())"
 		window.representedURL = doc.url
 		window.tab.title = project.map { doc.url == nil ? $0.name : name } ?? name
-		if window.isDocumentEdited != doc.isEdited { window.isDocumentEdited = doc.isEdited }
+		// The dot in the close button: any file of the window has unsaved changes.
+		let edited = panes.contains { $0.document.isEdited }
+		if window.isDocumentEdited != edited { window.isDocumentEdited = edited }
 	}
 
 	// MARK: Closing

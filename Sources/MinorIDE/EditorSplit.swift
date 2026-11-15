@@ -77,12 +77,7 @@ extension DocumentWindow {
 		guard let other = panes.first(where: { $0 !== focused }) else { return }
 		if other.document === doc { return showPane(other) }
 		let replace = { [weak self] in
-			guard let self, let index = panes.firstIndex(where: { $0 === other }) else { return }
-			let pane = makePane(doc)
-			pane.view.frame = other.view.frame
-			editorSplit.replaceSubview(other.view, with: pane.view)
-			other.document.text.detach(other.editor)
-			panes[index] = pane
+			guard let self, let pane = replacePane(other, with: doc) else { return }
 			showPane(pane)
 		}
 		if needsConfirm(other.document, closing: [other.editor]) {
@@ -90,6 +85,24 @@ extension DocumentWindow {
 		} else {
 			replace()
 		}
+	}
+
+	/// Puts a new pane for `doc` where `old` was.
+	@discardableResult
+	func replacePane(_ old: EditorPane, with doc: FileDocument) -> EditorPane? {
+		guard let index = panes.firstIndex(where: { $0 === old }) else { return nil }
+		let focused = old === focusedPane
+		let pane = makePane(doc)
+		pane.view.frame = old.view.frame
+		editorSplit.replaceSubview(old.view, with: pane.view)
+		old.document.text.detach(old.editor)
+		panes[index] = pane
+		if focused {
+			find.editor = pane.editor
+			if window.firstResponder === old.editor { window.makeFirstResponder(pane.editor) }
+		}
+		updateTitle()
+		return pane
 	}
 
 	private func showPane(_ pane: EditorPane) {
@@ -149,6 +162,7 @@ extension DocumentWindow {
 			guard let self else { return }
 			find.editor = focused
 			updateTitle()
+			revealInSidebar()
 		}
 		// Matches follow the text of the focused pane's file, whichever editor changed it.
 		editor.onTextChange = { [weak self, weak editor] in
