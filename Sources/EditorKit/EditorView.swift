@@ -76,6 +76,13 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	var accessibilityClientSeen = false
 	/// Measures key-to-frame latency when set (benchmark, MINORIDE_LATENCY=1).
 	public var latencyMonitor: LatencyMonitor?
+	/// Folded regions as byte ranges (`Rope.foldRange`), sorted by start; nested folds allowed.
+	public internal(set) var folds: [Range<Int>] = []
+	/// Rows on screen after folding.
+	public internal(set) var display = DisplayMap()
+	/// Header lines of folds, drawn with a placeholder after the text.
+	var foldedHeaders: Set<Int> = []
+
 	/// Find results, sorted; highlighted under the text. They follow edits until the next search.
 	public private(set) var findMatches: [Range<Int>] = []
 
@@ -124,11 +131,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public func updateSize() {
 		// The gutter (vertical ruler) floats over the clip view and insets it.
 		let width = enclosingScrollView.map { $0.contentSize.width - $0.contentView.contentInsets.left - $0.contentView.contentInsets.right } ?? frame.width
-		setFrameSize(NSSize(width: width, height: CGFloat(rope.lineCount) * lineHeight + lineHeight))
+		setFrameSize(NSSize(width: width, height: CGFloat(rowCount) * lineHeight + lineHeight))
 	}
 
 	public func setText(_ text: String) {
 		rope = Rope(text)
+		folds = []
+		display = DisplayMap()
+		foldedHeaders = []
 		selections = SelectionSet()
 		history.removeAll()
 		anchors.removeAll()
@@ -154,18 +164,19 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		ctx.setFillColor(NSColor.textBackgroundColor.cgColor)
 		ctx.fill(dirtyRect)
 
-		let first = max(0, Int(dirtyRect.minY / lineHeight))
-		let last = min(rope.lineCount - 1, Int(dirtyRect.maxY / lineHeight))
+		let shown = lines(inY: dirtyRect.minY, dirtyRect.maxY)
+		let first = shown.first ?? 0, last = shown.last ?? -1
 		let textColor = NSColor.textColor.cgColor
 		let visible = selections.all.filter {
 			rope.line(containing: $0.range.upperBound) >= first && rope.line(containing: $0.range.lowerBound) <= last
 		}
 
 		if first <= last {
-			drawnLines += last - first + 1
+			drawnLines += shown.count
 			drawFindMatches(ctx, lines: first...last)
 			drawSelectionBackground(ctx, visible, lines: first...last)
-			drawBatch(ctx, color: textColor, lines: first...last) { line in (layout(line), textInset) }
+			drawBatch(ctx, color: textColor, lines: shown) { line in (layout(line), textInset) }
+			if !foldedHeaders.isEmpty { drawFoldPlaceholders(ctx, lines: shown) }
 		}
 		if !markedText.isEmpty, visible.contains(selections.primary) { drawMarkedText(ctx, at: caret) }
 		let keep = (first - 300)...(max(first, last) + 300)
@@ -184,14 +195,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	/// Line numbers for the gutter; `rect` is in editor coordinates.
 	func drawLineNumbers(_ ctx: CGContext, in rect: NSRect, rightEdge: CGFloat) {
-		let first = max(0, Int(rect.minY / lineHeight))
-		let last = min(rope.lineCount - 1, Int(rect.maxY / lineHeight))
-		guard first <= last else { return }
-		drawnLines += last - first + 1
-		drawBatch(ctx, color: NSColor.tertiaryLabelColor.cgColor, lines: first...last) { line in
+		let shown = lines(inY: rect.minY, rect.maxY)
+		guard let first = shown.first, let last = shown.last else { return }
+		drawnLines += shown.count
+		drawBatch(ctx, color: NSColor.tertiaryLabelColor.cgColor, lines: shown) { line in
 			let n = numberLayout(line)
 			return (n, rightEdge - n.width)
 		}
+		drawFoldMarkers(ctx, lines: shown, centerX: rightEdge + 8)
 		numberCache.trim(keep: (first - 300)...(last + 300), limit: 1500)
 	}
 
@@ -208,10 +219,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		for m in findMatches[lo...] {
 			guard m.lowerBound <= end else { break }
 			let lowerLine = rope.line(containing: m.lowerBound), upperLine = rope.line(containing: m.upperBound)
-			for line in max(lowerLine, lines.lowerBound)...min(upperLine, lines.upperBound) {
+			for line in max(lowerLine, lines.lowerBound)...min(upperLine, lines.upperBound) where !display.isHidden(line) {
 				let x0 = line == lowerLine ? x(of: m.lowerBound, line: line) : textInset
 				let x1 = line == upperLine ? x(of: m.upperBound, line: line) : textInset + layout(line).width + newlineWidth
-				ctx.fill(CGRect(x: x0, y: CGFloat(line) * lineHeight, width: max(0, x1 - x0), height: lineHeight))
+				ctx.fill(CGRect(x: x0, y: y(ofLine: line), width: max(0, x1 - x0), height: lineHeight))
 			}
 		}
 	}
@@ -224,7 +235,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			let line = rope.line(containing: s.head)
 			guard line != lastHighlighted, lines.contains(line) else { continue }
 			lastHighlighted = line
-			ctx.fill(CGRect(x: 0, y: CGFloat(line) * lineHeight, width: bounds.width, height: lineHeight))
+			ctx.fill(CGRect(x: 0, y: y(ofLine: line), width: bounds.width, height: lineHeight))
 		}
 		let color = window?.firstResponder === self ? NSColor.selectedTextBackgroundColor : NSColor.unemphasizedSelectedTextBackgroundColor
 		ctx.setFillColor(color.cgColor)
@@ -232,23 +243,23 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		for s in visible where !s.isEmpty {
 			let lowerLine = rope.line(containing: s.range.lowerBound)
 			let upperLine = rope.line(containing: s.range.upperBound)
-			for line in max(lowerLine, lines.lowerBound)...min(upperLine, lines.upperBound) {
+			for line in max(lowerLine, lines.lowerBound)...min(upperLine, lines.upperBound) where !display.isHidden(line) {
 				let x0 = line == lowerLine ? x(of: s.range.lowerBound, line: line) : textStart
 				// A selected line break shows as a short block past the line end.
 				let x1 = line == upperLine ? x(of: s.range.upperBound, line: line) : textStart + layout(line).width + newlineWidth
-				ctx.fill(CGRect(x: x0, y: CGFloat(line) * lineHeight, width: max(0, x1 - x0), height: lineHeight))
+				ctx.fill(CGRect(x: x0, y: y(ofLine: line), width: max(0, x1 - x0), height: lineHeight))
 			}
 		}
 	}
 
 	/// Fast-path lines are batched into one glyph draw per colour; CTLine fallbacks draw alone.
-	private func drawBatch(_ ctx: CGContext, color: CGColor, lines: ClosedRange<Int>, _ layoutAt: (Int) -> (LineLayout, CGFloat)) {
+	private func drawBatch(_ ctx: CGContext, color: CGColor, lines: [Int], _ layoutAt: (Int) -> (LineLayout, CGFloat)) {
 		ctx.setFillColor(color)
 		batchGlyphs.removeAll(keepingCapacity: true)
 		batchPositions.removeAll(keepingCapacity: true)
 		for line in lines {
 			let (l, x) = layoutAt(line)
-			let baseline = CGFloat(line) * lineHeight + ascent + 1
+			let baseline = y(ofLine: line) + ascent + 1
 			if l.ctLine != nil {
 				l.draw(in: ctx, font: ctFont, at: CGPoint(x: x, y: baseline))
 				continue
@@ -267,7 +278,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	private func drawMarkedText(_ ctx: CGContext, at offset: Int) {
 		let line = rope.line(containing: offset)
 		let cx = x(of: offset, line: line)
-		let y = CGFloat(line) * lineHeight
+		let y = y(ofLine: line)
 		let marked = CTLineCreateWithAttributedString(NSAttributedString(string: markedText, attributes:
 			textAttributes.merging([.underlineStyle: NSUnderlineStyle.single.rawValue]) { $1 }))
 		ctx.setFillColor(NSColor.textBackgroundColor.cgColor)
@@ -276,7 +287,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		LineLayout.withBaseline(ctx, CGPoint(x: cx, y: y + ascent + 1)) { CTLineDraw(marked, ctx) }
 	}
 
-	private func layout(_ line: Int) -> LineLayout {
+	func layout(_ line: Int) -> LineLayout {
 		if let cached = layoutCache[line] { return cached }
 		let l = LineLayout(bytes: rope.bytes(in: rope.lineRange(line)), font: ctFont, ascii: ascii, tabWidth: format.tabWidth, attributes: textAttributes)
 		layoutCache[line] = l
@@ -299,14 +310,15 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	private func x(of offset: Int) -> CGFloat { x(of: offset, line: rope.line(containing: offset)) }
 
 	private func lineRect(_ line: Int) -> NSRect {
-		NSRect(x: 0, y: CGFloat(line) * lineHeight, width: bounds.width, height: lineHeight)
+		NSRect(x: 0, y: y(ofLine: line), width: bounds.width, height: lineHeight)
 	}
 
 	func invalidate(_ set: SelectionSet) {
 		for s in set.all {
 			let a = rope.line(containing: s.range.lowerBound)
 			let b = s.isEmpty ? a : rope.line(containing: s.range.upperBound)
-			setNeedsDisplay(NSRect(x: 0, y: CGFloat(a) * lineHeight, width: bounds.width, height: CGFloat(b - a + 1) * lineHeight))
+			let top = y(ofLine: a)
+			setNeedsDisplay(NSRect(x: 0, y: top, width: bounds.width, height: y(ofLine: b) - top + lineHeight))
 		}
 	}
 
@@ -319,6 +331,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		guard new != selections else { return }
 		invalidate(selections)
 		selections = new
+		revealSelections()
 		setNeedsCaretUpdate()
 		postAccessibilityChange(edited: false)
 		invalidate(selections)
@@ -352,7 +365,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		}
 		let moved = SelectionSet(zip(selections.all, goals).map { s, goal in
 			let from = extend || s.isEmpty ? s.head : (delta < 0 ? s.range.lowerBound : s.range.upperBound)
-			let target = min(max(0, rope.line(containing: from) + delta), rope.lineCount - 1)
+			let target = display.line(atRow: min(max(0, display.row(of: rope.line(containing: from)) + delta), rowCount - 1))
 			let head = offset(atX: goal, line: target)
 			return extend ? Selection(anchor: s.anchor, head: head) : Selection(caret: head)
 		}, primary: selections.primaryIndex)
@@ -379,7 +392,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		return offset
 	}
 
-	private func line(at point: NSPoint) -> Int { min(max(0, Int(point.y / lineHeight)), rope.lineCount - 1) }
+	private func line(at point: NSPoint) -> Int { line(atY: point.y) }
 
 	private func offset(at point: NSPoint) -> Int { offset(atX: point.x, line: line(at: point)) }
 
@@ -432,23 +445,40 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		changes.apply(to: &rope)
 		anchors.apply(changes)
 		if !findMatches.isEmpty { findMatches = changes.mapUntouched(findMatches) }
+		var foldsChanged = false
+		if !folds.isEmpty {
+			let mapped = changes.mapUntouched(folds, closedEnd: true)
+			foldsChanged = mapped.count != folds.count
+			folds = mapped
+			if foldsChanged || !sameLines { rebuildDisplay() }
+		}
 		selections = selectionsAfter(changes)
+		if revealSelections() { foldsChanged = true }
 		goalXs = nil
 		setNeedsCaretUpdate()
 		onChange?()
 		postAccessibilityChange(edited: true)
 
-		if sameLines {
+		if foldsChanged {
+			if sameLines {
+				for line in editedLines { layoutCache[line] = nil }
+			} else {
+				layoutCache.shift(from: firstLine, removed: lastLine - firstLine, delta: rope.lineCount - oldLines)
+			}
+			updateSize()
+			needsDisplay = true
+			gutter?.needsDisplay = true
+		} else if sameLines {
 			for line in editedLines {
 				layoutCache[line] = nil
 				setNeedsDisplay(lineRect(line))
 			}
 		} else {
 			layoutCache.shift(from: firstLine, removed: lastLine - firstLine, delta: rope.lineCount - oldLines)
-			if rope.lineCount != oldLines { updateSize() }
+			if rope.lineCount != oldLines || !folds.isEmpty { updateSize() }
 			let visible = visibleRect
-			let below = NSRect(x: 0, y: CGFloat(firstLine) * lineHeight, width: bounds.width,
-			                   height: max(0, visible.maxY - CGFloat(firstLine) * lineHeight))
+			let top = y(ofLine: firstLine)
+			let below = NSRect(x: 0, y: top, width: bounds.width, height: max(0, visible.maxY - top))
 			setNeedsDisplay(below)
 			if rope.lineCount != oldLines { gutter?.setNeedsDisplay(fromEditorY: below.minY) }
 		}
@@ -483,6 +513,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// Click: caret; double: word; triple: line. Shift extends the primary selection,
 	/// Option adds a selection (Option+drag selects a column).
 	func mouseDown(at point: NSPoint, clicks: Int, modifiers: NSEvent.ModifierFlags) {
+		if !foldedHeaders.isEmpty, case let l = line(at: point), foldedHeaders.contains(l), placeholderRect(l).contains(point) {
+			toggleFold(atLine: l)
+			return
+		}
 		let offset = offset(at: point)
 		let unit: DragUnit = clicks >= 3 ? .line : clicks == 2 ? .word : .character
 		var others: [Selection] = []
@@ -504,7 +538,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		guard let drag else { return }
 		if let start = drag.column {
 			let current = line(at: point)
-			let lines = Array(stride(from: start.line, through: current, by: current >= start.line ? 1 : -1))
+			let lines = stride(from: start.line, through: current, by: current >= start.line ? 1 : -1).filter { !display.isHidden($0) }
 			let block = lines.map { Selection(anchor: offset(atX: start.x, line: $0), head: offset(atX: point.x, line: $0)) }
 			setSelections(SelectionSet(drag.others + block, primary: drag.others.count + block.count - 1))
 			return
@@ -636,7 +670,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		case #selector(scrollLineUp(_:)): scroll(NSPoint(x: visibleRect.minX, y: visibleRect.minY - lineHeight))
 		case #selector(scrollLineDown(_:)): scroll(NSPoint(x: visibleRect.minX, y: visibleRect.minY + lineHeight))
 		case #selector(centerSelectionInVisibleArea(_:)):
-			let y = CGFloat(rope.line(containing: caret)) * lineHeight
+			let y = y(ofLine: rope.line(containing: caret))
 			scroll(NSPoint(x: visibleRect.minX, y: y - (visibleRect.height - lineHeight) / 2))
 		default: break
 		}
@@ -781,7 +815,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		let end = min(bytes.upperBound, rope.lineRange(line).upperBound)
 		actualRange?.pointee = utf16Range(bytes.lowerBound..<end)
 		let minX = x(of: bytes.lowerBound, line: line)
-		let rect = NSRect(x: minX, y: CGFloat(line) * lineHeight, width: max(1, x(of: end, line: line) - minX), height: lineHeight)
+		let rect = NSRect(x: minX, y: y(ofLine: line), width: max(1, x(of: end, line: line) - minX), height: lineHeight)
 		return window?.convertToScreen(convert(rect, to: nil)) ?? rect
 	}
 
@@ -812,6 +846,7 @@ extension EditorView: NSMenuItemValidation {
 		case #selector(redo(_:)): history.canRedo
 		case #selector(copy(_:)), #selector(cut(_:)): selections.all.contains { !$0.isEmpty }
 		case #selector(paste(_:)): NSPasteboard.general.string(forType: .string) != nil
+		case #selector(unfold(_:)), #selector(unfoldAll(_:)): !folds.isEmpty
 		case #selector(moveLinesUp(_:)): selectedLineBlocks().first.map { $0.lowerBound > 0 } ?? false
 		case #selector(moveLinesDown(_:)): selectedLineBlocks().last.map { $0.upperBound < rope.lineCount - 1 } ?? false
 		default: true

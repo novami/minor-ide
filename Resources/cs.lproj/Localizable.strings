@@ -92,6 +92,11 @@
 "Convert Indentation" = "Převést odsazení";
 "Tab Width" = "Šířka tabulátoru";
 "View" = "Zobrazení";
+"Code Folding" = "Sbalování kódu";
+"Fold" = "Sbalit";
+"Unfold" = "Rozbalit";
+"Fold All" = "Sbalit vše";
+"Unfold All" = "Rozbalit vše";
 "Enter Full Screen" = "Zapnout režim celé obrazovky";
 "Window" = "Okno";
 "Minimize" = "Minimalizovat";

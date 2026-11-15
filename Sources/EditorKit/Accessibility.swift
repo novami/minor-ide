@@ -71,8 +71,8 @@ extension EditorView {
 	public override func accessibilityVisibleCharacterRange() -> NSRange {
 		let visible = visibleRect.intersection(bounds)
 		guard !visible.isEmpty else { return NSRange(location: 0, length: 0) }
-		let first = max(0, Int(visible.minY / lineHeight))
-		let last = min(rope.lineCount - 1, Int(visible.maxY / lineHeight))
+		let first = line(atY: visible.minY)
+		let last = line(atY: visible.maxY)
 		let end = last + 1 < rope.lineCount ? rope.offset(ofLine: last + 1) : rope.byteCount
 		return utf16Range(rope.offset(ofLine: first)..<end)
 	}

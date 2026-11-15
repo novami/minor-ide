@@ -89,6 +89,11 @@
 "Convert Indentation" = "Convert Indentation";
 "Tab Width" = "Tab Width";
 "View" = "View";
+"Code Folding" = "Code Folding";
+"Fold" = "Fold";
+"Unfold" = "Unfold";
+"Fold All" = "Fold All";
+"Unfold All" = "Unfold All";
 "Enter Full Screen" = "Enter Full Screen";
 "Window" = "Window";
 "Minimize" = "Minimize";

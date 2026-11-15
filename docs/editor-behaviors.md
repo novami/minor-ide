@@ -38,3 +38,12 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Hledá se mimo hlavní vlákno nad snímkem ropu; novější dotaz nebo editace starší výsledek zahodí
 - [ ] Sdílená schránka hledání macOS (⌘E v jiné aplikaci → ⌘G tady) — ruční kontrola (zbývá)
 - [ ] Lišta: Return další, Shift+Return předchozí, Esc zavře a vrátí fokus editoru — ruční kontrola (zbývá)
+
+## Sbalování podle odsazení (Zobrazení › Sbalování kódu: ⌥⌘←, ⌥⌘→, ⌥⇧⌘←, ⌥⇧⌘→)
+- [x] Oblast = řádky odsazené hlouběji než hlavička; prázdné řádky uvnitř patří k ní, uzavírací `}` zůstane vidět — `FoldRegionTests.regionsByIndentation`
+- [x] Sbalit skryje řádky, šipky nahoru/dolů je přeskočí — `FoldingTests.foldHidesLinesAndArrowsSkipThem`
+- [x] Opakované Sbalit sbalí nadřazenou oblast, Rozbalit rozbalí oblast na řádku kurzoru — `FoldingTests.foldAgainTakesEnclosingRegion`
+- [x] Sbalení jdou s editacemi; výběr nebo kurzor uvnitř (Najít, Zpět) oblast rozbalí — `FoldingTests.editsMoveFoldsAndEditsInsideUnfold`
+- [x] Backspace pod sbalenou oblastí ji rozbalí (neschová řádek) — `FoldingTests.backspaceBelowFoldUnfoldsInsteadOfHidingTheLine`
+- [x] Mapa řádků ↔ zobrazených řádků — `FoldRegionTests.displayMapRowsAndLines`
+- [ ] Šipka v gutteru (klik sbalí/rozbalí), „…“ za řádkem (klik rozbalí) — ruční kontrola (zbývá; snímek `MINORIDE_FOLD=4 --snapshot` ověřen)

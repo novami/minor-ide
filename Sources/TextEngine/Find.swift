@@ -136,7 +136,9 @@ extension Rope {
 
 extension ChangeSet {
 	/// Ranges moved through the edit; ranges an edit overlaps or inserts into are dropped.
-	public func mapUntouched(_ ranges: [Range<Int>]) -> [Range<Int>] {
+	/// With `closedEnd` an edit starting exactly at a range's end drops it too (folds: joining
+	/// the next line onto the last hidden line must unfold).
+	public func mapUntouched(_ ranges: [Range<Int>], closedEnd: Bool = false) -> [Range<Int>] {
 		var out: [Range<Int>] = []
 		out.reserveCapacity(ranges.count)
 		var i = 0, delta = 0
@@ -146,7 +148,8 @@ extension ChangeSet {
 				delta += changes[i].text.count - changes[i].range.count
 				i += 1
 			}
-			if i < changes.count && changes[i].range.lowerBound < r.upperBound { continue }
+			if i < changes.count && (changes[i].range.lowerBound < r.upperBound
+				|| (closedEnd && changes[i].range.lowerBound == r.upperBound)) { continue }
 			out.append((r.lowerBound + delta)..<(r.upperBound + delta))
 		}
 		return out

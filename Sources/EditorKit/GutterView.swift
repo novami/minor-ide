@@ -41,6 +41,14 @@ public final class GutterView: NSRulerView {
 		setNeedsDisplay(NSRect(x: 0, y: top, width: bounds.width, height: max(0, bounds.maxY - top)))
 	}
 
+	/// A click in the marker column right of the numbers folds or unfolds that line.
+	public override func mouseDown(with event: NSEvent) {
+		guard let editor else { return }
+		let point = convert(event.locationInWindow, from: nil)
+		guard point.x >= bounds.width - 14 else { return super.mouseDown(with: event) }
+		editor.toggleFold(atLine: editor.line(atY: convert(point, to: editor).y))
+	}
+
 	public override func draw(_ dirtyRect: NSRect) {
 		guard let ctx = NSGraphicsContext.current?.cgContext, let editor else { return }
 		drawCount += 1
@@ -52,7 +60,7 @@ public final class GutterView: NSRulerView {
 		let inEditor = convert(dirtyRect, to: editor)
 		ctx.saveGState()
 		ctx.translateBy(x: 0, y: dirtyRect.minY - inEditor.minY)
-		editor.drawLineNumbers(ctx, in: inEditor, rightEdge: bounds.width - 10)
+		editor.drawLineNumbers(ctx, in: inEditor, rightEdge: bounds.width - 15)
 		ctx.restoreGState()
 	}
 }

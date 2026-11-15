@@ -83,6 +83,14 @@ enum MainMenu {
 		}
 
 		main.add(submenu: L("View")) { m in
+			let folding = m.item(L("Code Folding"), nil)
+			folding.submenu = NSMenu(title: L("Code Folding"))
+			let left = String(UnicodeScalar(UInt16(NSLeftArrowFunctionKey))!), right = String(UnicodeScalar(UInt16(NSRightArrowFunctionKey))!)
+			folding.submenu!.item(L("Fold"), #selector(EditorView.fold(_:)), left, [.command, .option])
+			folding.submenu!.item(L("Unfold"), #selector(EditorView.unfold(_:)), right, [.command, .option])
+			folding.submenu!.item(L("Fold All"), #selector(EditorView.foldAll(_:)), left, [.command, .option, .shift])
+			folding.submenu!.item(L("Unfold All"), #selector(EditorView.unfoldAll(_:)), right, [.command, .option, .shift])
+			m.addItem(.separator())
 			// AppKit adds only a hidden fn-key variant of this item, so the visible one must be ours.
 			m.item(L("Enter Full Screen"), #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control])
 		}

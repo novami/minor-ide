@@ -9,6 +9,7 @@ import MinorCore
 //        MinorIDE --snapshot <png> [file]   renders the editor to a PNG (visual check)
 //        MINORIDE_FONT_SIZE=40 enlarges the font, useful with --snapshot
 //        MINORIDE_FIND=<query> with --snapshot opens Find and Replace and saves the bar too
+//        MINORIDE_FOLD=<line> with --snapshot folds the region headed by that line
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
@@ -105,6 +106,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	/// ruler's content inset), plus the caret layer that cacheDisplay skips.
 	func snapshot(to path: String) {
 		guard let view = editor.enclosingScrollView else { return }
+		// MINORIDE_FOLD=<line> folds the region headed by that line (1-based).
+		if let line = ProcessInfo.processInfo.environment["MINORIDE_FOLD"].flatMap(Int.init) { editor.toggleFold(atLine: line - 1) }
 		// MINORIDE_FIND=<query> opens Find and Replace first and also saves the bar as <png>-find.png.
 		if let query = ProcessInfo.processInfo.environment["MINORIDE_FIND"], let doc = documents.last {
 			doc.showFindBar(replace: true)

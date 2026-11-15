@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1c/2)
+**Poslední aktualizace:** 2026-11-15 (1c/3)
 
 ## Kde jsme
 
@@ -49,7 +49,13 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1c, krok 2 hotový** (2026-11-15): Hledat/nahradit v souboru. `Sources/TextEngine/Find.swift` (`FindQuery`: regex přes `NSRegularExpression`, velikost písmen, celá slova, šablony $1 \n \t, zachování velikosti; `ChangeSet.mapUntouched` posune zvýraznění přes editace), `Sources/EditorKit/FindController.swift` (hledání mimo hlavní vlákno nad snímkem ropu, generace zahodí staré výsledky, Nahradit a najít, Nahradit vše jako jeden krok Zpět), `Sources/MinorIDE/FindBar.swift` (lišta nad editorem: pole, počet „3 z 12“, Aa / W / .* / AB, ‹ ›, Hotovo; druhý řádek Nahradit, Vše), akce v `DocumentWindow` (delegát okna je v responder chainu editoru i lišty), menu Úpravy › Najít: ⌘F, ⌥⌘F, ⌘G, ⇧⌘G, ⌘E, ⇧⌘E, ⌘J; sdílená schránka hledání macOS. Testy `FindTests`, `FindControllerTests`. `make bench` BUDGET OK (psaní p99 0,10 ms). `MINORIDE_FIND=<dotaz>` se `--snapshot` otevře lištu (ovládací prvky AppKit na macOS 27 kreslí přes hostované vrstvy, `cacheDisplay` je nevykreslí; rozložení ověřeno výpisem rámců).
 
-**Další: fáze 1c, krok 3 — folding podle odsazení** (mapa zobrazených řádků v EditorKit navržená i pro zalamování v 1f; složené oblasti jako bajtové rozsahy, které jdou s editacemi, editace uvnitř je rozbalí; trojúhelníky v gutteru, „…“ za řádkem; příkazy Sbalit ⌥⌘←, Rozbalit ⌥⌘→, Sbalit vše, Rozbalit vše).
+**Fáze 1c, krok 3 hotový** (2026-11-15): folding podle odsazení. `Sources/TextEngine/Folding.swift` (oblasti, hlavičky, všechny oblasti jedním průchodem, odsazení viditelných řádků jedním čtením), `Sources/TextEngine/DisplayMap.swift` (řádek ↔ zobrazený řádek binárním hledáním; v 1f se rozšíří o zalamování), `Sources/EditorKit/Folding.swift` (příkazy, šipky v gutteru, „…“ za řádkem). Editor kreslí, posouvá, myš a kurzory přes `y(ofLine:)` / `line(atY:)`. Sbalení jsou bajtové rozsahy, jdou s editacemi (`mapUntouched(closedEnd:)`), editace uvnitř nebo výběr uvnitř je rozbalí. Menu Zobrazení › Sbalování kódu. Testy `FoldRegionTests`, `FoldingTests`. `make bench` BUDGET OK (nový řádek p99 0,31 ms, scroll 0,21 ms; šipky v gutteru nejdřív přidaly 0,15 ms, vyřešeno jedním čtením odsazení).
+
+**Fáze 1c je hotová** kromě částí odložených za 1d (komentáře, párování a obalování závorkami, chytré odsazení, folding podle závorek).
+
+**Další: fáze 1d — lexery a zvýraznění** podle `docs/PLAN.md` (stavový automat se stavem na začátku řádku, Go, PHP, Latte, NEON, SQL, JSON; témata světlé/tmavé v JSON; golden testy). Po 1d jazykové příkazy z 1c.
+
+Známé mezery po kroku 1c/3: Enter na konci sbalené hlavičky posune sbalení pod nový řádek (hlavičkou se stane nový řádek); přesun a duplikace řádku se sbalenou hlavičkou berou jen hlavičku (sbalení se rozbalí); šipky v gutteru se kreslí u všech řádků, které jdou sbalit (ne až při najetí myší); sbalení se neukládají; ruční kontrola kliknutí zbývá.
 
 Známé mezery po kroku 1c/2: lišta hledání nebyla vyzkoušena ručně (Return/Shift+Return/Esc, fokus, vzhled v tmavém režimu) — obrazovka byla zamčená; hledání pustí regex nad celým textem (10 MB ≈ desítky ms mimo hlavní vlákno, bez limitu počtu shod); stav „3 z 12“ se neaktualizuje při ručním posunu kurzoru; regex v jednom nahrazení vidí jen řádky shody (look-behind přes začátek řádku nefunguje); vlastní lišta, ne `NSTextFinder` (rozhodnutí uživatele).
 

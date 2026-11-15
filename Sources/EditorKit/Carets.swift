@@ -43,8 +43,8 @@ extension EditorView {
 	func updateCaretsIfNeeded() {
 		guard window != nil else { return } // offscreen drawing can report an unbounded visibleRect
 		let visible = visibleRect.intersection(bounds)
-		let first = max(0, Int(visible.minY / lineHeight))
-		let last = min(rope.lineCount, Int(visible.maxY / lineHeight) + 1)
+		let first = line(atY: visible.minY)
+		let last = min(rope.lineCount, line(atY: visible.maxY) + 1)
 		if !caretsDirty && caretLines.lowerBound <= first && caretLines.upperBound >= last { return }
 		caretsDirty = false
 		// Carets one screen above and below are included, so short scrolls keep the path.
@@ -75,7 +75,7 @@ extension EditorView {
 		for s in selections.all {
 			let line = rope.line(containing: s.head)
 			guard lines.contains(line) else { continue }
-			rects.append(CGRect(x: x(of: s.head, line: line), y: CGFloat(line) * lineHeight + 1, width: 2, height: lineHeight - 2))
+			rects.append(CGRect(x: x(of: s.head, line: line), y: y(ofLine: line) + 1, width: 2, height: lineHeight - 2))
 		}
 		return rects
 	}
