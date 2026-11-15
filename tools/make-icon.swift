@@ -1,9 +1,14 @@
-// Draws the app icon: glossy blue gradient squircle, "{" + "M" in a monospaced face and a caret.
+// Draws the app icon: glossy blue gradient squircle, a rounded "M" and an amber underscore caret.
 // Usage: swift tools/make-icon.swift <out.iconset>; then iconutil -c icns <out.iconset>.
 import AppKit
 
 let out = CommandLine.arguments.dropFirst().first ?? "AppIcon.iconset"
 try? FileManager.default.createDirectory(atPath: out, withIntermediateDirectories: true)
+
+func roundedFont(_ size: CGFloat) -> NSFont {
+	let f = NSFont.systemFont(ofSize: size, weight: .heavy)
+	return f.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: size) } ?? f
+}
 
 func draw(_ px: Int) -> Data? {
 	let s = CGFloat(px)
@@ -45,14 +50,16 @@ func draw(_ px: Int) -> Data? {
 	glyphShadow.shadowOffset = NSSize(width: 0, height: -6 * k)
 	glyphShadow.shadowBlurRadius = 14 * k
 	glyphShadow.set()
-	func text(_ string: String, size: CGFloat, color: NSColor, weight: NSFont.Weight, at point: NSPoint) {
-		let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.monospacedSystemFont(ofSize: size * k, weight: weight), .foregroundColor: color]
-		NSAttributedString(string: string, attributes: attrs).draw(at: NSPoint(x: point.x * k, y: point.y * k))
-	}
-	text("{", size: 520, color: NSColor(srgbRed: 0.72, green: 0.84, blue: 1, alpha: 1), weight: .regular, at: NSPoint(x: 125, y: 175))
-	text("M", size: 430, color: NSColor(srgbRed: 0.93, green: 0.95, blue: 1, alpha: 1), weight: .semibold, at: NSPoint(x: 430, y: 240))
-	NSColor(srgbRed: 0.36, green: 0.79, blue: 0.65, alpha: 1).setFill()
-	NSBezierPath(roundedRect: NSRect(x: 800 * k, y: 290 * k, width: 34 * k, height: 400 * k), xRadius: 12 * k, yRadius: 12 * k).fill()
+	// Center the M by its glyph outline, not font metrics.
+	let m = NSAttributedString(string: "M", attributes: [.font: roundedFont(520 * k), .foregroundColor: NSColor(srgbRed: 0.96, green: 0.97, blue: 1, alpha: 1)])
+	let line = CTLineCreateWithAttributedString(m)
+	let cg = ctx.cgContext
+	cg.textPosition = .zero
+	let b = CTLineGetImageBounds(line, cg)
+	cg.textPosition = CGPoint(x: 450 * k - b.midX, y: 520 * k - b.midY)
+	CTLineDraw(line, cg)
+	NSColor(srgbRed: 1, green: 0.72, blue: 0.22, alpha: 1).setFill()
+	NSBezierPath(roundedRect: NSRect(x: 700 * k, y: 330 * k, width: 120 * k, height: 34 * k), xRadius: 10 * k, yRadius: 10 * k).fill()
 	NSGraphicsContext.current = nil
 	return rep.representation(using: .png, properties: [:])
 }
