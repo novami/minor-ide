@@ -14,7 +14,14 @@ enum Bench {
 		var t = CACurrentMediaTime()
 		app.openWindow(text: text, title: "bench")
 		let editor = app.editor!
-		editor.displayIfNeeded()
+		// Synchronous layout (caret layer) and drawing of text and gutter; the Core Animation
+		// commit waits on the render server and is covered by the key-to-frame latency.
+		func display() {
+			editor.window?.displayIfNeeded() // layout, and hands dirty rects to the layers
+			editor.layer?.displayIfNeeded()
+			editor.gutter?.layer?.displayIfNeeded()
+		}
+		display()
 		report("open + first draw", [CACurrentMediaTime() - t])
 		print("lines:      \(editor.rope.lineCount)")
 
@@ -25,10 +32,10 @@ enum Bench {
 		// Warm-up, not measured: first use of fonts, caches and Core Animation layers.
 		for _ in 0..<20 {
 			editor.insertText("w", replacementRange: NSRange(location: NSNotFound, length: 0))
-			editor.displayIfNeeded()
+			display()
 		}
 		for _ in 0..<20 { editor.doCommand(by: #selector(NSResponder.deleteBackward(_:))) }
-		editor.displayIfNeeded()
+		display()
 		var samples: [Double] = []
 		var model = 0.0
 		let drawBefore = editor.drawSeconds
@@ -36,7 +43,7 @@ enum Bench {
 			t = CACurrentMediaTime()
 			editor.insertText("x", replacementRange: NSRange(location: NSNotFound, length: 0))
 			model += CACurrentMediaTime() - t
-			editor.displayIfNeeded()
+			display()
 			samples.append(CACurrentMediaTime() - t)
 		}
 		report("type char", samples)
@@ -48,7 +55,7 @@ enum Bench {
 		for _ in 0..<300 {
 			t = CACurrentMediaTime()
 			editor.doCommand(by: #selector(NSResponder.insertNewline(_:)))
-			editor.displayIfNeeded()
+			display()
 			samples.append(CACurrentMediaTime() - t)
 		}
 		report("type newline", samples)
@@ -57,7 +64,7 @@ enum Bench {
 		for _ in 0..<500 {
 			t = CACurrentMediaTime()
 			editor.doCommand(by: #selector(NSResponder.deleteBackward(_:)))
-			editor.displayIfNeeded()
+			display()
 			samples.append(CACurrentMediaTime() - t)
 		}
 		report("backspace", samples)
@@ -71,7 +78,7 @@ enum Bench {
 			t = CACurrentMediaTime()
 			clip.scroll(to: NSPoint(x: 0, y: y))
 			editor.enclosingScrollView!.reflectScrolledClipView(clip)
-			editor.displayIfNeeded()
+			display()
 			samples.append(CACurrentMediaTime() - t)
 		}
 		report("scroll 40px", samples)
@@ -82,7 +89,7 @@ enum Bench {
 			let target = (i * 7919 + 13) % max(1, Int(editor.frame.height) - 2000) // distinct positions, no tile cache hits
 			clip.scroll(to: NSPoint(x: 0, y: CGFloat(target)))
 			editor.enclosingScrollView!.reflectScrolledClipView(clip)
-			editor.displayIfNeeded()
+			display()
 			samples.append(CACurrentMediaTime() - t)
 		}
 		report("scroll jump", samples)

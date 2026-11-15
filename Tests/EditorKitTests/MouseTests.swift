@@ -10,7 +10,7 @@ struct MouseTests {
 	/// Point in the middle of a column of the monospace text.
 	func at(_ column: Int, line: Int) -> NSPoint {
 		let width = ("0" as NSString).size(withAttributes: [.font: e.font]).width
-		return NSPoint(x: e.gutterWidth + e.textInset + (CGFloat(column) + 0.4) * width, y: (CGFloat(line) + 0.5) * e.lineHeight)
+		return NSPoint(x: e.textInset + (CGFloat(column) + 0.4) * width, y: (CGFloat(line) + 0.5) * e.lineHeight)
 	}
 
 	@Test func doubleClickSelectsWordAndDragExtendsByWords() {

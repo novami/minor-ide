@@ -100,12 +100,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		documents.first { $0.window == NSApp.keyWindow } ?? documents.last
 	}
 
+	/// Gutter and visible text composed by hand (cacheDisplay of the scroll view ignores the
+	/// ruler's content inset), plus the caret layer that cacheDisplay skips.
 	func snapshot(to path: String) {
-		editor.displayIfNeeded()
-		let rect = editor.visibleRect
-		guard let rep = editor.bitmapImageRepForCachingDisplay(in: rect) else { return }
-		editor.cacheDisplay(in: rect, to: rep)
-		try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+		guard let view = editor.enclosingScrollView else { return }
+		editor.window?.makeFirstResponder(editor)
+		editor.window?.displayIfNeeded()
+		guard let canvas = view.bitmapImageRepForCachingDisplay(in: view.bounds),
+		      let ctx = NSGraphicsContext(bitmapImageRep: canvas) else { return }
+		NSGraphicsContext.current = ctx
+		ctx.cgContext.scaleBy(x: CGFloat(canvas.pixelsWide) / view.bounds.width, y: CGFloat(canvas.pixelsHigh) / view.bounds.height)
+		// The bitmap context is not flipped; the scroll view may be.
+		func canvasY(_ y: CGFloat) -> CGFloat { view.isFlipped ? view.bounds.height - y : y }
+		NSColor.textBackgroundColor.setFill()
+		view.bounds.fill()
+		for part in [editor, editor.gutter] as [NSView?] { // the gutter floats over the text's inset
+			// The ruler is not clipped by the scroll view, so its visibleRect can exceed its bounds.
+			let visible = part?.visibleRect.intersection(part?.bounds ?? .zero) ?? .zero
+			guard let part, let rep = part.bitmapImageRepForCachingDisplay(in: visible) else { continue }
+			part.cacheDisplay(in: visible, to: rep)
+			let r = part.convert(visible, to: view)
+			rep.draw(in: NSRect(x: r.minX, y: canvasY(r.maxY), width: r.width, height: r.height))
+		}
+		let origin = editor.convert(NSPoint.zero, to: view)
+		ctx.cgContext.translateBy(x: origin.x, y: canvasY(origin.y))
+		ctx.cgContext.scaleBy(x: 1, y: canvasY(editor.convert(NSPoint(x: 0, y: 1), to: view).y) - canvasY(origin.y))
+		editor.renderCarets(in: ctx.cgContext)
+		NSGraphicsContext.current = nil
+		try? canvas.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
 	}
 
 	// MARK: Menu actions

@@ -63,9 +63,17 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	private let textAttributes: [NSAttributedString.Key: Any]
 
 	/// Number of draw passes, drawn lines and time spent in draw(_:), for benchmarks.
-	public private(set) var drawCount = 0
-	public private(set) var drawnLines = 0
-	public private(set) var drawSeconds = 0.0
+	public internal(set) var drawCount = 0
+	public internal(set) var drawnLines = 0
+	public internal(set) var drawSeconds = 0.0
+
+	/// Carets live in their own layer, so blinking and caret moves do not redraw text.
+	let caretLayer = CAShapeLayer()
+	var caretsDirty = true
+	/// Lines whose carets are in `caretLayer`; a scroll past them rebuilds the path.
+	var caretLines = 0..<0
+	/// Line numbers, drawn in the scroll view's vertical ruler.
+	public internal(set) weak var gutter: GutterView?
 
 	public init(text: String, font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)) {
 		rope = Rope(text)
@@ -81,6 +89,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		super.init(frame: .zero)
 		wantsLayer = true
 		layerContentsRedrawPolicy = .onSetNeedsDisplay
+		setUpCaretLayer()
 	}
 
 	@available(*, unavailable)
@@ -94,11 +103,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		super.viewDidChangeEffectiveAppearance()
 		layoutCache.removeAll() // fallback CTLines carry their colour
 		needsDisplay = true
+		gutter?.needsDisplay = true
+		setNeedsCaretUpdate()
 	}
 
 	/// Height follows the line count; width follows the scroll view (no horizontal scroll yet).
 	public func updateSize() {
-		let width = enclosingScrollView?.contentSize.width ?? frame.width
+		// The gutter (vertical ruler) floats over the clip view and insets it.
+		let width = enclosingScrollView.map { $0.contentSize.width - $0.contentView.contentInsets.left - $0.contentView.contentInsets.right } ?? frame.width
 		setFrameSize(NSSize(width: width, height: CGFloat(rope.lineCount) * lineHeight + lineHeight))
 	}
 
@@ -111,6 +123,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		layoutCache.removeAll()
 		updateSize()
 		needsDisplay = true
+		gutter?.needsDisplay = true
+		setNeedsCaretUpdate()
 	}
 
 	// MARK: Drawing
@@ -126,13 +140,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 		ctx.setFillColor(NSColor.textBackgroundColor.cgColor)
 		ctx.fill(dirtyRect)
-		ctx.setFillColor(NSColor.windowBackgroundColor.cgColor)
-		ctx.fill(CGRect(x: 0, y: dirtyRect.minY, width: gutterWidth, height: dirtyRect.height))
 
 		let first = max(0, Int(dirtyRect.minY / lineHeight))
 		let last = min(rope.lineCount - 1, Int(dirtyRect.maxY / lineHeight))
 		let textColor = NSColor.textColor.cgColor
-		let numberColor = NSColor.tertiaryLabelColor.cgColor
 		let visible = selections.all.filter {
 			rope.line(containing: $0.range.upperBound) >= first && rope.line(containing: $0.range.lowerBound) <= last
 		}
@@ -140,17 +151,34 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		if first <= last {
 			drawnLines += last - first + 1
 			drawSelectionBackground(ctx, visible, lines: first...last)
-			// Fast-path lines are batched into one glyph draw per colour; CTLine fallbacks draw alone.
-			drawBatch(ctx, color: numberColor, lines: first...last) { line in
-				let n = numberLayout(line)
-				return (n, gutterWidth - 10 - n.width)
-			}
-			drawBatch(ctx, color: textColor, lines: first...last) { line in (layout(line), gutterWidth + textInset) }
+			drawBatch(ctx, color: textColor, lines: first...last) { line in (layout(line), textInset) }
 		}
-		for s in visible { drawCaret(ctx, at: s.head, marked: s == selections.primary) }
+		if !markedText.isEmpty, visible.contains(selections.primary) { drawMarkedText(ctx, at: caret) }
 		let keep = (first - 300)...(max(first, last) + 300)
 		layoutCache.trim(keep: keep, limit: 1500) // bounds memory when scrolling through large files
-		numberCache.trim(keep: keep, limit: 1500)
+	}
+
+	public override func viewWillDraw() {
+		super.viewWillDraw()
+		updateCaretsIfNeeded() // scrolling exposes lines whose carets are not in the path yet
+	}
+
+	public override func layout() {
+		super.layout()
+		updateCaretsIfNeeded()
+	}
+
+	/// Line numbers for the gutter; `rect` is in editor coordinates.
+	func drawLineNumbers(_ ctx: CGContext, in rect: NSRect, rightEdge: CGFloat) {
+		let first = max(0, Int(rect.minY / lineHeight))
+		let last = min(rope.lineCount - 1, Int(rect.maxY / lineHeight))
+		guard first <= last else { return }
+		drawnLines += last - first + 1
+		drawBatch(ctx, color: NSColor.tertiaryLabelColor.cgColor, lines: first...last) { line in
+			let n = numberLayout(line)
+			return (n, rightEdge - n.width)
+		}
+		numberCache.trim(keep: (first - 300)...(last + 300), limit: 1500)
 	}
 
 	/// Current-line highlight under carets, then selected ranges.
@@ -161,11 +189,11 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			let line = rope.line(containing: s.head)
 			guard line != lastHighlighted, lines.contains(line) else { continue }
 			lastHighlighted = line
-			ctx.fill(CGRect(x: gutterWidth, y: CGFloat(line) * lineHeight, width: bounds.width - gutterWidth, height: lineHeight))
+			ctx.fill(CGRect(x: 0, y: CGFloat(line) * lineHeight, width: bounds.width, height: lineHeight))
 		}
 		let color = window?.firstResponder === self ? NSColor.selectedTextBackgroundColor : NSColor.unemphasizedSelectedTextBackgroundColor
 		ctx.setFillColor(color.cgColor)
-		let textStart = gutterWidth + textInset
+		let textStart = textInset
 		for s in visible where !s.isEmpty {
 			let lowerLine = rope.line(containing: s.range.lowerBound)
 			let upperLine = rope.line(containing: s.range.upperBound)
@@ -178,6 +206,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		}
 	}
 
+	/// Fast-path lines are batched into one glyph draw per colour; CTLine fallbacks draw alone.
 	private func drawBatch(_ ctx: CGContext, color: CGColor, lines: ClosedRange<Int>, _ layoutAt: (Int) -> (LineLayout, CGFloat)) {
 		ctx.setFillColor(color)
 		batchGlyphs.removeAll(keepingCapacity: true)
@@ -199,20 +228,17 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		}
 	}
 
-	private func drawCaret(_ ctx: CGContext, at offset: Int, marked: Bool) {
+	/// Pending dead key or composition, drawn over the text at the caret.
+	private func drawMarkedText(_ ctx: CGContext, at offset: Int) {
 		let line = rope.line(containing: offset)
 		let cx = x(of: offset, line: line)
 		let y = CGFloat(line) * lineHeight
-		if marked && !markedText.isEmpty {
-			let marked = CTLineCreateWithAttributedString(NSAttributedString(string: markedText, attributes:
-				textAttributes.merging([.underlineStyle: NSUnderlineStyle.single.rawValue]) { $1 }))
-			ctx.setFillColor(NSColor.textBackgroundColor.cgColor)
-			ctx.fill(CGRect(x: cx, y: y, width: CTLineGetTypographicBounds(marked, nil, nil, nil), height: lineHeight))
-			ctx.setFillColor(NSColor.textColor.cgColor)
-			LineLayout.withBaseline(ctx, CGPoint(x: cx, y: y + ascent + 1)) { CTLineDraw(marked, ctx) }
-		}
-		ctx.setFillColor(NSColor.controlAccentColor.cgColor)
-		ctx.fill(CGRect(x: cx, y: y + 1, width: 2, height: lineHeight - 2))
+		let marked = CTLineCreateWithAttributedString(NSAttributedString(string: markedText, attributes:
+			textAttributes.merging([.underlineStyle: NSUnderlineStyle.single.rawValue]) { $1 }))
+		ctx.setFillColor(NSColor.textBackgroundColor.cgColor)
+		ctx.fill(CGRect(x: cx, y: y, width: CTLineGetTypographicBounds(marked, nil, nil, nil), height: lineHeight))
+		ctx.setFillColor(NSColor.textColor.cgColor)
+		LineLayout.withBaseline(ctx, CGPoint(x: cx, y: y + ascent + 1)) { CTLineDraw(marked, ctx) }
 	}
 
 	private func layout(_ line: Int) -> LineLayout {
@@ -230,9 +256,9 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	/// View x of a byte offset on its line.
-	private func x(of offset: Int, line: Int) -> CGFloat {
+	func x(of offset: Int, line: Int) -> CGFloat {
 		let column = rope.utf16Offset(ofByte: offset) - rope.utf16Offset(ofByte: rope.offset(ofLine: line))
-		return gutterWidth + textInset + layout(line).x(atUnit: column)
+		return textInset + layout(line).x(atUnit: column)
 	}
 
 	private func x(of offset: Int) -> CGFloat { x(of: offset, line: rope.line(containing: offset)) }
@@ -241,7 +267,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		NSRect(x: 0, y: CGFloat(line) * lineHeight, width: bounds.width, height: lineHeight)
 	}
 
-	private func invalidate(_ set: SelectionSet) {
+	func invalidate(_ set: SelectionSet) {
 		for s in set.all {
 			let a = rope.line(containing: s.range.lowerBound)
 			let b = s.isEmpty ? a : rope.line(containing: s.range.upperBound)
@@ -258,6 +284,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		guard new != selections else { return }
 		invalidate(selections)
 		selections = new
+		setNeedsCaretUpdate()
 		invalidate(selections)
 		scrollCaretVisible()
 	}
@@ -304,7 +331,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	private func offset(atX x: CGFloat, line: Int) -> Int {
-		let target = layout(line).unitIndex(atX: x - gutterWidth - textInset)
+		let target = layout(line).unitIndex(atX: x - textInset)
 		let range = rope.lineRange(line)
 		var units = 0
 		var offset = range.lowerBound
@@ -365,6 +392,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		anchors.apply(changes)
 		selections = selectionsAfter(changes)
 		goalXs = nil
+		setNeedsCaretUpdate()
 		onChange?()
 
 		if sameLines {
@@ -376,8 +404,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			layoutCache.shift(from: firstLine, removed: lastLine - firstLine, delta: rope.lineCount - oldLines)
 			if rope.lineCount != oldLines { updateSize() }
 			let visible = visibleRect
-			setNeedsDisplay(NSRect(x: 0, y: CGFloat(firstLine) * lineHeight, width: bounds.width,
-			                       height: max(0, visible.maxY - CGFloat(firstLine) * lineHeight)))
+			let below = NSRect(x: 0, y: CGFloat(firstLine) * lineHeight, width: bounds.width,
+			                   height: max(0, visible.maxY - CGFloat(firstLine) * lineHeight))
+			setNeedsDisplay(below)
+			if rope.lineCount != oldLines { gutter?.setNeedsDisplay(fromEditorY: below.minY) }
 		}
 		invalidate(selections)
 		scrollCaretVisible()
@@ -453,11 +483,13 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	public override func becomeFirstResponder() -> Bool {
 		invalidate(selections) // selection colour follows focus
+		setNeedsCaretUpdate()
 		return super.becomeFirstResponder()
 	}
 
 	public override func resignFirstResponder() -> Bool {
 		invalidate(selections)
+		setNeedsCaretUpdate()
 		return super.resignFirstResponder()
 	}
 

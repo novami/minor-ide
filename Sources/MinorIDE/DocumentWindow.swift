@@ -22,11 +22,14 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		let scroll = NSScrollView(frame: window.contentView!.bounds)
 		scroll.autoresizingMask = [.width, .height]
 		scroll.hasVerticalScroller = true
+		scroll.backgroundColor = .textBackgroundColor // below the last line
+		scroll.wantsLayer = true // clip view, gutter and editor draw into layers
 		let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init) ?? 13
 		editor = EditorView(text: text, font: .monospacedSystemFont(ofSize: size, weight: .regular))
 		editor.autoresizingMask = [.width]
 		editor.format = format
 		scroll.documentView = editor
+		GutterView.install(for: editor)
 		window.contentView = scroll
 		window.isReleasedWhenClosed = false
 		super.init()

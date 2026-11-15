@@ -62,7 +62,7 @@ struct SelectionDrawingTests {
 		// Line 2 is selected from its start; line 3 only holds a caret.
 		let scale = CGFloat(rep.pixelsWide) / e.bounds.width
 		func pixel(line: Int) -> NSColor? {
-			rep.colorAt(x: Int((e.gutterWidth + e.textInset + 20) * scale), y: Int((CGFloat(line) + 0.5) * e.lineHeight * scale))
+			rep.colorAt(x: Int((e.textInset + 20) * scale), y: Int((CGFloat(line) + 0.5) * e.lineHeight * scale))
 		}
 		let inside = pixel(line: 1), outside = pixel(line: 2)
 		#expect(inside != outside)
