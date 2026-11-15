@@ -82,4 +82,18 @@ final class LayerTests {
 		#expect(monitor.commits.count == 1)
 		#expect(monitor.commits.allSatisfy { $0 >= 0 && $0 < 1 })
 	}
+
+	@Test func accessibilityReadsTheCurrentLine() {
+		let e = EditorView(text: "Příliš\nžluťoučký kůň\n")
+		e.setSelections(SelectionSet(caret: 12)) // bytes of "Příliš\nž"
+		#expect(e.accessibilityRole() == .textArea)
+		let line = e.accessibilityInsertionPointLineNumber()
+		#expect(line == 1)
+		#expect(e.accessibilityString(for: e.accessibilityRange(forLine: line)) == "žluťoučký kůň\n")
+		#expect(e.accessibilitySelectedTextRange() == NSRange(location: 8, length: 0))
+		#expect(e.accessibilityLine(for: 8) == 1)
+		e.setAccessibilitySelectedTextRange(NSRange(location: 0, length: 6))
+		#expect(e.accessibilitySelectedText() == "Příliš")
+		#expect(e.accessibilityNumberOfCharacters() == 21)
+	}
 }

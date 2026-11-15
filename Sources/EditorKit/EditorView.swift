@@ -72,6 +72,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	var caretsDirty = true
 	/// Lines whose carets are in `caretLayer`; a scroll past them rebuilds the path.
 	var caretLines = 0..<0
+	/// Set once an assistive app (VoiceOver) asked for text; changes are posted only then.
+	var accessibilityClientSeen = false
 	/// Measures key-to-frame latency when set (benchmark, MINORIDE_LATENCY=1).
 	public var latencyMonitor: LatencyMonitor?
 	/// Line numbers, drawn in the scroll view's vertical ruler.
@@ -287,6 +289,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		invalidate(selections)
 		selections = new
 		setNeedsCaretUpdate()
+		postAccessibilityChange(edited: false)
 		invalidate(selections)
 		scrollCaretVisible()
 	}
@@ -396,6 +399,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		goalXs = nil
 		setNeedsCaretUpdate()
 		onChange?()
+		postAccessibilityChange(edited: true)
 
 		if sameLines {
 			for line in editedLines {
@@ -751,14 +755,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	/// Byte range of a UTF-16 range clamped to the document; nil for NSNotFound.
-	private func byteRange(_ range: NSRange) -> Range<Int>? {
+	func byteRange(_ range: NSRange) -> Range<Int>? {
 		guard range.location != NSNotFound else { return nil }
 		let start = min(range.location, rope.utf16Count)
 		let end = min(start + range.length, rope.utf16Count)
 		return rope.byteOffset(ofUTF16: start)..<rope.byteOffset(ofUTF16: end)
 	}
 
-	private func utf16Range(_ range: Range<Int>) -> NSRange {
+	func utf16Range(_ range: Range<Int>) -> NSRange {
 		let start = rope.utf16Offset(ofByte: range.lowerBound)
 		return NSRange(location: start, length: rope.utf16Offset(ofByte: range.upperBound) - start)
 	}

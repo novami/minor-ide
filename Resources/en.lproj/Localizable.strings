@@ -2,6 +2,7 @@
    change the text in the Swift source and run "make l10n" again. */
 
 /* MinorIDE/DocumentWindow.swift */
+"Editor" = "Editor";
 "Untitled" = "Untitled";
 "Tabs (%d)" = "Tabs (%d)";
 "Mixed → %@" = "Mixed → %@";

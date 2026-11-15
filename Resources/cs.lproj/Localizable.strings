@@ -3,6 +3,7 @@
    Run "make l10n" after changing source strings, "make l10n-check" to verify. */
 
 /* MinorIDE/DocumentWindow.swift */
+"Editor" = "Editor";
 "Untitled" = "Bez názvu";
 "Tabs (%d)" = "tabulátory: %d";
 "Mixed → %@" = "smíšené → %@";

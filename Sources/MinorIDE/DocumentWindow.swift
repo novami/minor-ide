@@ -28,6 +28,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		editor = EditorView(text: text, font: .monospacedSystemFont(ofSize: size, weight: .regular))
 		editor.autoresizingMask = [.width]
 		editor.format = format
+		editor.setAccessibilityLabel(L("Editor"))
 		scroll.documentView = editor
 		GutterView.install(for: editor)
 		window.contentView = scroll
