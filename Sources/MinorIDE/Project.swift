@@ -11,6 +11,8 @@ final class Project {
 	var expanded: Set<URL> = []
 	/// Called with the folders whose children changed (the sidebars reload them).
 	var onChange: [(FileNode) -> Void] = []
+	/// Called with every changed path (open windows compare their files with the disk).
+	var onFiles: (([String]) -> Void)?
 	private var stream: FSEventStreamRef?
 
 	init(root url: URL) {
@@ -28,6 +30,7 @@ final class Project {
 
 	/// Re-reads loaded folders that FSEvents reported (or the parents of reported files).
 	private func changed(_ paths: [String]) {
+		onFiles?(paths)
 		var folders: [FileNode] = []
 		for path in paths {
 			let u = URL(fileURLWithPath: path)

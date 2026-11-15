@@ -2,6 +2,7 @@ import AppKit
 import EditorKit
 import Highlight
 import MinorCore
+import TextEngine
 
 /// One editor window bound to a file (or untitled). Holds what is needed to save the file
 /// back in its own conventions: line ending, charset and the lines as loaded.
@@ -20,6 +21,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 
 	/// The folder this window belongs to; its windows are tabs of one window group.
 	let project: Project?
+	private let diskBanner = DiskBanner()
+	/// Modification date and size of the file as last loaded or saved.
+	private var diskStamp: FileStamp?
 	private(set) var sidebar: ProjectSidebar?
 
 	init(text: String, url: URL?, format: FormatSettings, project: Project? = nil) {
@@ -43,13 +47,14 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		find = FindController(editor: editor)
 		findBar = FindBar(controller: find)
 		findBar.isHidden = true
-		let content = NSStackView(views: [findBar, scroll])
+		let content = NSStackView(views: [diskBanner, findBar, scroll])
 		content.orientation = .vertical
 		content.spacing = 0
 		content.alignment = .width
 		content.distribution = .fill
 		scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
 		findBar.setContentHuggingPriority(.required, for: .vertical)
+		diskBanner.setContentHuggingPriority(.required, for: .vertical)
 		if let project {
 			// Sidebar and editor in a split view controller (HIG sidebar, View › Show Sidebar).
 			let sidebar = ProjectSidebar(project: project)
@@ -110,6 +115,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		doc.editor.language = TextFile.needsSimplifiedMode(data) ? nil : Languages.language(forPath: url.path)
 		doc.resolved = resolved
 		doc.originalLines = loaded.originalLines
+		doc.diskStamp = FileStamp(url)
 		doc.mixedLineEndings = loaded.detected.mixedLineEndings
 		doc.updateTitle()
 		return doc
@@ -158,6 +164,56 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		placed = true
 		window.makeKeyAndOrderFront(nil)
 		window.makeFirstResponder(editor)
+	}
+
+	// MARK: Changes on disk
+
+	func windowDidBecomeKey(_ notification: Notification) { checkDisk() }
+
+	/// Compares the file with the version loaded or saved: unchanged windows reload quietly
+	/// (keeping the caret and scroll position), edited ones get a bar to choose.
+	func checkDisk() {
+		guard let url else { return }
+		guard let now = FileStamp(url) else {
+			guard diskStamp != nil else { return }
+			diskStamp = nil
+			markEdited() // saving recreates the file
+			diskBanner.show(L("The file was deleted from disk. Saving creates it again."), [(L("OK"), {})])
+			return
+		}
+		guard now != diskStamp else { return }
+		if !window.isDocumentEdited {
+			reload()
+		} else {
+			diskBanner.show(L("The file changed on disk."), [
+				(L("Reload"), { [weak self] in self?.reload() }),
+				(L("Keep Mine"), { [weak self] in self?.diskStamp = now }),
+			])
+		}
+	}
+
+	/// Replaces the text with the file on disk as one undoable step.
+	func reload() {
+		guard let url, let data = try? Data(contentsOf: url) else { return }
+		let loaded = TextFile.load(data, fallback: format.charset)
+		let selections = editor.selections
+		let origin = editor.visibleRect.origin
+		if loaded.text != editor.rope.string {
+			editor.replace([(0..<editor.rope.byteCount, loaded.text)])
+			let end = editor.rope.byteCount
+			editor.setSelections(selections.map { s in
+				Selection(anchor: editor.rope.scalarBoundary(atOrBefore: min(s.anchor, end)),
+				          head: editor.rope.scalarBoundary(atOrBefore: min(s.head, end)))
+			})
+			editor.scroll(origin)
+		}
+		originalLines = loaded.originalLines
+		mixedLineEndings = loaded.detected.mixedLineEndings
+		diskStamp = FileStamp(url)
+		diskBanner.isHidden = true
+		window.isDocumentEdited = false
+		editor.sealUndo()
+		updateTitle()
 	}
 
 	// MARK: Format changes (Format menu)
@@ -254,6 +310,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 			// Saved content becomes the new baseline for "trim modified lines".
 			originalLines = Set(editor.rope.string.split(separator: "\n", omittingEmptySubsequences: false))
 			window.isDocumentEdited = false
+			diskStamp = FileStamp(url)
+			diskBanner.isHidden = true
 			editor.sealUndo()
 			NSDocumentController.shared.noteNewRecentDocumentURL(url)
 			updateTitle()
@@ -315,5 +373,18 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 			if ok { self?.window.close() }
 		}
 		return false
+	}
+}
+
+/// Identity of a file version on disk: modification date and size.
+struct FileStamp: Equatable {
+	let date: Date?
+	let size: Int?
+
+	init?(_ url: URL) {
+		guard let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
+		      values.contentModificationDate != nil else { return nil }
+		date = values.contentModificationDate
+		size = values.fileSize
 	}
 }

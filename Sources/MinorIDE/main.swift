@@ -95,6 +95,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	}
 
 	private var projects: [Project] = []
+	/// Files of closed windows, newest last (File › Reopen Closed Tab).
+	private var closedFiles: [URL] = []
+
+	@objc func reopenClosedTab(_ sender: Any?) {
+		while let url = closedFiles.popLast() {
+			guard FileManager.default.fileExists(atPath: url.path) else { continue }
+			return open(url)
+		}
+	}
+
+	func applicationDidBecomeActive(_ notification: Notification) {
+		documents.forEach { $0.checkDisk() } // git checkout or another editor while away
+	}
 
 	/// Opens a folder in a project window with the file tree; an empty editor until a file
 	/// is opened, which then replaces it.
@@ -105,6 +118,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return
 		}
 		let project = Project(root: root)
+		project.onFiles = { [weak self] paths in
+			let changed = Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
+			self?.documents.filter { $0.url.map { changed.contains($0.standardizedFileURL.path) } ?? false }.forEach { $0.checkDisk() }
+		}
 		projects.append(project)
 		add(DocumentWindow(text: "", url: nil, format: FormatSettings(), project: project))
 		NSDocumentController.shared.noteNewRecentDocumentURL(root)
@@ -135,6 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			MainActor.assumeIsolated {
 				guard let self else { return }
 				let project = doc?.project
+				if let url = doc?.url { self.closedFiles.append(url) }
 				self.documents.removeAll { $0 === doc }
 				// The last window of a project closes the project (stops watching its files).
 				if let project, !self.documents.contains(where: { $0.project === project }) {
@@ -256,6 +274,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	}
 
 	func validateMenuItem(_ item: NSMenuItem) -> Bool {
+		if item.action == #selector(reopenClosedTab(_:)) { return !closedFiles.isEmpty }
 		let needsDocument: Set<Selector?> = [#selector(saveDocument(_:)), #selector(saveDocumentAs(_:)),
 		                                    #selector(setLineEnding(_:)), #selector(setIndent(_:)), #selector(setTabWidth(_:))]
 		guard let doc = current else { return !needsDocument.contains(item.action) }

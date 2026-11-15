@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1e/1)
+**Poslední aktualizace:** 2026-11-15 (1e/2)
 
 ## Kde jsme
 
@@ -67,7 +67,11 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1e, krok 1 hotový** (2026-11-15): `docs/keymap.md`; projektové okno: Soubor › Otevřít… bere i složky (i Nedávné a Finder), `Project.swift` (strom sdílený taby, rozbalené složky, sledování přes FSEvents → přenačtení načtených složek), `ProjectSidebar.swift` (zdrojový seznam `NSOutlineView`, líné načítání, klik nebo Return otevře soubor, `reveal` vybere otevřený soubor), `MinorCore/FileTree.swift` (složky první, řazení jako Finder, skryté `.git`, `.DS_Store`). Soubory projektu se otevírají jako nativní taby jedné skupiny oken (`tabbingIdentifier` podle projektu), prázdný editor projektu ustoupí prvnímu souboru, poslední zavřené okno projekt ukončí. Zobrazení › Zobrazit boční panel ⌃⌘S. Test `FileTreeTests`. `MINORIDE_OPEN=<soubor> --snapshot <png> <složka>` uloží i celé okno.
 
-**Další: fáze 1e, krok 2** — důvěra projektu a Omezený režim (`trusted.json` mimo projekt, sheet při prvním otevření neznámé složky), Nedávné projekty v uvítacím okně, „Znovu otevřít zavřený tab“, indikace neuložených změn v tabu; pak Nastavení (SwiftUI nad `settings.json`), stavový řádek, změna souboru na disku, binární soubory, automatické ukládání a Local History.
+**Fáze 1e, krok 2 hotový** (2026-11-15): změna souboru na disku (`DocumentWindow.checkDisk` při aktivaci okna a aplikace a z FSEvents projektu; porovnává datum změny a velikost): bez neuložených změn tiché přenačtení jako jeden krok Zpět se zachováním kurzorů a posunu, s neuloženými změnami lišta `DiskBanner` „Přenačíst / Ponechat moje“, smazaný soubor zůstane otevřený jako upravený s lištou. Soubor › Znovu otevřít zavřený tab ⇧⌘T. Taby ukazují neuložené změny samy (nativní taby).
+
+**Další: fáze 1e, krok 3** — důvěra projektu a Omezený režim (`trusted.json` mimo projekt; zatím nic nespouštíme, tak jen uložení a sheet), uvítací okno s nedávnými projekty, binární soubory (NUL v prvních 8 KB → neotevírat jako text, nabídnout Quick Look), pak Nastavení (SwiftUI nad `settings.json`), stavový řádek, automatické ukládání a Local History.
+
+Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 
 Známé mezery po kroku 1e/1: každý tab má vlastní strom (sdílí model a rozbalení při vytvoření, ne průběžně); vybraný soubor ve stromu se při přepnutí tabu nemění; strom nemá kontextové menu (nový soubor, přejmenovat, smazat, ukázat ve Finderu); split editoru není (s nativními taby se řeší zvlášť); `vendor/` se jen nerozbaluje, jinak se chová jako ostatní složky; ruční kontrola okna s projektem zbývá.
 

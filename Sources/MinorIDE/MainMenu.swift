@@ -31,6 +31,7 @@ enum MainMenu {
 			recent.submenu = RecentMenu(target: target)
 			m.addItem(.separator())
 			m.item(L("Close"), #selector(NSWindow.performClose(_:)), "w")
+			m.item(L("Reopen Closed Tab"), #selector(AppDelegate.reopenClosedTab(_:)), "t", [.command, .shift], target: target)
 			m.item(L("Save"), #selector(AppDelegate.saveDocument(_:)), "s", target: target)
 			m.item(L("Save As…"), #selector(AppDelegate.saveDocumentAs(_:)), "s", [.command, .shift], target: target)
 		}
