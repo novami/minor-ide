@@ -50,6 +50,7 @@ enum MainMenu {
 			m.item(L("Duplicate Line"), #selector(EditorView.duplicateLines(_:)), "d", [.command, .shift])
 			m.item(L("Move Line Up"), #selector(EditorView.moveLinesUp(_:)), up, [.command, .option])
 			m.item(L("Move Line Down"), #selector(EditorView.moveLinesDown(_:)), down, [.command, .option])
+			m.item(L("Comment Selection"), #selector(EditorView.toggleComment(_:)), "/")
 			m.addItem(.separator())
 			let find = m.item(L("Find"), nil)
 			find.submenu = NSMenu(title: L("Find"))

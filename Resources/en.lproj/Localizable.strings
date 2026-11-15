@@ -72,6 +72,7 @@
 "Duplicate Line" = "Duplicate Line";
 "Move Line Up" = "Move Line Up";
 "Move Line Down" = "Move Line Down";
+"Comment Selection" = "Comment Selection";
 "Find…" = "Find…";
 "Find and Replace…" = "Find and Replace…";
 "Use Selection for Find" = "Use Selection for Find";

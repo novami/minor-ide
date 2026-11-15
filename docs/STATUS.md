@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1d/3)
+**Poslední aktualizace:** 2026-11-15 (1c jazykové příkazy)
 
 ## Kde jsme
 
@@ -59,7 +59,13 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1d, krok 3 hotový — fáze 1d je hotová** (2026-11-15): `LatteLexer` (HTML, `{tagy}` s výrazy a `|filtry`, `{* komentáře *}` přes řádky, `n:atributy` s výrazem v hodnotě, tagy i v hodnotách atributů, HTML komentářích a ve `<script>`/`<style>`; obsah skriptů a stylů zatím prostý text — JS/CSS lexery jsou v 1f). Golden `layout.latte`. Rozpočet přelexování: psaní v Go p99 0,19 ms včetně kreslení (bench `type char go`).
 
-**Další: jazykové příkazy odložené z 1c** (teď nad lexerem): komentáře ⌘/ (řádkové i blokové podle jazyka), párování a obalování závorkami a uvozovkami (ne uvnitř řetězců a komentářů), chytré odsazení (Enter za `{`/`(`/`[` a `:` v NEON přidá úroveň, `}` ji ubere), folding podle závorek. Potom fáze 1e (projekt a pracovní prostředí).
+**Jazykové příkazy z 1c hotové** (2026-11-15): `Sources/Highlight/Languages.swift` (`SyntaxLanguage`: lexer, komentáře, závorky, uvozovky, odsazení za `:`; komentář podle stavu lexeru — HTML části PHP), `Sources/EditorKit/LanguageCommands.swift`: ⌘/ (Úpravy › Zakomentovat výběr), párování a obalování, přepisování zavíracích znaků, Backspace v prázdném páru, chytrý Enter a zavírací závorka na prázdném řádku. Nic z toho neplatí uvnitř řetězců a komentářů (podle tokenů). Testy `LanguageCommandTests`. Bench BUDGET OK. Folding podle závorek se nedělal: u formátovaného kódu dává totéž co folding podle odsazení (otevřené).
+
+**Fáze 1c a 1d jsou hotové.**
+
+**Další: fáze 1e (projekt a pracovní prostředí)** podle `docs/PLAN.md` — před začátkem probrat s uživatelem otázky v sekci „Otázky pro uživatele“ níže.
+
+Známé mezery po jazykových příkazech: zavírací znak se přepíše vždy, když je hned za kurzorem (i když ho editor sám nevložil); ⌘/ na české klávesnici vyžaduje Shift (řeší keymapa v 1e); u neukončeného řetězce na konci řádku se Enter za `{` uvnitř něj odsadí; párování nejde vypnout (nastavení v 1e).
 
 Známé mezery po kroku 1d/1: téma se nedá změnit v nastavení (jen vestavěné světlé/tmavé); tokeny viditelných řádků se lexují při každém kreslení (bez cache, v rozpočtu); po editaci s limitem 2000 řádků se zbytek dopočítá na pozadí až po 300 ms; Uložit jako s jinou příponou nezmění jazyk.
 
@@ -90,6 +96,13 @@ Pak zbytek 1c (hledání, folding), 1d (lexery a zvýraznění) a po ní jazykov
 - 1b: klávesy mimo keymapu přes `doCommandBySelector`;
 - důvěra projektu mimo projekt (`trusted.json`), `.minoride/local.json` se v Omezeném režimu nečte;
 - prostředí ze shellu přes `-l -i -c` (D22).
+
+## Otázky pro uživatele (připravené 2026-11-15, před fází 1e)
+1. **Push**: lokálně je řada nepushnutých commitů (1a–1d). Pushnout a ověřit CI (benchmark má nové sekce `type char go`, `scroll jump go`)?
+2. **Taby v projektovém okně (1e)**: (a, doporučeno) vlastní lišta tabů v editorové oblasti (umožní split vertikálně i horizontálně a „Znovu otevřít zavřený tab“), nativní tabování oken vypnuté; (b) nativní taby oken macOS (HIG, ale split a přesuny mezi skupinami jsou omezené).
+3. **Zkratky zvolené bez keymapy**: Duplikovat řádek ⇧⌘D, Přesunout řádek ⌥⌘↑/↓, Sbalit/Rozbalit ⌥⌘←/→ (vše ⌥⇧⌘←/→), Zakomentovat ⌘/, výskyty ⌃G / ⌃⌘G. Ponechat do `docs/keymap.md`?
+4. **Barvy témat**: vestavěné světlé/tmavé jsou vlastní paleta. Mají být v 1e uživatelská témata (JSON v `~/Library/Application Support/MinorIDE/themes/`) a výběr v Nastavení?
+5. **Ruční kontroly** (čekají na uživatele): čeština na skutečné klávesnici a mrtvé klávesy, VoiceOver, lišta hledání (Return/Shift+Return/Esc, tmavý režim), klik na šipky foldingu a „…“, barvy v tmavém i světlém režimu.
 
 ## Otevřené věci mimo kód
 - **Apple Developer účet** (potřeba pro fázi 2: podepsané aktualizace).

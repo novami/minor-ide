@@ -85,6 +85,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	var foldedHeaders: Set<Int> = []
 
 	/// Syntax colouring; nil for plain text.
+	/// Language of the document: colouring, comments, brackets; nil for plain text.
+	public var language: SyntaxLanguage? {
+		didSet { highlighter = language.map { SyntaxHighlighter(lexer: $0.lexer, lineCount: rope.lineCount) } }
+	}
 	public var highlighter: SyntaxHighlighter? {
 		didSet {
 			needsDisplay = true
@@ -607,9 +611,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		let lineEnd = { (o: Int) in self.rope.lineRange(self.rope.line(containing: o)).upperBound }
 		switch selector {
 		case #selector(deleteBackward(_:)):
-			replaceSelections(.deleting) { s in (s.isEmpty ? previous(s.head)..<s.head : s.range, "") }
+			replaceSelections(.deleting) { s in (s.isEmpty ? emptyPair(around: s.head) ?? previous(s.head)..<s.head : s.range, "") }
 		case #selector(deleteForward(_:)):
 			replaceSelections(.deleting) { s in (s.isEmpty ? s.head..<next(s.head) : s.range, "") }
+		case #selector(insertNewline(_:)) where language != nil: insertNewlineSmart()
 		case #selector(insertNewline(_:)):
 			// Keep the current line's indentation (up to the caret).
 			replaceSelections { s in
@@ -805,6 +810,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			apply(ChangeSet([(range, text)]), kind: .other) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
 			return
 		}
+		if text.utf8.count == 1, language != nil, typePairCharacter(text.utf8.first!) { return }
 		replaceSelections(text.contains("\n") ? .other : .typing) { _ in text }
 	}
 
@@ -877,6 +883,7 @@ extension EditorView: NSMenuItemValidation {
 		case #selector(copy(_:)), #selector(cut(_:)): selections.all.contains { !$0.isEmpty }
 		case #selector(paste(_:)): NSPasteboard.general.string(forType: .string) != nil
 		case #selector(unfold(_:)), #selector(unfoldAll(_:)): !folds.isEmpty
+		case #selector(toggleComment(_:)): language != nil
 		case #selector(moveLinesUp(_:)): selectedLineBlocks().first.map { $0.lowerBound > 0 } ?? false
 		case #selector(moveLinesDown(_:)): selectedLineBlocks().last.map { $0.upperBound < rope.lineCount - 1 } ?? false
 		default: true

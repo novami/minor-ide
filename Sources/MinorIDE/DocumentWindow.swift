@@ -77,9 +77,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		var format = resolved.settings
 		format.charset = loaded.charset
 		let doc = DocumentWindow(text: loaded.text, url: url, format: format)
-		if let lexer = Languages.lexer(forPath: url.path) {
-			doc.editor.highlighter = SyntaxHighlighter(lexer: lexer, lineCount: doc.editor.rope.lineCount)
-		}
+		doc.editor.language = Languages.language(forPath: url.path)
 		doc.resolved = resolved
 		doc.originalLines = loaded.originalLines
 		doc.mixedLineEndings = loaded.detected.mixedLineEndings

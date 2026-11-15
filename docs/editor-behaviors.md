@@ -47,3 +47,12 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Backspace pod sbalenou oblastí ji rozbalí (neschová řádek) — `FoldingTests.backspaceBelowFoldUnfoldsInsteadOfHidingTheLine`
 - [x] Mapa řádků ↔ zobrazených řádků — `FoldRegionTests.displayMapRowsAndLines`
 - [ ] Šipka v gutteru (klik sbalí/rozbalí), „…“ za řádkem (klik rozbalí) — ruční kontrola (zbývá; snímek `MINORIDE_FOLD=4 --snapshot` ověřen)
+
+## Jazykové příkazy (Go, PHP, SQL, NEON, Latte, JSON)
+- [x] ⌘/ zakomentuje řádky na společném odsazení, podruhé odkomentuje; prázdné řádky vynechá — `LanguageCommandTests.lineCommentsToggleAtCommonIndent`
+- [x] Latte `{* *}`, HTML části PHP `<!-- -->` (podle stavu lexeru na řádku) — `LanguageCommandTests.blockCommentsInLatteAndHTMLPartsOfPHP`
+- [x] Závorka nebo uvozovka vloží pár, zavírací znak se přepíše, výběr se obalí a zůstane vybraný — `LanguageCommandTests.pairsWrapAndTypeOver`
+- [x] Uvnitř řetězců a komentářů a za písmenem (don't) se pár nevkládá — `LanguageCommandTests.noPairsInsideStringsOrAfterWords`
+- [x] Backspace v prázdném páru smaže oba znaky — `LanguageCommandTests.backspaceDeletesEmptyPair`
+- [x] Enter za `{ [ (` (v NEON i za `:`) přidá úroveň, mezi párem přesune zavírací závorku na vlastní řádek — `LanguageCommandTests.enterIndentsAfterBracketAndSplitsPair`
+- [x] Zavírací závorka na prázdném řádku ubere úroveň — `LanguageCommandTests.closingBracketOutdentsEmptyLine`

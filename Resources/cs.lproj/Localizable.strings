@@ -75,6 +75,7 @@
 "Duplicate Line" = "Duplikovat řádek";
 "Move Line Up" = "Přesunout řádek nahoru";
 "Move Line Down" = "Přesunout řádek dolů";
+"Comment Selection" = "Zakomentovat výběr";
 "Find…" = "Najít…";
 "Find and Replace…" = "Najít a nahradit…";
 "Use Selection for Find" = "Použít výběr pro hledání";
