@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1e, důvěra projektu)
+**Poslední aktualizace:** 2026-11-15 (1e: uvítání, Nastavení, Místní historie, automatické ukládání, nástroje)
 
 ## Kde jsme
 
