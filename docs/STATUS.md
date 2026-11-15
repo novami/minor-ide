@@ -41,7 +41,7 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Výklad rozpočtu latence potvrzen uživatelem** (2026-11-15).
 
-**Odloženo (připomenout uživateli na začátku další session, od 2026-11-16):** ruční část „Hotovo když“ 1b – v aplikaci (`make run`) napsat „čšžýáíéůú“ na české klávesnici (i přes mrtvé klávesy ˇ a ´) a zkusit VoiceOver (⌘F5, šipky nahoru/dolů čtou řádek). Fázi 1b to neblokuje.
+**Odloženo (připomenout uživateli na začátku další session, od 2026-11-16):** ruční část „Hotovo když“ 1b – zbývá jen VoiceOver (⌘F5, šipky nahoru/dolů čtou řádek); čeština a mrtvé klávesy ručně ověřeny 2026-11-15. Fázi 1b to neblokuje.
 
 **Fáze 1c, krok 1 hotový** (2026-11-15): řádkové příkazy v `Sources/EditorKit/LineCommands.swift` — Duplikovat řádek ⇧⌘D, Přesunout řádek ⌥⌘↑/↓, Vybrat další výskyt ⌃G, všechny výskyty ⌃⌘G, Převést odsazení (Formát › Odsazení); hledání v ropu po blocích `Sources/TextEngine/Search.swift`. Checklist `docs/editor-behaviors.md`. Testy `LineCommandTests`, `RopeSearchTests`.
 
@@ -141,7 +141,7 @@ Nové: kontextové menu editoru (Vyjmout, Kopírovat, Vložit, Zakomentovat, Naj
 Poznámka k prostředí: aplikace spuštěná z prostředí Clauda (`open` v jeho shellu) se vykreslí, ale nedostává vstup uživatele (běží mimo jeho sezení) — ruční testy musí uživatel spustit z Finderu.
 
 ## Rozhodnutí uživatele (2026-11-15)
-Taby = nativní taby oken macOS; push zatím ne; zkratky ponechány (`docs/keymap.md`); témata jen vestavěná. Ruční kontroly (čeština, VoiceOver, lišta hledání, folding, barvy) čekají na uživatele.
+Taby = nativní taby oken macOS; push zatím ne; zkratky ponechány (`docs/keymap.md`); témata jen vestavěná. Ruční kontroly: čeština, hledání a sbalování prošly; VoiceOver a barvy čekají na uživatele.
 
 ## Otevřené věci mimo kód
 - **Apple Developer účet** (potřeba pro fázi 2: podepsané aktualizace).
