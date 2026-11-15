@@ -165,6 +165,28 @@ struct FormatTests {
 		#expect(try String(contentsOf: script, encoding: .utf8).contains("echo hi")) // target written
 		#expect((try fm.attributesOfItem(atPath: script.path)[.posixPermissions] as? Int) == 0o755)
 	}
+
+	@Test func writeKeepsExtendedAttributes() throws {
+		let fm = FileManager.default
+		let dir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+		try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+		defer { try? fm.removeItem(at: dir) }
+		let file = dir.appendingPathComponent("a.txt")
+		try Data("a\n".utf8).write(to: file)
+		try fm.setAttributes([.modificationDate: Date(timeIntervalSince1970: 0)], ofItemAtPath: file.path)
+		let value = Array("blue".utf8)
+		#expect(setxattr(file.path, "cz.minoride.test", value, value.count, 0, 0) == 0)
+
+		try TextFile.write(Data("b\n".utf8), to: file)
+
+		var buffer = [UInt8](repeating: 0, count: 16)
+		let n = getxattr(file.path, "cz.minoride.test", &buffer, buffer.count, 0, 0)
+		#expect(n == value.count && Array(buffer.prefix(max(n, 0))) == value)
+		#expect(try String(contentsOf: file, encoding: .utf8) == "b\n")
+		let modified = try fm.attributesOfItem(atPath: file.path)[.modificationDate] as? Date
+		#expect((modified ?? .distantPast) > Date(timeIntervalSince1970: 1)) // not the old date
+		#expect(try fm.contentsOfDirectory(atPath: dir.path) == ["a.txt"]) // no temp file left
+	}
 }
 
 struct HexDumpTests {

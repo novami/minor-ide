@@ -99,14 +99,37 @@ public enum TextFile {
 	}
 
 	/// Writes atomically without changing what the file is: a symbolic link keeps pointing at its
-	/// target (the target is written) and the file keeps its permissions (executable scripts stay executable).
+	/// target (the target is written) and the file keeps its permissions (executable scripts stay executable),
+	/// owner and group (when the user may set them), ACL and extended attributes (tags, Finder info).
 	public static func write(_ data: Data, to url: URL) throws {
 		let target = url.resolvingSymlinksInPath()
 		let fm = FileManager.default
-		let permissions = (try? fm.attributesOfItem(atPath: target.path))?[.posixPermissions]
-		try data.write(to: target, options: .atomic)
-		if let permissions {
-			try fm.setAttributes([.posixPermissions: permissions], ofItemAtPath: target.path)
+		guard fm.fileExists(atPath: target.path) else {
+			try data.write(to: target, options: .atomic)
+			return
+		}
+		let temp = target.deletingLastPathComponent()
+			.appendingPathComponent(".\(target.lastPathComponent).\(UUID().uuidString.prefix(8)).tmp")
+		try data.write(to: temp)
+		do {
+			// Permissions, owner, ACL and extended attributes of the old file. A different owner
+			// cannot be set without privileges; then everything else is copied and the user owns the file.
+			if copyfile(target.path, temp.path, nil, copyfile_flags_t(COPYFILE_METADATA)) != 0 {
+				guard copyfile(target.path, temp.path, nil, copyfile_flags_t(COPYFILE_XATTR | COPYFILE_ACL)) == 0 else {
+					throw CocoaError(.fileWriteUnknown)
+				}
+				if let permissions = (try? fm.attributesOfItem(atPath: target.path))?[.posixPermissions] {
+					try fm.setAttributes([.posixPermissions: permissions], ofItemAtPath: temp.path)
+				}
+			}
+			utimes(temp.path, nil) // copyfile also copied the old modification time
+
+			guard rename(temp.path, target.path) == 0 else {
+				throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+			}
+		} catch {
+			try? fm.removeItem(at: temp)
+			throw error
 		}
 	}
 

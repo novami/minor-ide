@@ -243,7 +243,7 @@ Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 59–74 týdnů; s
 - **Automatické ukládání**: auto-save při ztrátě fokusu a přepnutí tabu (zapínatelné), **Local History** (snímek při uložení, 14 dní, náhled a obnovení), obnova sezení a obnova po pádu.
 - Velké a minifikované soubory (> 5 MB nebo řádek > 10 000 znaků): zjednodušený režim bez zvýraznění a analýzy. Nad 256 MB jen náhled po částech.
 - **Binární soubory** (NUL bajty v prvních 8 KB): neotevírat jako text, nabídnout Quick Look nebo hex náhled.
-- **Bezpečné ukládání**: atomicky přes dočasný soubor, ale se zachováním **práv** (spustitelné skripty), **vlastníka**, **rozšířených atributů** a **cíle symbolického odkazu** (zapisuje se do cíle, odkaz zůstane). Hotovo: práva a odkazy (oprava z revize plánu).
+- **Bezpečné ukládání**: atomicky přes dočasný soubor, ale se zachováním **práv** (spustitelné skripty), **vlastníka**, **rozšířených atributů** a **cíle symbolického odkazu** (zapisuje se do cíle, odkaz zůstane). Hotovo: práva a odkazy (oprava z revize plánu), vlastník, ACL a rozšířené atributy (`copyfile`, 2026-11-15).
 - **Změna souboru na disku** (git checkout, jiný editor): bez neuložených změn tiše přenačíst se zachováním pozice; s neuloženými změnami lišta „Soubor se změnil na disku: Přenačíst / Porovnat / Ponechat moje“. Smazaný soubor: ponechat obsah a označit.
 - **Uvítací okno** („Klonovat z Gitu“ přibude ve 2b.3), **kontrola nástrojů, prostředí z přihlašovacího shellu (D22)**.
 - **`.minoride/` v projektu**: `settings.json` (sdílené, commitovat), `local.json` (osobní, do `.gitignore` se přidá automaticky: servery, cesty; v Omezeném režimu se nečte). Hesla nikdy v žádném souboru.
