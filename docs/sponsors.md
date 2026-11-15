@@ -33,6 +33,8 @@ Prefer Bitcoin? `bc1qasvxqe0r76awkyklwjxsv5scrznxs08gtz7fzt`
 
 ## Úrovně (Tiers)
 
+**Zveřejněno přes API 2026-11-15** (popis začíná názvem, GitHub úroveň pojmenuje podle částky). Úpravu API neumí: změna = zrušit (`retireSponsorsTier`) a vytvořit novou. Profil a vlastní částka jen ručně v dashboardu.
+
 Málo úrovní, žádné sliby, které by bylo nutné hlídat. Zapnout i **vlastní částku**.
 
 | Typ | Částka | Název | Popis |
