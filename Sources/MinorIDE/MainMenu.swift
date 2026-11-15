@@ -100,6 +100,7 @@ enum MainMenu {
 			m.item(L("Close Editor Split"), #selector(DocumentWindow.closeEditorSplit(_:)))
 			m.addItem(.separator())
 			m.item(L("Wrap Lines"), #selector(AppDelegate.toggleWrapLines(_:)), target: target)
+			m.item(L("Pin Enclosing Lines"), #selector(AppDelegate.toggleStickyLines(_:)), target: target)
 			let folding = m.item(L("Code Folding"), nil)
 			folding.submenu = NSMenu(title: L("Code Folding"))
 			let left = String(UnicodeScalar(UInt16(NSLeftArrowFunctionKey))!), right = String(UnicodeScalar(UInt16(NSRightArrowFunctionKey))!)

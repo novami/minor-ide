@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1f: zalamování řádků)
+**Poslední aktualizace:** 2026-11-16 (1f: připnuté nadřazené řádky)
 
 ## Kde jsme
 
@@ -127,7 +127,11 @@ Známé mezery po zalamování: ⌥+tažení (sloupec) a přístupnost počítaj
 
 **Písmo editoru** (2026-11-15, rozhodnutí uživatele: volba v Nastavení): ztlumená diakritika na displeji 1080p při 1× není chyba kreslení — SF Mono 13 má háčky a čárky tenčí než pixel (měřeno ~50–70 % sytosti), Menlo je kreslí plně. Nastavení › Obecné: Písmo (systémové neproporcionální + nainstalované neproporcionální rodiny) a Velikost; `settings.json` `"font_family"`, `"font_size"`. `EditorKit/EditorFont.swift`: `EditorView.editorFont` (globální, notifikace), `setFont` přepočítá metriky, gutter, zalomení a kurzory otevřených editorů. `MINORIDE_FONT_SIZE` má přednost; `--snapshot` uživatelské písmo nepoužívá. Test `EditorFontTests`, bench BUDGET OK.
 
-**Další krok (1f):** sticky header s aktuální funkcí, pak plná přístupnost (čtení po znacích/slovech/řádcích, Zvýšit kontrast, Omezit pohyb) a systémové textové funkce (Vyhledat ⌃⌘D, přetažení textu, výběr emoji).
+**Fáze 1f, krok 2 hotový — připnuté nadřazené řádky (sticky header)** (2026-11-16; rozhodnuto bez dotazu: podle odsazení jako folding, nejvýš 3 řádky, vnější mají přednost, výchozí zapnuté): `TextEngine/Scope.swift` (`Rope.scopeHeaders(around:)`: méně odsazené řádky nad řádkem, prázdný řádek bere odsazení dalšího, řádky jen se závorkou — `) {`, samotná `{`, `} else {` — se přeskakují, takže hlavičkou je řádek s názvem; čtení po blocích 256 řádků, nejvýš 5000 řádků nahoru). `EditorKit/StickyLines.swift`: `StickyLinesView` je sourozenec clip view ve scroll view (nad pravítkem, pod posuvníky), kreslí čísla řádků a text přes `drawText` s vodorovným posunem, oddělovač dole; přepočet při scrollu (notifikace clip view) a v `viewWillDraw` editoru, překreslí se jen při změně řádků, posunu, písma nebo úpravě připnutého řádku. Hlavička je připnutá jen, dokud je její vlastní řádek nad jejím slotem. Klik → kurzor na text řádku a posun tak, aby řádek byl ve svém slotu. `scrollCaretVisible` počítá s výškou připnutých řádků. Ve zjednodušeném režimu vypnuté. `settings.json` `"sticky_lines"`, Zobrazení › Připnout nadřazené řádky, Nastavení › Obecné. `MINORIDE_SCROLL=<řádek> --snapshot` (snímek skládá i připnuté řádky). Testy `ScopeTests`, `StickyLinesTests`. Bench BUDGET OK (nový řádek p99 0,32 ms proti 0,28; první verze četla odsazení po řádcích a stála 0,18 ms na Enter; skok p99 +0,1 ms včetně kreslení). Nápověda doplněna.
+
+Známé mezery po připnutých řádcích: Markdown a prostý text se řídí také odsazením (vnořené seznamy); zalomená hlavička ukáže jen první zobrazený řádek; vložený `<script>`/`<style>` bez odsazení se nepřipne; řádky se objeví skokem (bez „odsunutí“ další hlavičkou); přístupnost je nevidí; ruční kontrola (tmavý režim, klik, split, trackpad) zbývá.
+
+**Další krok (1f):** plná přístupnost (čtení po znacích/slovech/řádcích, Zvýšit kontrast, Omezit pohyb) a systémové textové funkce (Vyhledat ⌃⌘D, přetažení textu, výběr emoji).
 
 **Fáze 1e:** z plánu zbývá ruční kontrola nových oken (uvítání, Nastavení, Místní historie, automatické ukládání, obnova, stavový řádek); `.minoride/local.json` až s prvním uživatelem (servery v 6b).
 

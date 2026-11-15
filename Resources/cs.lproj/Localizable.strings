@@ -224,6 +224,7 @@
 "Split Editor Top and Bottom" = "Rozdělit editor pod sebe";
 "Close Editor Split" = "Zavřít rozdělení editoru";
 "Wrap Lines" = "Zalamovat řádky";
+"Pin Enclosing Lines" = "Připnout nadřazené řádky";
 "Code Folding" = "Sbalování kódu";
 "Fold" = "Sbalit";
 "Unfold" = "Rozbalit";
@@ -273,6 +274,8 @@
 "Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History." = "Upravené soubory se uloží při přepnutí na jiný tab, okno nebo aplikaci. Soubory, které se mezitím změnily na disku, se neukládají. Každé uložení se uchová v Místní historii.";
 "Wrap lines" = "Zalamovat řádky";
 "Long lines continue on the next row at the line length from Format (120 when not set). Large and minified files are not wrapped." = "Dlouhé řádky pokračují na dalším řádku po délce řádku z karty Formát (když není nastavená, po 120 znacích). Velké a minifikované soubory se nezalamují.";
+"Pin enclosing lines" = "Připnout nadřazené řádky";
+"While you scroll, the lines that open the class, function and blocks around the top of the editor stay pinned above the text. Click one to go to it." = "Při posouvání zůstanou nad textem připnuté řádky, které otevírají třídu, funkci a bloky kolem horního okraje editoru. Klik na řádek na něj přejde.";
 "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here." = "settings.json není platný JSON. Opravte ho v editoru; do té doby tu nastavení nejde měnit.";
 "Settings are stored in settings.json. A project can override them in .minoride/settings.json." = "Nastavení se ukládá do settings.json. Projekt ho může přepsat v .minoride/settings.json.";
 "Open settings.json" = "Otevřít settings.json";

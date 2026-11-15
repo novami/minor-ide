@@ -8,7 +8,7 @@ extension EditorView {
 	public var rowCount: Int { display.rowCount(lineCount: rope.lineCount) }
 
 	/// Top of the first row of a line.
-	func y(ofLine line: Int) -> CGFloat { CGFloat(display.row(of: line)) * lineHeight }
+	public func y(ofLine line: Int) -> CGFloat { CGFloat(display.row(of: line)) * lineHeight }
 
 	func line(atY y: CGFloat) -> Int { position(atY: y).line }
 

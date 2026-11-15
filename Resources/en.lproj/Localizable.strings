@@ -222,6 +222,7 @@
 "Split Editor Top and Bottom" = "Split Editor Top and Bottom";
 "Close Editor Split" = "Close Editor Split";
 "Wrap Lines" = "Wrap Lines";
+"Pin Enclosing Lines" = "Pin Enclosing Lines";
 "Code Folding" = "Code Folding";
 "Fold" = "Fold";
 "Unfold" = "Unfold";
@@ -271,6 +272,8 @@
 "Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History." = "Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History.";
 "Wrap lines" = "Wrap lines";
 "Long lines continue on the next row at the line length from Format (120 when not set). Large and minified files are not wrapped." = "Long lines continue on the next row at the line length from Format (120 when not set). Large and minified files are not wrapped.";
+"Pin enclosing lines" = "Pin enclosing lines";
+"While you scroll, the lines that open the class, function and blocks around the top of the editor stay pinned above the text. Click one to go to it." = "While you scroll, the lines that open the class, function and blocks around the top of the editor stay pinned above the text. Click one to go to it.";
 "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here." = "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here.";
 "Settings are stored in settings.json. A project can override them in .minoride/settings.json." = "Settings are stored in settings.json. A project can override them in .minoride/settings.json.";
 "Open settings.json" = "Open settings.json";

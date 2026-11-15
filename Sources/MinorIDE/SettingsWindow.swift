@@ -179,6 +179,17 @@ struct GeneralSettingsView: View {
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)
+			Section {
+				Toggle(L("Pin enclosing lines"), isOn: Binding(
+					get: { store.file.stickyLines ?? true },
+					set: { on in
+						store.set(nil, "sticky_lines", .bool(on))
+						EditorView.showsStickyLines = on
+					}))
+				Text(L("While you scroll, the lines that open the class, function and blocks around the top of the editor stay pinned above the text. Click one to go to it."))
+					.font(.callout).foregroundStyle(.secondary)
+			}
+			.disabled(store.unreadable)
 			SettingsFileSection(store: store)
 		}
 		.formStyle(.grouped)

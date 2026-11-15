@@ -10,6 +10,7 @@ import MinorCore
 //        MINORIDE_FONT_SIZE=40 enlarges the font, useful with --snapshot
 //        MINORIDE_FIND=<query> with --snapshot opens Find and Replace and saves the bar too
 //        MINORIDE_FOLD=<line> with --snapshot folds the region headed by that line
+//        MINORIDE_SCROLL=<line> with --snapshot scrolls that line to the top (pinned enclosing lines)
 //        MINORIDE_SPLIT=right|down with --snapshot splits the editor and prints the pane frames
 //        MINORIDE_HISTORY=1 with --snapshot shows Local History of the file (temporary versions)
 //        MINORIDE_WELCOME=1 with --snapshot saves the welcome window and prints its frames
@@ -276,6 +277,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	static func loadEditorSettings() {
 		let settings = SettingsFile.load(SettingsFile.userURL)
 		EditorView.wrapsLines = settings?.wrapLines ?? false
+		EditorView.showsStickyLines = settings?.stickyLines ?? true
 		let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init) ?? settings?.fontSize
 		EditorView.editorFont = EditorView.font(family: settings?.fontFamily, size: size.map { CGFloat($0) })
 	}
@@ -286,6 +288,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		let url = SettingsFile.userURL
 		try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 		if let data = try? SettingsFile.updating(try? Data(contentsOf: url), section: nil, key: "wrap_lines", value: .bool(EditorView.wrapsLines)) {
+			try? data.write(to: url, options: .atomic)
+		}
+	}
+
+	/// View › Pin Enclosing Lines: switches pinned lines in every editor, kept in settings.json.
+	@objc func toggleStickyLines(_ sender: Any?) {
+		EditorView.showsStickyLines.toggle()
+		let url = SettingsFile.userURL
+		try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+		if let data = try? SettingsFile.updating(try? Data(contentsOf: url), section: nil, key: "sticky_lines", value: .bool(EditorView.showsStickyLines)) {
 			try? data.write(to: url, options: .atomic)
 		}
 	}
@@ -364,6 +376,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		}
 		// MINORIDE_FOLD=<line> folds the region headed by that line (1-based).
 		if let line = ProcessInfo.processInfo.environment["MINORIDE_FOLD"].flatMap(Int.init) { editor.toggleFold(atLine: line - 1) }
+		if let line = ProcessInfo.processInfo.environment["MINORIDE_SCROLL"].flatMap(Int.init) {
+			editor.scroll(NSPoint(x: 0, y: editor.y(ofLine: line - 1)))
+			print("sticky", editor.sticky.map { "\($0.lines.map { $0 + 1 }) \(NSStringFromRect($0.frame))" } ?? "-")
+		}
 		if let split = ProcessInfo.processInfo.environment["MINORIDE_SPLIT"], let doc = documents.last {
 			doc.split(vertical: split != "down")
 			for pane in [doc.editor, doc.splitEditor].compactMap({ $0 }) {
@@ -416,7 +432,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		func canvasY(_ y: CGFloat) -> CGFloat { view.isFlipped ? view.bounds.height - y : y }
 		NSColor.textBackgroundColor.setFill()
 		view.bounds.fill()
-		for part in [editor, editor.gutter] as [NSView?] { // the gutter floats over the text's inset
+		for part in [editor, editor.gutter, editor.sticky.flatMap { $0.isHidden ? nil : $0 }] as [NSView?] { // the gutter floats over the text's inset
 			// The ruler is not clipped by the scroll view, so its visibleRect can exceed its bounds.
 			let visible = part?.visibleRect.intersection(part?.bounds ?? .zero) ?? .zero
 			guard let part, let rep = part.bitmapImageRepForCachingDisplay(in: visible) else { continue }
@@ -567,6 +583,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		if item.action == #selector(reopenClosedTab(_:)) { return !closedFiles.isEmpty }
 		if item.action == #selector(toggleWrapLines(_:)) {
 			item.state = EditorView.wrapsLines ? .on : .off
+			return true
+		}
+		if item.action == #selector(toggleStickyLines(_:)) {
+			item.state = EditorView.showsStickyLines ? .on : .off
 			return true
 		}
 		if item.action == #selector(quitTogglingKeepWindows(_:)) {

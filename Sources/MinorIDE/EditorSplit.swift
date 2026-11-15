@@ -49,6 +49,7 @@ extension DocumentWindow {
 		editor.autoresizingMask = [.width]
 		scroll.documentView = editor
 		GutterView.install(for: editor)
+		StickyLinesView.install(for: editor)
 		return scroll
 	}
 

@@ -19,6 +19,8 @@ public struct SettingsFile: Sendable, Equatable {
 	public var autoSave: Bool?
 	/// Soft wrap long lines in every editor (off unless set).
 	public var wrapLines: Bool?
+	/// Pin the lines that open the enclosing blocks at the top of editors (on unless set).
+	public var stickyLines: Bool?
 	/// Editor font family and size (system monospaced, 13 unless set).
 	public var fontFamily: String?
 	public var fontSize: Double?
@@ -30,6 +32,7 @@ public struct SettingsFile: Sendable, Equatable {
 		if case .bool(let b)? = value["detect_indent"] { detectIndent = b }
 		if case .bool(let b)? = value["auto_save"] { autoSave = b }
 		if case .bool(let b)? = value["wrap_lines"] { wrapLines = b }
+		if case .bool(let b)? = value["sticky_lines"] { stickyLines = b }
 		if case .string(let f)? = value["font_family"], !f.isEmpty { fontFamily = f }
 		if case .number(let n)? = value["font_size"], n > 0 { fontSize = n }
 		if case .object(let sections)? = value["format"] {

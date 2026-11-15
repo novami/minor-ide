@@ -21,6 +21,7 @@ enum Bench {
 			editor.window?.displayIfNeeded() // layout, and hands dirty rects to the layers
 			editor.layer?.displayIfNeeded()
 			editor.gutter?.layer?.displayIfNeeded()
+			editor.sticky?.layer?.displayIfNeeded()
 		}
 		display()
 		report("open + first draw", [CACurrentMediaTime() - t])
@@ -282,7 +283,7 @@ enum Bench {
 		if let e = (NSApp.delegate as? AppDelegate)?.editor {
 			let draws = (e.drawCount - lastDraws.0, e.drawnLines - lastDraws.1)
 			lastDraws = (e.drawCount, e.drawnLines)
-			print("  [\(name): \(draws.0) draws, \(draws.1) lines]")
+			print("  [\(name): \(draws.0) draws, \(draws.1) lines, \(e.sticky?.drawCount ?? 0) pinned-line draws in total]")
 		}
 		let s = samples.sorted()
 		func ms(_ v: Double) -> String { String(format: "%.2f ms", v * 1000) }

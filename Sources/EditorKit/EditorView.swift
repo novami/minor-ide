@@ -135,6 +135,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	/// Line numbers, drawn in the scroll view's vertical ruler.
 	public internal(set) weak var gutter: GutterView?
+	/// Enclosing lines pinned over the top of the scroll view.
+	public internal(set) weak var sticky: StickyLinesView?
 
 	public convenience init(text: String, font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)) {
 		self.init(document: TextDocument(text: text), font: font)
@@ -170,6 +172,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		updateTokenColors()
 		needsDisplay = true
 		gutter?.needsDisplay = true
+		sticky?.needsDisplay = true // token colours of the other theme
 		setNeedsCaretUpdate()
 	}
 
@@ -256,6 +259,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public override func viewWillDraw() {
 		super.viewWillDraw()
 		updateCaretsIfNeeded() // scrolling exposes lines whose carets are not in the path yet
+		sticky?.update()
 	}
 
 	public override func layout() {
@@ -312,7 +316,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	/// Fast-path lines are batched into one glyph draw per colour; CTLine fallbacks draw alone.
-	private func drawBatch(_ ctx: CGContext, color: CGColor, lines: [Int], _ layoutAt: (Int) -> (LineLayout, CGFloat)) {
+	func drawBatch(_ ctx: CGContext, color: CGColor, lines: [Int], _ layoutAt: (Int) -> (LineLayout, CGFloat)) {
 		ctx.setFillColor(color)
 		batchGlyphs.removeAll(keepingCapacity: true)
 		batchPositions.removeAll(keepingCapacity: true)
@@ -352,7 +356,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		return l
 	}
 
-	private func numberLayout(_ line: Int) -> LineLayout {
+	func numberLayout(_ line: Int) -> LineLayout {
 		if let cached = numberCache[line] { return cached }
 		let l = LineLayout(bytes: Array(String(line + 1).utf8), font: ctFont, ascii: ascii, tabWidth: format.tabWidth, attributes: textAttributes)
 		numberCache[line] = l
@@ -440,7 +444,9 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			x0 = p.x - jump <= textInset ? 0 : p.x - jump
 			x1 = p.x + jump
 		}
-		let rect = NSRect(x: x0, y: p.y - lineHeight, width: x1 - x0, height: 3 * lineHeight)
+		// Pinned enclosing lines cover the top rows.
+		let above = lineHeight + stickyHeight
+		let rect = NSRect(x: x0, y: p.y - above, width: x1 - x0, height: above + 2 * lineHeight)
 		if !visibleRect.contains(rect) { scrollToVisible(rect) }
 	}
 
@@ -520,7 +526,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// After the document changed: sets the selections and repaints as little as possible.
 	/// Only the editor that made the edit unfolds around and scrolls to its carets.
 	func didEdit(_ changes: ChangeSet, _ edit: TextDocument.Edit, selections newSelections: SelectionSet, isSource: Bool) {
-		defer { onTextChange?() }
+		defer {
+			sticky?.textChanged(fromLine: edit.firstLine)
+			onTextChange?()
+		}
 		let firstLine = edit.firstLine, lastLine = edit.lastLine, oldLines = edit.oldLines, sameLines = edit.sameLines
 		if !findMatches.isEmpty { findMatches = changes.mapUntouched(findMatches) }
 		var foldsChanged = false
