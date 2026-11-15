@@ -41,7 +41,7 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Výklad rozpočtu latence potvrzen uživatelem** (2026-11-15).
 
-**Odloženo (připomenout uživateli na začátku další session, od 2026-11-16):** ruční část „Hotovo když“ 1b – zbývá jen VoiceOver (⌘F5, šipky nahoru/dolů čtou řádek); čeština a mrtvé klávesy ručně ověřeny 2026-11-15. Fázi 1b to neblokuje.
+**Ruční část „Hotovo když“ 1b ověřena uživatelem** (2026-11-15): čeština, mrtvé klávesy, VoiceOver.
 
 **Fáze 1c, krok 1 hotový** (2026-11-15): řádkové příkazy v `Sources/EditorKit/LineCommands.swift` — Duplikovat řádek ⇧⌘D, Přesunout řádek ⌥⌘↑/↓, Vybrat další výskyt ⌃G, všechny výskyty ⌃⌘G, Převést odsazení (Formát › Odsazení); hledání v ropu po blocích `Sources/TextEngine/Search.swift`. Checklist `docs/editor-behaviors.md`. Testy `LineCommandTests`, `RopeSearchTests`.
 
@@ -128,20 +128,20 @@ Pak zbytek 1c (hledání, folding), 1d (lexery a zvýraznění) a po ní jazykov
 - prostředí ze shellu přes `-l -i -c` (D22).
 
 ## Ruční kontrola s uživatelem (2026-11-15) a opravy
-Prošlo: čeština a mrtvé klávesy, hledání, sbalování, označování, nastavení s taby, diktování, kontextové menu s Řečí, ⌘/ (na české klávesnici ⌘-). VoiceOver uživatel nezkoušel (není jasné ovládání; ⌘F5 a šipky).
+Prošlo: čeština a mrtvé klávesy, hledání, sbalování, označování, nastavení s taby, diktování, kontextové menu s Řečí, ⌘/ (na české klávesnici ⌘-). VoiceOver ověřen později téhož dne.
 Opravené chyby, které offscreen snímky neukázaly (regresní testy `WindowRegressionTests`):
 - editor měl šířku 0 (clip view nemění velikost dokumentu) → sleduje rám clip view a po změně šířky se překreslí;
 - gutter (`NSRulerView`) bez ořezu (výchozí od macOS 14) zakrýval celý editor → `clipsToBounds` u gutteru i editoru;
 - kurzor neblikal (diskrétní animace potřebuje o jeden `keyTime` víc než hodnot);
 - diktování nevkládalo text (`unmarkText` musí rozepsaný text potvrdit; nahrazení „rozsahu“ rozepsaného textu nesmí mazat text za kurzorem);
-- VoiceOver: oznámení o pohybu kurzoru nesou typ, směr a krok (`AXTextStateChangeType` …), jinak VoiceOver mlčí — neověřeno;
+- VoiceOver: oznámení o pohybu kurzoru nesou typ, směr a krok (`AXTextStateChangeType` …), jinak VoiceOver mlčí — ověřeno;
 - ⌘/ podle fyzické klávesy (`KeyboardLayout`, menu ukazuje znak aktuálního rozložení, přepočet při změně rozložení).
 Ikona aplikace (rozhodnutí uživatele: tmavá královská modrá, „{M“ a kurzor; `tools/make-icon.swift`, `make icon` → `Resources/AppIcon.icns`). Sjednocený panel nástrojů (rozhodnutí: jednoduchý): tlačítko bočního panelu u projektu, název souboru a formát jako podtitul okna, Hledat.
 Nové: kontextové menu editoru (Vyjmout, Kopírovat, Vložit, Zakomentovat, Najít, Řeč › Začít/Přestat mluvit, Služby macOS přes `NSServicesMenuRequestor`).
 Poznámka k prostředí: aplikace spuštěná z prostředí Clauda (`open` v jeho shellu) se vykreslí, ale nedostává vstup uživatele (běží mimo jeho sezení) — ruční testy musí uživatel spustit z Finderu.
 
 ## Rozhodnutí uživatele (2026-11-15)
-Taby = nativní taby oken macOS; push zatím ne; zkratky ponechány (`docs/keymap.md`); témata jen vestavěná. Ruční kontroly: čeština, hledání a sbalování prošly; VoiceOver a barvy čekají na uživatele.
+Taby = nativní taby oken macOS; push zatím ne; zkratky ponechány (`docs/keymap.md`); témata jen vestavěná. Ruční kontroly: čeština, VoiceOver, hledání a sbalování prošly; barvy čekají na uživatele.
 
 ## Otevřené věci mimo kód
 - **Apple Developer účet** (potřeba pro fázi 2: podepsané aktualizace).
