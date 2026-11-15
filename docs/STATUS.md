@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1b/3)
+**Poslední aktualizace:** 2026-11-15 (1c/1)
 
 ## Kde jsme
 
@@ -43,7 +43,13 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Odloženo (připomenout uživateli na začátku další session, od 2026-11-16):** ruční část „Hotovo když“ 1b – v aplikaci (`make run`) napsat „čšžýáíéůú“ na české klávesnici (i přes mrtvé klávesy ˇ a ´) a zkusit VoiceOver (⌘F5, šipky nahoru/dolů čtou řádek). Fázi 1b to neblokuje.
 
-**Další: fáze 1c** (editační příkazy, hledání) podle `docs/PLAN.md`.
+**Fáze 1c, krok 1 hotový** (2026-11-15): řádkové příkazy v `Sources/EditorKit/LineCommands.swift` — Duplikovat řádek ⇧⌘D, Přesunout řádek ⌥⌘↑/↓, Vybrat další výskyt ⌃G, všechny výskyty ⌃⌘G, Převést odsazení (Formát › Odsazení); hledání v ropu po blocích `Sources/TextEngine/Search.swift`. Checklist `docs/editor-behaviors.md`. Testy `LineCommandTests`, `RopeSearchTests`.
+
+**Rozhodnutí uživatele:** komentáře, párování závorek, chytré odsazení a folding podle závorek až po 1d nad lexerem; hledání vlastní lištou (zapsáno v plánu u 1c).
+
+**Další: fáze 1c, krok 2 — Hledat/nahradit v souboru** (vlastní lišta nad editorem ve stylu systémové: regex, velikost písmen, celé slovo, zachování velikosti; zvýraznění ve vrstvě pozadí; ⌘F, ⌘G, ⇧⌘G, ⌘E, ⌥⌘F; menu Najít teď volá `performTextFinderAction`, přepojit). **Krok 3:** folding podle odsazení (mapa zobrazených řádků navržená i pro zalamování v 1f).
+
+Známé mezery po kroku 1c/1: kotvy na řádku prohozeném při přesunu se sbalí (kotvy v přesouvaném bloku jdou s ním); ⌃G hledá jen s rozlišením velikosti písmen; ⌃⌘G nad 10 MB s častým slovem vytvoří desítky tisíc výběrů bez limitu; keymapa (`docs/keymap.md`) až v 1e.
 
 Známé mezery po kroku 1b/3: výklad rozpočtu latence z plánu („< 8 ms do vykresleného snímku“) je upraven (viz výše) (potvrzeno); na zamčené obrazovce se sekce latence přeskočí. Gutter má pevnou šířku na 7 číslic a při každém scrollu se kreslí celý (≈ 0,1 ms). Barva kurzoru se nepřepočítá při změně systémové barvy zvýraznění, dokud se kurzor nepohne. `accessibilityValue` vrací celý text (u 10 MB pomalé, jen když se VoiceOver zeptá). Benchmark kreslí synchronně přes `layer.displayIfNeeded()`; `CATransaction.flush()` by čekal na render server (≈ 3,5 ms) a měří se zvlášť přes latenci.
 
@@ -57,7 +63,7 @@ Známé mezery po kroku 2: Zpět až na uložený stav nesmaže příznak „upr
 
 Známé mezery po kroku 1: Tab s víceřádkovým výběrem výběr nahradí (odsazení bloku patří do 1c), vložení více řádků do stejného počtu kurzorů nerozděluje text, dvojklik/trojklik a ⌥+tažení jsou v 1b.
 
-Pak 1c (příkazy, hledání), 1d (lexery a zvýraznění).
+Pak zbytek 1c (hledání, folding), 1d (lexery a zvýraznění) a po ní jazykové příkazy z 1c.
 
 **Revize plánu 2026-11-14** (pořadí fází se změnilo, další krok ne): nová fáze 2b (otevření souboru, hledání, Git gutter, terminál) před LSP, debugger Go a testy v MVP (7b; PHP přes Tracy, Xdebug až po MVP), žádná vazba na konkurenční IDE (stuby PHP z oficiálních zdrojů PHP, D25), Git rozšířen o konflikty, externí LSP servery (D23), PHP až po aktuální verzi. Opravy, které se týkají už hotového kódu nebo nejbližší práce:
 - zkratky: písmena podle znaku, keyCode jen pro interpunkci (1e); ⌘E zůstává systémové;

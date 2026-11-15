@@ -1,4 +1,5 @@
 import AppKit
+import EditorKit
 
 /// Standard macOS menu bar (Apple HIG): app, File, Edit, Format, View, Window, Help.
 /// Items without a responder that implements their action stay disabled automatically.
@@ -42,6 +43,13 @@ enum MainMenu {
 			m.item(L("Copy"), #selector(NSText.copy(_:)), "c")
 			m.item(L("Paste"), #selector(NSText.paste(_:)), "v")
 			m.item(L("Select All"), #selector(NSText.selectAll(_:)), "a")
+			m.item(L("Select Next Occurrence"), #selector(EditorView.selectNextOccurrence(_:)), "g", .control)
+			m.item(L("Select All Occurrences"), #selector(EditorView.selectAllOccurrences(_:)), "g", [.control, .command])
+			m.addItem(.separator())
+			let up = String(UnicodeScalar(UInt16(NSUpArrowFunctionKey))!), down = String(UnicodeScalar(UInt16(NSDownArrowFunctionKey))!)
+			m.item(L("Duplicate Line"), #selector(EditorView.duplicateLines(_:)), "d", [.command, .shift])
+			m.item(L("Move Line Up"), #selector(EditorView.moveLinesUp(_:)), up, [.command, .option])
+			m.item(L("Move Line Down"), #selector(EditorView.moveLinesDown(_:)), down, [.command, .option])
 			m.addItem(.separator())
 			let find = m.item(L("Find"), nil)
 			find.submenu = NSMenu(title: L("Find"))
@@ -61,6 +69,8 @@ enum MainMenu {
 			for (title, tag) in [(L("Tabs"), 0), (L("2 Spaces"), 2), (L("4 Spaces"), 4)] {
 				indent.submenu!.item(title, #selector(AppDelegate.setIndent(_:)), target: target).tag = tag
 			}
+			indent.submenu!.addItem(.separator())
+			indent.submenu!.item(L("Convert Indentation"), #selector(EditorView.convertIndentation(_:)))
 			let width = m.item(L("Tab Width"), nil)
 			width.submenu = NSMenu()
 			for w in [2, 4, 8] {

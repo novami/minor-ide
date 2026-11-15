@@ -43,6 +43,11 @@
 "Copy" = "Kopírovat";
 "Paste" = "Vložit";
 "Select All" = "Vybrat vše";
+"Select Next Occurrence" = "Vybrat další výskyt";
+"Select All Occurrences" = "Vybrat všechny výskyty";
+"Duplicate Line" = "Duplikovat řádek";
+"Move Line Up" = "Přesunout řádek nahoru";
+"Move Line Down" = "Přesunout řádek dolů";
 "Find" = "Najít";
 "Find…" = "Najít…";
 "Find Next" = "Najít další";
@@ -56,6 +61,7 @@
 "Tabs" = "Tabulátory";
 "2 Spaces" = "2 mezery";
 "4 Spaces" = "4 mezery";
+"Convert Indentation" = "Převést odsazení";
 "Tab Width" = "Šířka tabulátoru";
 "View" = "Zobrazení";
 "Enter Full Screen" = "Zapnout režim celé obrazovky";

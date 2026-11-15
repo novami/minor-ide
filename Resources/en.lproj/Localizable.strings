@@ -41,6 +41,11 @@
 "Copy" = "Copy";
 "Paste" = "Paste";
 "Select All" = "Select All";
+"Select Next Occurrence" = "Select Next Occurrence";
+"Select All Occurrences" = "Select All Occurrences";
+"Duplicate Line" = "Duplicate Line";
+"Move Line Up" = "Move Line Up";
+"Move Line Down" = "Move Line Down";
 "Find" = "Find";
 "Find…" = "Find…";
 "Find Next" = "Find Next";
@@ -54,6 +59,7 @@
 "Tabs" = "Tabs";
 "2 Spaces" = "2 Spaces";
 "4 Spaces" = "4 Spaces";
+"Convert Indentation" = "Convert Indentation";
 "Tab Width" = "Tab Width";
 "View" = "View";
 "Enter Full Screen" = "Enter Full Screen";

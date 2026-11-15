@@ -219,6 +219,7 @@ Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 59–74 týdnů; s
 - Multi-cursor (Ctrl+G další výskyt, Ctrl+Cmd+G všechny), duplikace a přesun řádku, komentáře (Cmd+/), párování a obalování závorkami a uvozovkami, chytré odsazení podle lexeru, „Převést odsazení“ (tabulátory ↔ mezery v celém souboru). Tab, Shift+Tab a Enter s převzetím odsazení jsou hotové.
 - Hledat/nahradit v souboru (regex, case, celé slovo, zachování velikosti písmen).
 - Folding podle závorek a odsazení (později doplní LSP `foldingRange`).
+- **Rozhodnutí 2026-11-15:** komentáře, párování a obalování závorkami, chytré odsazení a folding podle závorek až po 1d nad lexerem (bez provizorního skeneru). V 1c zůstává folding podle odsazení. Hledání má vlastní lištu ve stylu systémové (`NSTextFinder` neumí regex ani zachování velikosti písmen).
 - Checklist chování editoru v `docs/editor-behaviors.md`. Každý bod má test.
 
 **1d. Lexery a zvýraznění (≈ 2–3 týdny)**

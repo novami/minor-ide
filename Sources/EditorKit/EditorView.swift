@@ -372,7 +372,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	/// Applies and records the edit as one transaction.
-	private func apply(_ changes: ChangeSet, kind: EditKind, selectionsAfter: (ChangeSet) -> SelectionSet) {
+	func apply(_ changes: ChangeSet, kind: EditKind, selectionsAfter: (ChangeSet) -> SelectionSet) {
 		guard !changes.isEmpty else { return }
 		let before = rope, selectionsBefore = selections
 		apply(changes) { selectionsAfter($0) }
@@ -775,6 +775,8 @@ extension EditorView: NSMenuItemValidation {
 		case #selector(redo(_:)): history.canRedo
 		case #selector(copy(_:)), #selector(cut(_:)): selections.all.contains { !$0.isEmpty }
 		case #selector(paste(_:)): NSPasteboard.general.string(forType: .string) != nil
+		case #selector(moveLinesUp(_:)): selectedLineBlocks().first.map { $0.lowerBound > 0 } ?? false
+		case #selector(moveLinesDown(_:)): selectedLineBlocks().last.map { $0.upperBound < rope.lineCount - 1 } ?? false
 		default: true
 		}
 	}
