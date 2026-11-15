@@ -64,10 +64,10 @@ enum Bytes {
 	@inline(__always) static func isSpace(_ b: UInt8) -> Bool { b == 0x20 || b == 0x09 || b == 0x0D }
 }
 
-/// Keywords looked up without allocating: up to 16 bytes packed into two integers.
+/// Keywords looked up without allocating: up to 24 bytes packed into three integers.
 struct WordSet: Sendable {
 	private struct Key: Hashable {
-		var a: UInt64, b: UInt64, n: Int
+		var a: UInt64, b: UInt64, c: UInt64, n: Int
 	}
 
 	private var words: Set<Key> = []
@@ -82,13 +82,13 @@ struct WordSet: Sendable {
 	}
 
 	private func key(_ s: ArraySlice<UInt8>) -> Key? {
-		guard s.count <= 16 else { return nil }
-		var a: UInt64 = 0, b: UInt64 = 0
-		for (i, var c) in s.enumerated() {
-			if caseInsensitive && c >= 0x41 && c <= 0x5A { c |= 0x20 }
-			if i < 8 { a |= UInt64(c) << (i * 8) } else { b |= UInt64(c) << ((i - 8) * 8) }
+		guard s.count <= 24 else { return nil }
+		var a: UInt64 = 0, b: UInt64 = 0, c: UInt64 = 0
+		for (i, var ch) in s.enumerated() {
+			if caseInsensitive && ch >= 0x41 && ch <= 0x5A { ch |= 0x20 }
+			if i < 8 { a |= UInt64(ch) << (i * 8) } else if i < 16 { b |= UInt64(ch) << ((i - 8) * 8) } else { c |= UInt64(ch) << ((i - 16) * 8) }
 		}
-		return Key(a: a, b: b, n: s.count)
+		return Key(a: a, b: b, c: c, n: s.count)
 	}
 
 	func contains(_ s: ArraySlice<UInt8>) -> Bool {

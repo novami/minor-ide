@@ -1,0 +1,31 @@
+1:1 comment # Application config
+2:1 property parameters
+3:2 property debug
+3:9 constant yes
+4:2 property "quoted key"
+4:16 string 'value'
+4:24 comment # comment
+5:2 property ratio
+5:9 number 1.5
+6:2 property path
+6:8 variable %appDir%
+8:1 property services
+9:4 function App\Model\UserRepository
+9:29 variable @database.default
+9:48 variable %debug%
+10:2 property router
+10:10 type App\Router\RouterFactory::createRouter
+11:2 property mail
+11:8 function Nette\Mail\SmtpMailer
+11:30 property host
+11:54 property port
+11:60 number 587
+12:2 property list
+12:15 constant null
+13:2 property text
+13:8 string '''
+14:1 string 		multi
+15:1 string 		line
+16:1 string 	'''
+17:2 property after
+17:9 constant off

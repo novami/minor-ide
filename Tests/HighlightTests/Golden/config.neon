@@ -1,0 +1,17 @@
+# Application config
+parameters:
+	debug: yes
+	"quoted key": 'value' # comment
+	ratio: 1.5
+	path: %appDir%/temp
+
+services:
+	- App\Model\UserRepository(@database.default, %debug%)
+	router: App\Router\RouterFactory::createRouter
+	mail: Nette\Mail\SmtpMailer(host: smtp.example.com, port: 587)
+	list: [a, b, null]
+	text: '''
+		multi
+		line
+	'''
+	after: off

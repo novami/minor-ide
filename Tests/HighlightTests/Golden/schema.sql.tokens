@@ -1,0 +1,45 @@
+1:1 comment -- Users table
+2:1 keyword CREATE
+2:8 keyword TABLE
+2:14 property `users`
+3:5 type SERIAL
+3:12 keyword PRIMARY
+3:20 keyword KEY
+4:8 type VARCHAR
+4:16 number 255
+4:21 keyword NOT
+4:25 constant NULL
+4:30 keyword UNIQUE
+5:7 type TEXT
+5:12 keyword DEFAULT
+5:20 string '
+5:21 string it
+5:23 escape ''
+5:25 string s 
+5:27 escape \'
+5:29 string ok
+5:31 escape \'
+6:1 string second line'
+7:13 type TIMESTAMP
+7:23 keyword DEFAULT
+7:31 constant CURRENT_TIMESTAMP
+7:49 comment /* block
+8:1 comment 	comment */
+10:1 keyword SELECT
+10:14 function COUNT
+10:23 keyword AS
+10:28 keyword FROM
+10:41 keyword WHERE
+10:55 keyword LIKE
+10:60 variable ?
+10:62 keyword AND
+10:71 variable :min
+10:76 keyword OR
+10:84 variable $1
+10:87 comment # mysql comment
+11:2 keyword AND
+11:18 type date
+11:25 string '
+11:26 string 2026-01-01'
+11:38 keyword LIMIT
+11:44 number 10.5

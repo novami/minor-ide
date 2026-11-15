@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1d/1)
+**Poslední aktualizace:** 2026-11-15 (1d/2)
 
 ## Kde jsme
 
@@ -55,7 +55,9 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1d, krok 1 hotový** (2026-11-15): nový modul `Sources/Highlight/` (bez AppKitu): `Token.swift` (druhy tokenů, `LexState` s režimem, zásobníkem a textem, protokol `Lexer` nad `ArraySlice<UInt8>`, `WordSet` bez alokací, `LineScanner`), `SyntaxHighlighter.swift` (stav na začátku řádku v `GapArray`, přelexování od editace do shody stavů, limit 2000 řádků, líné dopočítání, dolexování na pozadí s generací), `Theme.swift` (světlé a tmavé téma jako JSON), `Languages.swift` (lexer podle přípony), lexery Go a JSON (s komentáři). Editor barví po druzích tokenů jedním voláním na barvu (`EditorKit/SyntaxDrawing.swift`), fallback řádky (emoji) přes obarvený `CTLine`. Golden testy `Tests/HighlightTests/Golden/` (`MINORIDE_UPDATE_GOLDEN=1 make test` přepíše očekávané výstupy), `SyntaxHighlighterTests` (náhodné editace proti lexování od začátku). Bench: psaní v Go p99 0,19 ms, skok p99 0,79 ms, dolexování 10 MB na pozadí 97 ms, celý lex 129 ms; BUDGET OK.
 
-**Další: fáze 1d, krok 2 — lexery PHP (s HTML, heredoc/nowdoc), SQL, NEON**, pak krok 3 Latte (HTML/JS/CSS uvnitř) a ověření rozpočtu přelexování (< 1 ms na řádek).
+**Fáze 1d, krok 2 hotový** (2026-11-15): lexery `PHPLexer` (HTML kolem s tagy, atributy, entitami a komentáři; `<?php`/`<?=` i uvnitř hodnot atributů přes zásobník režimů; řetězce přes víc řádků, interpolace `$var`, `{$…}`, `$a->b`; heredoc/nowdoc s ukončovačem ve stavu; doc komentáře s `@tagy`; atributy `#[…]`; jména s namespace; PascalCase = typ, VELKÁ = konstanta), `SQLLexer` (MySQL/PostgreSQL, '' a \' v řetězcích, placeholdery ?, :name, $1), `NEONLexer` (klíče, @služby, %parametry%, entity, ''' víceřádkové řetězce). `WordSet` až 24 bajtů. Golden vzorky `sample.php`, `schema.sql`, `config.neon`.
+
+**Další: fáze 1d, krok 3 — Latte** (HTML s `{tagy}`, `n:atributy`, PHP výrazy uvnitř tagů, `{* komentáře *}`, `<script>`/`<style>` jako vnořený JS/CSS přes zásobník režimů), pak kontrola rozpočtu přelexování (< 1 ms na běžný řádek) a uzavření 1d.
 
 Známé mezery po kroku 1d/1: téma se nedá změnit v nastavení (jen vestavěné světlé/tmavé); tokeny viditelných řádků se lexují při každém kreslení (bez cache, v rozpočtu); po editaci s limitem 2000 řádků se zbytek dopočítá na pozadí až po 300 ms; Uložit jako s jinou příponou nezmění jazyk.
 
