@@ -10,6 +10,7 @@ import MinorCore
 //        MINORIDE_FONT_SIZE=40 enlarges the font, useful with --snapshot
 //        MINORIDE_FIND=<query> with --snapshot opens Find and Replace and saves the bar too
 //        MINORIDE_FOLD=<line> with --snapshot folds the region headed by that line
+//        MINORIDE_SPLIT=right|down with --snapshot splits the editor and prints the pane frames
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
@@ -245,6 +246,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		}
 		// MINORIDE_FOLD=<line> folds the region headed by that line (1-based).
 		if let line = ProcessInfo.processInfo.environment["MINORIDE_FOLD"].flatMap(Int.init) { editor.toggleFold(atLine: line - 1) }
+		if let split = ProcessInfo.processInfo.environment["MINORIDE_SPLIT"], let doc = documents.last {
+			doc.split(vertical: split != "down")
+			for pane in [doc.editor, doc.splitEditor].compactMap({ $0 }) {
+				print("pane", pane.enclosingScrollView.map { NSStringFromRect($0.convert($0.bounds, to: nil)) } ?? "-",
+				      "editor", NSStringFromSize(pane.frame.size), "caret", pane.caret, "first responder", doc.window.firstResponder === pane)
+			}
+		}
 		// MINORIDE_FIND=<query> opens Find and Replace first and also saves the bar as <png>-find.png.
 		if let query = ProcessInfo.processInfo.environment["MINORIDE_FIND"], let doc = documents.last {
 			doc.showFindBar(replace: true)

@@ -14,24 +14,6 @@ extension EditorView {
 		}
 	}
 
-	/// Lexes the rest of the document off the main thread, so jumping far does not stall.
-	/// An edit meanwhile makes the result stale; it is dropped and the job runs again.
-	func scheduleBackgroundHighlight(delay: Duration = .zero) {
-		guard let highlighter, !backgroundHighlightRunning, highlighter.backgroundJob(rope: rope) != nil else { return }
-		backgroundHighlightRunning = true
-		Task { [weak self] in
-			if delay > .zero { try? await Task.sleep(for: delay) }
-			guard let self, let job = highlighter.backgroundJob(rope: rope) else {
-				self?.backgroundHighlightRunning = false
-				return
-			}
-			let states = await Task.detached(priority: .utility) { SyntaxHighlighter.lexStates(job) }.value
-			backgroundHighlightRunning = false
-			guard self.highlighter === highlighter else { return }
-			if !highlighter.finishBackgroundJob(job, states: states) { scheduleBackgroundHighlight(delay: .milliseconds(300)) }
-		}
-	}
-
 	/// UTF-16 unit ranges of the tokens (glyph indexes on the fast path).
 	static func unitRuns(_ bytes: [UInt8], _ tokens: [Token]) -> [(Range<Int>, TokenKind)] {
 		var runs: [(Range<Int>, TokenKind)] = []

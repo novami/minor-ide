@@ -6,9 +6,6 @@
 "The versions are identical." = "Verze jsou stejné.";
 "Comparison" = "Porovnání";
 
-/* MinorIDE/DocumentWindow.swift */
-"Editor" = "Editor";
-
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Cut" = "Vyjmout";
 "Copy" = "Kopírovat";
@@ -79,6 +76,9 @@
 "%d spaces|few" = "%d mezery";
 "%d spaces|other" = "%d mezer";
 
+/* MinorIDE/EditorSplit.swift */
+"Editor" = "Editor";
+
 /* MinorIDE/FindBar.swift */
 "Match Case" = "Rozlišovat velikost písmen";
 "Whole Word" = "Celá slova";
@@ -146,6 +146,9 @@
 "Tab Width" = "Šířka tabulátoru";
 "View" = "Zobrazení";
 "Show Sidebar" = "Zobrazit boční panel";
+"Split Editor Side by Side" = "Rozdělit editor vedle sebe";
+"Split Editor Top and Bottom" = "Rozdělit editor pod sebe";
+"Close Editor Split" = "Zavřít rozdělení editoru";
 "Code Folding" = "Sbalování kódu";
 "Fold" = "Sbalit";
 "Unfold" = "Rozbalit";

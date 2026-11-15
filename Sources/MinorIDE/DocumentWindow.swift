@@ -8,8 +8,11 @@ import TextEngine
 /// back in its own conventions: line ending, charset and the lines as loaded.
 @MainActor
 final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMenuItemValidation {
-	let window: NSWindow
+	let window: EditorWindow
+	/// The first editor pane; `splitEditor` is the second one of a split.
 	let editor: EditorView
+	var splitEditor: EditorView?
+	let editorSplit = NSSplitView()
 	private(set) var url: URL?
 	private(set) var format: FormatSettings
 	private(set) var resolved: ResolvedFormat?
@@ -34,29 +37,25 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		self.url = url
 		self.format = format
 		self.project = project
-		window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 800),
+		window = EditorWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 800),
 		                  styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
-		let scroll = NSScrollView(frame: window.contentView!.bounds)
-		scroll.autoresizingMask = [.width, .height]
-		scroll.hasVerticalScroller = true
-		scroll.backgroundColor = .textBackgroundColor // below the last line
-		scroll.wantsLayer = true // clip view, gutter and editor draw into layers
 		let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init) ?? 13
 		editor = EditorView(text: text, font: .monospacedSystemFont(ofSize: size, weight: .regular))
-		editor.autoresizingMask = [.width]
 		editor.format = format
-		editor.setAccessibilityLabel(L("Editor"))
-		scroll.documentView = editor
-		GutterView.install(for: editor)
+		editorSplit.dividerStyle = .thin
+		editorSplit.isVertical = true
+		editorSplit.addSubview(Self.makeScrollView(for: editor))
 		find = FindController(editor: editor)
 		findBar = FindBar(controller: find)
 		findBar.isHidden = true
-		let content = NSStackView(views: [diskBanner, findBar, scroll])
+		let content = NSStackView(views: [diskBanner, findBar, editorSplit])
 		content.orientation = .vertical
 		content.spacing = 0
 		content.alignment = .width
 		content.distribution = .fill
-		scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
+		editorSplit.setContentHuggingPriority(.defaultLow, for: .vertical)
+		// A split view has no width of its own; .width alignment alone leaves it at zero.
+		editorSplit.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 		findBar.setContentHuggingPriority(.required, for: .vertical)
 		diskBanner.setContentHuggingPriority(.required, for: .vertical)
 		if let project {
@@ -120,8 +119,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		if let url { sidebar?.reveal(url) }
 		observePanels()
 		window.delegate = self
-		editor.contextMenuProvider = { _ in DocumentWindow.contextMenu() }
-		editor.onChange = { [weak self] in
+		configure(editor)
+		window.closesPane = { [weak self] in self?.closeFocusedPane() ?? false }
+		editor.document.onChange = { [weak self] in
 			guard let self else { return }
 			markEdited()
 			if findBar.isHidden { find.invalidate() } else { find.refresh(delay: .milliseconds(100)) }
@@ -283,6 +283,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		case #selector(toggleBottomPanel(_:)):
 			guard let bottom = panels?.bottom else { return false }
 			item.title = bottom.isCollapsed ? L("Show Bottom Panel") : L("Hide Bottom Panel")
+		case #selector(closeEditorSplit(_:)):
+			return splitEditor != nil
 		case #selector(toggleRightPanel(_:)):
 			guard let right = panels?.inspector else { return false }
 			item.title = right.isCollapsed ? L("Show Right Panel") : L("Hide Right Panel")

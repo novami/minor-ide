@@ -11,26 +11,28 @@ import TextEngine
 /// cache rework come later in phase 1.
 @MainActor
 public final class EditorView: NSView, @preconcurrency NSTextInputClient {
-	public private(set) var rope: Rope
+	/// Text, undo history and colouring, shared with other editors of the same file.
+	public let document: TextDocument
+	public var rope: Rope { document.rope }
 	/// Byte offsets, always on scalar boundaries.
 	public private(set) var selections = SelectionSet()
 	/// Head of the primary selection.
 	public var caret: Int { selections.primary.head }
-	public private(set) var history = EditHistory()
-
-	/// Called after every text change (dirty tracking).
-	public var onChange: (() -> Void)?
+	public var history: EditHistory { document.history }
 	/// Positions that follow edits, undo and redo included.
-	public var anchors = AnchorSet()
+	public var anchors: AnchorSet {
+		get { document.anchors }
+		set { document.anchors = newValue }
+	}
+	/// Indentation and tab display of the document.
+	public var format: FormatSettings {
+		get { document.format }
+		set { document.format = newValue }
+	}
 
-	/// Indentation and tab display for this document. The buffer always uses "\n";
-	/// line endings and charset apply when saving.
-	public var format = FormatSettings() {
-		didSet {
-			guard format.tabWidth != oldValue.tabWidth else { return }
-			layoutCache.removeAll()
-			needsDisplay = true
-		}
+	func tabWidthDidChange() {
+		layoutCache.removeAll()
+		needsDisplay = true
 	}
 
 	public let font: NSFont
@@ -85,18 +87,16 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// Header lines of folds, drawn with a placeholder after the text.
 	var foldedHeaders: Set<Int> = []
 
-	/// Syntax colouring; nil for plain text.
 	/// Language of the document: colouring, comments, brackets; nil for plain text.
 	public var language: SyntaxLanguage? {
-		didSet { highlighter = language.map { SyntaxHighlighter(lexer: $0.lexer, lineCount: rope.lineCount) } }
+		get { document.language }
+		set { document.language = newValue }
 	}
+	/// Syntax colouring; nil for plain text.
 	public var highlighter: SyntaxHighlighter? {
-		didSet {
-			needsDisplay = true
-			scheduleBackgroundHighlight()
-		}
+		get { document.highlighter }
+		set { document.highlighter = newValue }
 	}
-	var backgroundHighlightRunning = false
 	private var clipObserver: (any NSObjectProtocol)?
 	/// Builds the right-click menu (localized by the app).
 	public var contextMenuProvider: ((EditorView) -> NSMenu)?
@@ -119,8 +119,13 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// Line numbers, drawn in the scroll view's vertical ruler.
 	public internal(set) weak var gutter: GutterView?
 
-	public init(text: String, font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)) {
-		rope = Rope(text)
+	public convenience init(text: String, font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)) {
+		self.init(document: TextDocument(text: text), font: font)
+	}
+
+	/// An editor of `document`; several editors of one document make a split view.
+	public init(document: TextDocument, font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)) {
+		self.document = document
 		self.font = font
 		ctFont = font as CTFont
 		ascent = ceil(CTFontGetAscent(font))
@@ -136,6 +141,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		clipsToBounds = true // drawing stays inside the view (default is false since macOS 14)
 		setUpCaretLayer()
 		updateTokenColors()
+		document.attach(self)
 	}
 
 	@available(*, unavailable)
@@ -177,23 +183,6 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		clipObserver = NotificationCenter.default.addObserver(forName: NSView.frameDidChangeNotification, object: clip, queue: .main) { [weak self] _ in
 			MainActor.assumeIsolated { self?.updateSize() }
 		}
-	}
-
-	public func setText(_ text: String) {
-		rope = Rope(text)
-		folds = []
-		display = DisplayMap()
-		if let lexer = highlighter?.lexer { highlighter = SyntaxHighlighter(lexer: lexer, lineCount: rope.lineCount) }
-		foldedHeaders = []
-		selections = SelectionSet()
-		history.removeAll()
-		anchors.removeAll()
-		goalXs = nil
-		layoutCache.removeAll()
-		updateSize()
-		needsDisplay = true
-		gutter?.needsDisplay = true
-		setNeedsCaretUpdate()
 	}
 
 	// MARK: Drawing
@@ -476,27 +465,25 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		guard !changes.isEmpty else { return }
 		let before = rope, selectionsBefore = selections
 		apply(changes) { selectionsAfter($0) }
-		history.record(Transaction(changes, on: before, before: selectionsBefore, after: selections,
+		document.history.record(Transaction(changes, on: before, before: selectionsBefore, after: selections,
 		                           kind: kind, time: ProcessInfo.processInfo.systemUptime))
 	}
 
-	/// Applies the edit, sets the selections it produces and repaints as little as possible.
+	/// Applies the edit through the document; every editor of it follows.
 	private func apply(_ changes: ChangeSet, selectionsAfter: (ChangeSet) -> SelectionSet) {
-		guard !changes.isEmpty, let firstChange = changes.changes.first, let lastChange = changes.changes.last else { return }
-		let firstLine = rope.line(containing: firstChange.range.lowerBound)
-		let lastLine = rope.line(containing: lastChange.range.upperBound)
-		let oldLines = rope.lineCount
-		// Without line breaks removed or inserted, every line keeps its number.
-		let sameLines = changes.changes.allSatisfy { c in
-			!c.text.contains(0x0A) && rope.line(containing: c.range.lowerBound) == rope.line(containing: c.range.upperBound)
-		}
-		let editedLines = sameLines ? changes.changes.map { rope.line(containing: $0.range.lowerBound) } : []
-		invalidate(selections)
+		guard !changes.isEmpty else { return }
+		document.apply(changes, from: self, selectionsAfter: selectionsAfter)
+	}
 
-		changes.apply(to: &rope)
-		anchors.apply(changes)
-		let newLastLine = lastLine + rope.lineCount - oldLines
-		let syntaxDirty = highlighter?.edit(firstLine: firstLine, oldLastLine: lastLine, newLastLine: newLastLine, in: rope)
+	/// Before the document changes: old selections are repainted away.
+	func willEdit() {
+		invalidate(selections)
+	}
+
+	/// After the document changed: sets the selections and repaints as little as possible.
+	/// Only the editor that made the edit unfolds around and scrolls to its carets.
+	func didEdit(_ changes: ChangeSet, _ edit: TextDocument.Edit, selections newSelections: SelectionSet, isSource: Bool) {
+		let firstLine = edit.firstLine, lastLine = edit.lastLine, oldLines = edit.oldLines, sameLines = edit.sameLines
 		if !findMatches.isEmpty { findMatches = changes.mapUntouched(findMatches) }
 		var foldsChanged = false
 		if !folds.isEmpty {
@@ -505,16 +492,15 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			folds = mapped
 			if foldsChanged || !sameLines { rebuildDisplay() }
 		}
-		selections = selectionsAfter(changes)
-		if revealSelections() { foldsChanged = true }
+		selections = newSelections
+		if isSource, revealSelections() { foldsChanged = true }
 		goalXs = nil
 		setNeedsCaretUpdate()
-		onChange?()
 		postAccessibilityChange(edited: true)
 
 		if foldsChanged {
 			if sameLines {
-				for line in editedLines { layoutCache[line] = nil }
+				for line in edit.editedLines { layoutCache[line] = nil }
 			} else {
 				layoutCache.shift(from: firstLine, removed: lastLine - firstLine, delta: rope.lineCount - oldLines)
 			}
@@ -522,7 +508,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			needsDisplay = true
 			gutter?.needsDisplay = true
 		} else if sameLines {
-			for line in editedLines {
+			for line in edit.editedLines {
 				layoutCache[line] = nil
 				setNeedsDisplay(lineRect(line))
 			}
@@ -535,15 +521,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			setNeedsDisplay(below)
 			if rope.lineCount != oldLines { gutter?.setNeedsDisplay(fromEditorY: below.minY) }
 		}
-		if let highlighter, highlighter.validUpTo < rope.lineCount - 1 { scheduleBackgroundHighlight(delay: .milliseconds(300)) }
 		// A change of state (an opened comment or string) recolours lines below the edit.
-		if let syntaxDirty, syntaxDirty.upperBound > newLastLine, !foldsChanged {
-			let top = y(ofLine: newLastLine + 1)
+		if let syntaxDirty = edit.syntaxDirty, syntaxDirty.upperBound > edit.newLastLine, !foldsChanged {
+			let top = y(ofLine: edit.newLastLine + 1)
 			let bottom = min(visibleRect.maxY, y(ofLine: min(syntaxDirty.upperBound, rope.lineCount - 1)) + lineHeight)
 			if bottom > top { setNeedsDisplay(NSRect(x: 0, y: top, width: bounds.width, height: bottom - top)) }
 		}
 		invalidate(selections)
-		scrollCaretVisible()
+		if isSource { scrollCaretVisible() }
 	}
 
 	// MARK: Input
@@ -624,10 +609,24 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		}
 	}
 
+	/// Called when the editor gets keyboard focus (the active pane of a split).
+	public var onFocus: ((EditorView) -> Void)?
+
 	public override func becomeFirstResponder() -> Bool {
 		invalidate(selections) // selection colour follows focus
 		setNeedsCaretUpdate()
-		return super.becomeFirstResponder()
+		guard super.becomeFirstResponder() else { return false }
+		onFocus?(self)
+		return true
+	}
+
+	/// Takes selections, folds and scroll position from another editor of the same document
+	/// (a new split pane, or the pane that stays when the other one closes).
+	public func adoptViewState(of other: EditorView) {
+		setFolds(other.folds)
+		setSelections(other.selections)
+		updateSize()
+		scroll(other.visibleRect.origin)
 	}
 
 	public override func resignFirstResponder() -> Bool {
@@ -793,18 +792,18 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	@objc public func undo(_ sender: Any?) {
 		discardMarkedText()
-		guard let step = history.undo() else { return }
+		guard let step = document.history.undo() else { return }
 		for t in step.transactions.reversed() { apply(t.inverse) { _ in t.selectionsBefore } }
 	}
 
 	@objc public func redo(_ sender: Any?) {
 		discardMarkedText()
-		guard let step = history.redo() else { return }
+		guard let step = document.history.redo() else { return }
 		for t in step.transactions { apply(t.changes) { _ in t.selectionsAfter } }
 	}
 
 	/// The next edit starts a new undo step.
-	public func sealUndo() { history.seal() }
+	public func sealUndo() { document.history.seal() }
 
 	private var selectedText: String {
 		selections.all.filter { !$0.isEmpty }.map { rope.string(in: $0.range) }.joined(separator: "\n")

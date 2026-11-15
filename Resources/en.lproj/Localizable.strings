@@ -5,9 +5,6 @@
 "The versions are identical." = "The versions are identical.";
 "Comparison" = "Comparison";
 
-/* MinorIDE/DocumentWindow.swift */
-"Editor" = "Editor";
-
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Cut" = "Cut";
 "Copy" = "Copy";
@@ -77,6 +74,9 @@
 "%d spaces|one" = "%d space";
 "%d spaces|other" = "%d spaces";
 
+/* MinorIDE/EditorSplit.swift */
+"Editor" = "Editor";
+
 /* MinorIDE/FindBar.swift */
 "Match Case" = "Match Case";
 "Whole Word" = "Whole Word";
@@ -143,6 +143,9 @@
 "Tab Width" = "Tab Width";
 "View" = "View";
 "Show Sidebar" = "Show Sidebar";
+"Split Editor Side by Side" = "Split Editor Side by Side";
+"Split Editor Top and Bottom" = "Split Editor Top and Bottom";
+"Close Editor Split" = "Close Editor Split";
 "Code Folding" = "Code Folding";
 "Fold" = "Fold";
 "Unfold" = "Unfold";

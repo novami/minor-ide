@@ -1,11 +1,12 @@
 import AppKit
 import TextEngine
 
-/// Find and replace in one editor. Searches run off the main thread on a snapshot of the
+/// Find and replace in one document; selections go to `editor`, highlights to all its editors. Searches run off the main thread on a snapshot of the
 /// rope; a newer query or edit discards older results.
 @MainActor
 public final class FindController {
-	public let editor: EditorView
+	/// The editor that gets the selected match (the focused pane of a split).
+	public var editor: EditorView
 	public var query = FindQuery(text: "") {
 		didSet { if query != oldValue { refresh() } }
 	}
@@ -13,7 +14,7 @@ public final class FindController {
 	public var preserveCase = false
 	/// Highlights are shown only while the find bar is open.
 	public var showsHighlights = false {
-		didSet { editor.setFindMatches(showsHighlights ? matches : []) }
+		didSet { highlight(showsHighlights ? matches : []) }
 	}
 	/// After a new query the first match at or after this offset gets selected (incremental find).
 	public var origin: Int?
@@ -28,6 +29,10 @@ public final class FindController {
 
 	public init(editor: EditorView) {
 		self.editor = editor
+	}
+
+	private func highlight(_ ranges: [Range<Int>]) {
+		for view in editor.document.views { view.setFindMatches(ranges) }
 	}
 
 	/// Index of the match the primary selection covers.
@@ -57,7 +62,7 @@ public final class FindController {
 				matches = []
 				error = e
 			}
-			if showsHighlights { editor.setFindMatches(matches) }
+			if showsHighlights { highlight(matches) }
 			if let origin {
 				self.origin = nil
 				if let first = matches.isEmpty ? nil : matches[lowerIndex(origin) % matches.count] { select(first) }
