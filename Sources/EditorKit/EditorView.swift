@@ -1,6 +1,7 @@
 import AppKit
 import CoreText
 import QuartzCore
+import Highlight
 import MinorCore
 import TextEngine
 
@@ -33,7 +34,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	public let font: NSFont
 	let ctFont: CTFont
-	let lineHeight: CGFloat
+	public let lineHeight: CGFloat
 	let ascent: CGFloat
 	let gutterWidth: CGFloat
 	let textInset: CGFloat = 8
@@ -60,7 +61,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	private let ascii: AsciiGlyphs
 	private var batchGlyphs: [CGGlyph] = []
 	private var batchPositions: [CGPoint] = []
-	private let textAttributes: [NSAttributedString.Key: Any]
+	let textAttributes: [NSAttributedString.Key: Any]
 
 	/// Number of draw passes, drawn lines and time spent in draw(_:), for benchmarks.
 	public internal(set) var drawCount = 0
@@ -82,6 +83,18 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public internal(set) var display = DisplayMap()
 	/// Header lines of folds, drawn with a placeholder after the text.
 	var foldedHeaders: Set<Int> = []
+
+	/// Syntax colouring; nil for plain text.
+	public var highlighter: SyntaxHighlighter? {
+		didSet {
+			needsDisplay = true
+			scheduleBackgroundHighlight()
+		}
+	}
+	var backgroundHighlightRunning = false
+	var tokenColors: [NSColor?] = []
+	var colorGlyphs: [[CGGlyph]] = []
+	var colorPositions: [[CGPoint]] = []
 
 	/// Find results, sorted; highlighted under the text. They follow edits until the next search.
 	public private(set) var findMatches: [Range<Int>] = []
@@ -110,6 +123,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		wantsLayer = true
 		layerContentsRedrawPolicy = .onSetNeedsDisplay
 		setUpCaretLayer()
+		updateTokenColors()
 	}
 
 	@available(*, unavailable)
@@ -122,6 +136,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public override func viewDidChangeEffectiveAppearance() {
 		super.viewDidChangeEffectiveAppearance()
 		layoutCache.removeAll() // fallback CTLines carry their colour
+		updateTokenColors()
 		needsDisplay = true
 		gutter?.needsDisplay = true
 		setNeedsCaretUpdate()
@@ -138,6 +153,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		rope = Rope(text)
 		folds = []
 		display = DisplayMap()
+		if let lexer = highlighter?.lexer { highlighter = SyntaxHighlighter(lexer: lexer, lineCount: rope.lineCount) }
 		foldedHeaders = []
 		selections = SelectionSet()
 		history.removeAll()
@@ -175,7 +191,12 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			drawnLines += shown.count
 			drawFindMatches(ctx, lines: first...last)
 			drawSelectionBackground(ctx, visible, lines: first...last)
-			drawBatch(ctx, color: textColor, lines: shown) { line in (layout(line), textInset) }
+			if let highlighter {
+				highlighter.prepare(upTo: last, in: rope)
+				drawHighlighted(ctx, lines: shown, highlighter: highlighter, textColor: textColor)
+			} else {
+				drawBatch(ctx, color: textColor, lines: shown) { line in (layout(line), textInset) }
+			}
 			if !foldedHeaders.isEmpty { drawFoldPlaceholders(ctx, lines: shown) }
 		}
 		if !markedText.isEmpty, visible.contains(selections.primary) { drawMarkedText(ctx, at: caret) }
@@ -444,6 +465,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 		changes.apply(to: &rope)
 		anchors.apply(changes)
+		let newLastLine = lastLine + rope.lineCount - oldLines
+		let syntaxDirty = highlighter?.edit(firstLine: firstLine, oldLastLine: lastLine, newLastLine: newLastLine, in: rope)
 		if !findMatches.isEmpty { findMatches = changes.mapUntouched(findMatches) }
 		var foldsChanged = false
 		if !folds.isEmpty {
@@ -481,6 +504,13 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			let below = NSRect(x: 0, y: top, width: bounds.width, height: max(0, visible.maxY - top))
 			setNeedsDisplay(below)
 			if rope.lineCount != oldLines { gutter?.setNeedsDisplay(fromEditorY: below.minY) }
+		}
+		if let highlighter, highlighter.validUpTo < rope.lineCount - 1 { scheduleBackgroundHighlight(delay: .milliseconds(300)) }
+		// A change of state (an opened comment or string) recolours lines below the edit.
+		if let syntaxDirty, syntaxDirty.upperBound > newLastLine, !foldsChanged {
+			let top = y(ofLine: newLastLine + 1)
+			let bottom = min(visibleRect.maxY, y(ofLine: min(syntaxDirty.upperBound, rope.lineCount - 1)) + lineHeight)
+			if bottom > top { setNeedsDisplay(NSRect(x: 0, y: top, width: bounds.width, height: bottom - top)) }
 		}
 		invalidate(selections)
 		scrollCaretVisible()

@@ -1,0 +1,45 @@
+1:1 comment // Package demo shows the lexer.
+2:1 keyword package
+4:1 keyword import
+5:2 string "fmt"
+6:2 string "strings"
+9:1 comment /* Block comment
+10:1 comment    over two lines */
+11:1 keyword type
+11:6 type Point
+11:12 keyword struct
+12:7 type float64
+12:15 string `json:"x"`
+15:1 keyword func
+15:17 function Scale
+15:25 type float64
+16:2 keyword return
+16:31 number 1.5e3
+19:1 keyword func
+19:6 function Map
+19:12 type any
+19:28 keyword func
+20:7 string "tab
+20:11 escape \t
+20:13 escape \"
+20:15 string quote
+20:20 escape \"
+20:22 string  žluť"
+21:7 string 'x'
+22:9 string `first
+23:1 string second`
+24:7 number 0x1F
+24:14 number 07
+24:19 number 1_000
+24:27 number 2i
+25:2 keyword if
+25:11 constant nil
+25:18 function len
+25:29 number 0
+25:34 constant true
+26:7 function Println
+26:23 function ToUpper
+26:46 constant iota
+28:2 keyword return
+28:12 comment /* inline */
+28:25 comment // trailing

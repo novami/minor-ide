@@ -1,5 +1,6 @@
 import AppKit
 import EditorKit
+import Highlight
 import MinorCore
 
 /// One editor window bound to a file (or untitled). Holds what is needed to save the file
@@ -76,6 +77,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		var format = resolved.settings
 		format.charset = loaded.charset
 		let doc = DocumentWindow(text: loaded.text, url: url, format: format)
+		if let lexer = Languages.lexer(forPath: url.path) {
+			doc.editor.highlighter = SyntaxHighlighter(lexer: lexer, lineCount: doc.editor.rope.lineCount)
+		}
 		doc.resolved = resolved
 		doc.originalLines = loaded.originalLines
 		doc.mixedLineEndings = loaded.detected.mixedLineEndings

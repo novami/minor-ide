@@ -1,5 +1,6 @@
 import AppKit
 import EditorKit
+import Highlight
 import QuartzCore
 import TextEngine
 
@@ -96,6 +97,50 @@ enum Bench {
 
 		keyToFrame(editor)
 
+		// Syntax colouring (the sample is Go): typing and jumping with tokens per drawn line.
+		editor.highlighter = SyntaxHighlighter(lexer: GoLexer(), lineCount: editor.rope.lineCount)
+		display()
+		// The rest of the file is lexed in the background; jumps measured after it finished.
+		t = CACurrentMediaTime()
+		let lexed = Date(timeIntervalSinceNow: 5)
+		while let h = editor.highlighter, h.validUpTo < editor.rope.lineCount - 1, Date() < lexed {
+			RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.005))
+		}
+		report("background lex go", [CACurrentMediaTime() - t])
+		samples = []
+		for _ in 0..<1000 {
+			t = CACurrentMediaTime()
+			editor.insertText("x", replacementRange: NSRange(location: NSNotFound, length: 0))
+			display()
+			samples.append(CACurrentMediaTime() - t)
+		}
+		report("type char go", samples)
+		samples = []
+		for _ in 0..<100 {
+			t = CACurrentMediaTime()
+			editor.insertText("\"", replacementRange: NSRange(location: NSNotFound, length: 0))
+			display()
+			samples.append(CACurrentMediaTime() - t)
+			editor.doCommand(by: #selector(NSResponder.deleteBackward(_:)))
+			display()
+		}
+		report("type quote go", samples)
+		samples = []
+		var jump = UInt64(7)
+		for _ in 0..<200 {
+			jump = jump &* 6364136223846793005 &+ 1442695040888963407
+			let line = Int(jump >> 33) % editor.rope.lineCount
+			t = CACurrentMediaTime()
+			editor.scroll(NSPoint(x: 0, y: CGFloat(line) * editor.lineHeight))
+			display()
+			samples.append(CACurrentMediaTime() - t)
+		}
+		report("scroll jump go", samples)
+		t = CACurrentMediaTime()
+		SyntaxHighlighter(lexer: GoLexer(), lineCount: editor.rope.lineCount).prepare(upTo: editor.rope.lineCount - 1, in: editor.rope)
+		report("lex 10 MB go", [CACurrentMediaTime() - t])
+		editor.highlighter = nil
+
 		// Raw rope throughput, independent of drawing.
 		var rope = Rope(text)
 		var rng = UInt64(1)
@@ -172,7 +217,7 @@ enum Bench {
 	/// p99 (8 ms) and rope throughput (4 s) are checked there.
 	static func checkBudgets() -> Bool {
 		let ci = ProcessInfo.processInfo.environment["MINORIDE_BENCH_PROFILE"] == "ci"
-		let frames = ["type char", "type newline", "backspace", "scroll 40px", "scroll jump"]
+		let frames = ["type char", "type newline", "backspace", "scroll 40px", "scroll jump", "type char go", "type quote go", "scroll jump go"]
 		var checks: [(String, Double?, Double)] = [] // name, measured, limit (seconds)
 		for name in frames {
 			checks.append((name + " p99", p99[name], 0.008))

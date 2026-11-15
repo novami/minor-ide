@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1c/3)
+**Poslední aktualizace:** 2026-11-15 (1d/1)
 
 ## Kde jsme
 
@@ -53,7 +53,11 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1c je hotová** kromě částí odložených za 1d (komentáře, párování a obalování závorkami, chytré odsazení, folding podle závorek).
 
-**Další: fáze 1d — lexery a zvýraznění** podle `docs/PLAN.md` (stavový automat se stavem na začátku řádku, Go, PHP, Latte, NEON, SQL, JSON; témata světlé/tmavé v JSON; golden testy). Po 1d jazykové příkazy z 1c.
+**Fáze 1d, krok 1 hotový** (2026-11-15): nový modul `Sources/Highlight/` (bez AppKitu): `Token.swift` (druhy tokenů, `LexState` s režimem, zásobníkem a textem, protokol `Lexer` nad `ArraySlice<UInt8>`, `WordSet` bez alokací, `LineScanner`), `SyntaxHighlighter.swift` (stav na začátku řádku v `GapArray`, přelexování od editace do shody stavů, limit 2000 řádků, líné dopočítání, dolexování na pozadí s generací), `Theme.swift` (světlé a tmavé téma jako JSON), `Languages.swift` (lexer podle přípony), lexery Go a JSON (s komentáři). Editor barví po druzích tokenů jedním voláním na barvu (`EditorKit/SyntaxDrawing.swift`), fallback řádky (emoji) přes obarvený `CTLine`. Golden testy `Tests/HighlightTests/Golden/` (`MINORIDE_UPDATE_GOLDEN=1 make test` přepíše očekávané výstupy), `SyntaxHighlighterTests` (náhodné editace proti lexování od začátku). Bench: psaní v Go p99 0,19 ms, skok p99 0,79 ms, dolexování 10 MB na pozadí 97 ms, celý lex 129 ms; BUDGET OK.
+
+**Další: fáze 1d, krok 2 — lexery PHP (s HTML, heredoc/nowdoc), SQL, NEON**, pak krok 3 Latte (HTML/JS/CSS uvnitř) a ověření rozpočtu přelexování (< 1 ms na řádek).
+
+Známé mezery po kroku 1d/1: téma se nedá změnit v nastavení (jen vestavěné světlé/tmavé); tokeny viditelných řádků se lexují při každém kreslení (bez cache, v rozpočtu); po editaci s limitem 2000 řádků se zbytek dopočítá na pozadí až po 300 ms; Uložit jako s jinou příponou nezmění jazyk.
 
 Známé mezery po kroku 1c/3: Enter na konci sbalené hlavičky posune sbalení pod nový řádek (hlavičkou se stane nový řádek); přesun a duplikace řádku se sbalenou hlavičkou berou jen hlavičku (sbalení se rozbalí); šipky v gutteru se kreslí u všech řádků, které jdou sbalit (ne až při najetí myší); sbalení se neukládají; ruční kontrola kliknutí zbývá.
 

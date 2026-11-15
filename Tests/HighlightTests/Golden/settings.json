@@ -1,0 +1,9 @@
+{
+	// Editor settings
+	"editor.tabSize": 4,
+	"files.exclude": ["vendor", "temp"],
+	"ratio": -1.5e-3,
+	"enabled": true, "missing": null,
+	/* block */ "escaped": "a\"b\\n",
+	"bad": nope
+}

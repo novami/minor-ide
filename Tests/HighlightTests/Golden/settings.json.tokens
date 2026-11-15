@@ -1,0 +1,21 @@
+2:2 comment // Editor settings
+3:2 property "editor.tabSize"
+3:20 number 4
+4:2 property "files.exclude"
+4:20 string "vendor"
+4:30 string "temp"
+5:2 property "ratio"
+5:11 number -1.5e-3
+6:2 property "enabled"
+6:13 constant true
+6:19 property "missing"
+6:30 constant null
+7:2 comment /* block */
+7:14 property "escaped"
+7:25 string "a
+7:27 escape \"
+7:29 string b
+7:30 escape \\
+7:32 string n"
+8:2 property "bad"
+8:9 invalid nope

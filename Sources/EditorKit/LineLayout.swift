@@ -1,3 +1,4 @@
+import AppKit
 import CoreText
 import Foundation
 
@@ -12,6 +13,8 @@ struct LineLayout {
 	/// Fallback path: the typeset line and the units, so offsets are computed only when asked.
 	let ctLine: CTLine?
 	private let expandedIndex: [Int] // fallback: string index in the tab-expanded text per unit boundary
+	/// Fallback: the tab-expanded text, to typeset again with token colours.
+	private var expandedText: String?
 	let width: CGFloat
 
 	var unitCount: Int { ctLine == nil ? unitX.count - 1 : expandedIndex.count - 1 }
@@ -60,6 +63,7 @@ struct LineLayout {
 		let line = CTLineCreateWithAttributedString(NSAttributedString(
 			string: String(utf16CodeUnits: expanded, count: expanded.count), attributes: attributes))
 		(unitX, glyphs, positions, ctLine, expandedIndex) = ([], [], [], line, map)
+		expandedText = String(utf16CodeUnits: expanded, count: expanded.count)
 		width = CTLineGetTypographicBounds(line, nil, nil, nil)
 	}
 
@@ -114,6 +118,17 @@ struct LineLayout {
 	}
 
 	/// Draws with the baseline at `origin` in a flipped (y-down) view.
+	/// Fallback line typeset again with colours for UTF-16 unit ranges (syntax colouring).
+	func colored(_ runs: [(Range<Int>, NSColor)], attributes: [NSAttributedString.Key: Any]) -> CTLine? {
+		guard let expandedText else { return nil }
+		let s = NSMutableAttributedString(string: expandedText, attributes: attributes)
+		for (r, color) in runs {
+			let a = expandedIndex[min(r.lowerBound, unitCount)], b = expandedIndex[min(r.upperBound, unitCount)]
+			if a < b { s.addAttribute(.foregroundColor, value: color, range: NSRange(location: a, length: b - a)) }
+		}
+		return CTLineCreateWithAttributedString(s)
+	}
+
 	func draw(in ctx: CGContext, font: CTFont, at origin: CGPoint) {
 		guard ctLine != nil || !glyphs.isEmpty else { return }
 		LineLayout.withBaseline(ctx, origin) {
