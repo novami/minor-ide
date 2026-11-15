@@ -479,6 +479,10 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	}
 
 	private func write(_ doc: FileDocument, to url: URL) -> Bool {
+		if let char = TextFile.firstUnencodable(doc.text.rope.string, charset: doc.format.charset) {
+			askToSaveAsUTF8(doc, to: url, char: char)
+			return false // the sheet saves (or not) when answered
+		}
 		do {
 			try doc.write(to: url)
 			NSDocumentController.shared.noteNewRecentDocumentURL(url)
@@ -486,6 +490,24 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		} catch {
 			NSAlert(error: error).beginSheetModal(for: window)
 			return false
+		}
+	}
+
+	/// The text has characters the file's charset cannot store: saving would turn them into
+	/// "?", so offer UTF-8 instead.
+	private func askToSaveAsUTF8(_ doc: FileDocument, to url: URL, char: Character) {
+		let alert = NSAlert()
+		let charset = doc.format.charset.rawValue.uppercased()
+		alert.messageText = L("“%@” contains characters that %@ can’t store, such as “%@”.", url.lastPathComponent, charset, String(char))
+		alert.informativeText = L("Saving in %@ would replace them with question marks. You can save the file in UTF-8 instead, or remove those characters.", charset)
+		alert.addButton(withTitle: L("Save as UTF-8"))
+		alert.addButton(withTitle: L("Cancel"))
+		alert.beginSheetModal(for: window) { [weak self] response in
+			MainActor.assumeIsolated {
+				guard response == .alertFirstButtonReturn, let self else { return }
+				doc.format.charset = .utf8
+				_ = self.write(doc, to: url)
+			}
 		}
 	}
 

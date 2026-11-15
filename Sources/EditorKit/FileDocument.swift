@@ -263,7 +263,8 @@ public final class FileDocument {
 	/// and while the file changed on disk, which would overwrite someone else's changes.
 	@discardableResult
 	public func autoSave() -> Bool {
-		guard isEdited, diskNotice == nil, let url else { return false }
+		guard isEdited, diskNotice == nil, let url,
+		      TextFile.firstUnencodable(text.rope.string, charset: format.charset) == nil else { return false }
 		return (try? write(to: url)) != nil
 	}
 

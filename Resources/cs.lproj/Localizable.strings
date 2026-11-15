@@ -92,6 +92,9 @@
 "Replace" = "Nahradit";
 
 /* MinorIDE/DocumentWindow.swift */
+"“%@” contains characters that %@ can’t store, such as “%@”." = "„%@“ obsahuje znaky, které kódování %@ neumí uložit, například „%@“.";
+"Saving in %@ would replace them with question marks. You can save the file in UTF-8 instead, or remove those characters." = "Uložením v %@ by se nahradily otazníky. Soubor můžete místo toho uložit v UTF-8, nebo tyto znaky odstranit.";
+"Save as UTF-8" = "Uložit v UTF-8";
 "Tabs (%d)" = "tabulátory: %d";
 "Mixed → %@" = "smíšené → %@";
 "Do you want to save the changes made to the document “%@”?" = "Chcete uložit změny provedené v dokumentu „%@“?";

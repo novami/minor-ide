@@ -69,6 +69,14 @@ public enum TextFile {
 		return LoadedText(text: text, charset: charset, detected: detected, originalLines: lines)
 	}
 
+	/// The first character of `text` that `charset` cannot store (saving would write "?"),
+	/// or nil when it can store all of them.
+	public static func firstUnencodable(_ text: String, charset: Charset) -> Character? {
+		let encoding = charset.encoding
+		guard !text.canBeConverted(to: encoding) else { return nil }
+		return text.first { !String($0).canBeConverted(to: encoding) }
+	}
+
 	/// Encodes buffer text ("\n" only) for writing with the given settings.
 	public static func save(_ text: String, settings: FormatSettings, originalLines: Set<Substring> = []) -> Data {
 		var lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -85,7 +93,7 @@ public enum TextFile {
 		if settings.charset == .utf8bom { data.append(contentsOf: [0xEF, 0xBB, 0xBF]) }
 		if settings.charset == .utf16be { data.append(contentsOf: [0xFE, 0xFF]) }
 		if settings.charset == .utf16le { data.append(contentsOf: [0xFF, 0xFE]) }
-		// Characters the target charset cannot represent are written lossily; the UI warns before save (phase 1e).
+		// Characters the charset cannot store become "?"; the app asks first (firstUnencodable).
 		data.append(out.data(using: settings.charset.encoding, allowLossyConversion: true) ?? Data(out.utf8))
 		return data
 	}

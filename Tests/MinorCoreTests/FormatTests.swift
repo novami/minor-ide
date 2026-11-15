@@ -21,6 +21,12 @@ struct FormatTests {
 		#expect(throws: SettingsFile.UpdateError.self) { try SettingsFile.updating(Data("{oops".utf8), section: nil, key: "a", value: nil) }
 	}
 
+	@Test func findsCharactersTheCharsetCannotStore() {
+		#expect(TextFile.firstUnencodable("Příliš žluťoučký", charset: .windows1250) == nil)
+		#expect(TextFile.firstUnencodable("cena 5 € a → šipka", charset: .iso88592) == "€")
+		#expect(TextFile.firstUnencodable("emoji 🙂", charset: .utf8) == nil)
+	}
+
 	@Test func binaryFilesHaveNulBytes() {
 		#expect(TextFile.looksBinary(Data([0x89, 0x50, 0x4E, 0x47, 0x00, 0x01])))
 		#expect(!TextFile.looksBinary(Data("<?php echo 1;".utf8)))

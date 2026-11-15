@@ -103,7 +103,9 @@ Známé mezery po Local History: kopie se dělají i u citlivých souborů (`.en
 
 **Automatické ukládání** (2026-11-15; výchozí vypnuté, protože plán říká „zapínatelné“ — případně potvrdit s uživatelem): `settings.json` `"auto_save": true`, přepínač v Nastavení › Obecné. Okno, které přestane být klíčové (jiný tab, okno), uloží své soubory, deaktivace aplikace uloží všechny (`FileDocument.autoSave`: ne bez názvu, ne se změnou na disku, ne okno s otevřeným sheetem). Test `FileDocumentTests.autoSaveSkipsUntitledAndFilesChangedOnDisk`. Nápověda doplněna. Ruční kontrola zbývá (zvlášť: dotaz na uložení při zavírání nesmí předběhnout).
 
-**Další:** stavový řádek s přepínači (konce řádků, odsazení, kódování, pozice kurzoru), varování před znaky, které kódování neumí, obnova sezení a obnova po pádu.
+**Varování před znaky, které kódování neumí** (2026-11-15): `TextFile.firstUnencodable`; uložení souboru v kódování, které text neumí uložit, ukáže sheet „Uložit v UTF-8 / Zrušit“ (dřív se tiše zapsaly otazníky); automatické ukládání takový soubor vynechá. Test `FormatTests.findsCharactersTheCharsetCannotStore`. Mezera: při zavírání okna s volbou Uložit se okno nezavře, dokud uživatel neodpoví na sheet a nezavře znovu.
+
+**Další:** obnova sezení a obnova po pádu. **Čeká na rozhodnutí uživatele:** stavový řádek z plánu (konce řádků, odsazení, kódování, pozice kurzoru) vs. jeho rozhodnutí mít formát v podtitulu okna — zdvojil by informaci.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 

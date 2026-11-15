@@ -91,6 +91,9 @@
 "Replace" = "Replace";
 
 /* MinorIDE/DocumentWindow.swift */
+"“%@” contains characters that %@ can’t store, such as “%@”." = "“%@” contains characters that %@ can’t store, such as “%@”.";
+"Saving in %@ would replace them with question marks. You can save the file in UTF-8 instead, or remove those characters." = "Saving in %@ would replace them with question marks. You can save the file in UTF-8 instead, or remove those characters.";
+"Save as UTF-8" = "Save as UTF-8";
 "Tabs (%d)" = "Tabs (%d)";
 "Mixed → %@" = "Mixed → %@";
 "Do you want to save the changes made to the document “%@”?" = "Do you want to save the changes made to the document “%@”?";
