@@ -19,6 +19,20 @@ public struct LoadedText: Sendable {
 }
 
 public enum TextFile {
+	/// Large (> 5 MB) or minified (a line over 10 000 bytes) files open without syntax
+	/// colouring and analysis (plan, phase 1e).
+	public static func needsSimplifiedMode(_ data: Data, maxBytes: Int = 5 << 20, maxLine: Int = 10_000) -> Bool {
+		if data.count > maxBytes { return true }
+		return data.withUnsafeBytes { (buf: UnsafeRawBufferPointer) -> Bool in
+			var lineStart = 0
+			for (i, b) in buf.enumerated() where b == 0x0A {
+				if i - lineStart > maxLine { return true }
+				lineStart = i + 1
+			}
+			return buf.count - lineStart > maxLine
+		}
+	}
+
 	/// Decodes bytes: BOMs first, then UTF-8, then the hint (e.g. windows-1250 for legacy projects).
 	public static func load(_ data: Data, fallback: Charset = .windows1250) -> LoadedText {
 		var charset = Charset.utf8

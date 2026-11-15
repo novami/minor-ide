@@ -72,12 +72,14 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 	/// Opens a file: decodes it, keeps its line endings, and resolves indentation from
 	/// language defaults, user and project settings, .editorconfig and the file itself.
 	static func open(_ url: URL) throws -> DocumentWindow {
-		let loaded = TextFile.load(try Data(contentsOf: url))
+		let data = try Data(contentsOf: url)
+		let loaded = TextFile.load(data)
 		let resolved = Self.resolve(path: url.path, detected: loaded.detected)
 		var format = resolved.settings
 		format.charset = loaded.charset
 		let doc = DocumentWindow(text: loaded.text, url: url, format: format)
-		doc.editor.language = Languages.language(forPath: url.path)
+		// Large and minified files open without colouring (plan: simplified mode).
+		doc.editor.language = TextFile.needsSimplifiedMode(data) ? nil : Languages.language(forPath: url.path)
 		doc.resolved = resolved
 		doc.originalLines = loaded.originalLines
 		doc.mixedLineEndings = loaded.detected.mixedLineEndings

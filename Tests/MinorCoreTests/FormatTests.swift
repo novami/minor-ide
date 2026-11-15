@@ -8,6 +8,12 @@ struct FormatTests {
 		FormatResolver.resolve(path: path, user: user, project: project, editorConfig: editorConfig, detected: detected).settings
 	}
 
+	@Test func simplifiedModeForLargeOrMinifiedFiles() {
+		#expect(!TextFile.needsSimplifiedMode(Data("a\nb".utf8)))
+		#expect(TextFile.needsSimplifiedMode(Data(("x\n" + String(repeating: "y", count: 11)).utf8), maxLine: 10))
+		#expect(TextFile.needsSimplifiedMode(Data(String(repeating: "z", count: 20).utf8), maxBytes: 10))
+	}
+
 	@Test func standardDefaults() {
 		let php = resolve("/p/src/User.php")
 		#expect(php.indentStyle == .space && php.indentSize == 4 && php.lineEnding == .lf)
