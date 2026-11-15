@@ -66,6 +66,10 @@
 "%d matches|few" = "%d výskyty";
 "%d matches|other" = "%d výskytů";
 
+/* MinorIDE/HexWindow.swift */
+"Showing the first 1 MB of %@." = "Zobrazen je první 1 MB z %@.";
+"Hex View" = "Hexadecimální náhled";
+
 /* MinorIDE/MainMenu.swift */
 "About MinorIDE" = "O aplikaci MinorIDE";
 "Settings…" = "Nastavení…";
@@ -126,5 +130,6 @@
 
 /* MinorIDE/main.swift */
 "“%@” is not a text file." = "„%@“ není textový soubor.";
-"MinorIDE opens text files only. You can preview it in the Finder with Quick Look." = "MinorIDE otevírá jen textové soubory. Náhled ukáže Finder přes Quick Look.";
+"MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look." = "MinorIDE upravuje jen textové soubory. Můžete si prohlédnout jeho bajty nebo náhled ve Finderu přes Quick Look.";
+"Show Hex" = "Zobrazit hex";
 "Show in Finder" = "Ukázat ve Finderu";

@@ -1,0 +1,34 @@
+import AppKit
+import MinorCore
+
+/// Read-only hex view of a binary file (first 1 MB).
+@MainActor
+final class HexWindow: NSObject, NSWindowDelegate {
+	let window: NSWindow
+	var onClose: (() -> Void)?
+
+	init(url: URL) {
+		window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 700, height: 600),
+		                  styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
+		let scroll = NSTextView.scrollableTextView()
+		let text = scroll.documentView as! NSTextView
+		text.isEditable = false
+		text.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+		let data = (try? Data(contentsOf: url, options: .alwaysMapped)) ?? Data()
+		var dump = HexDump.format(data)
+		if data.count > 1 << 20 { dump += "\n" + L("Showing the first 1 MB of %@.", ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file)) }
+		text.string = dump
+		text.setAccessibilityLabel(L("Hex View"))
+		window.contentView = scroll
+		window.title = url.lastPathComponent
+		window.subtitle = L("Hex View")
+		window.representedURL = url
+		window.isReleasedWhenClosed = false
+		super.init()
+		window.delegate = self
+		window.center()
+		window.makeKeyAndOrderFront(nil)
+	}
+
+	func windowWillClose(_ notification: Notification) { onClose?() }
+}

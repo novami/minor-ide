@@ -147,3 +147,14 @@ struct FormatTests {
 		#expect((try fm.attributesOfItem(atPath: script.path)[.posixPermissions] as? Int) == 0o755)
 	}
 }
+
+struct HexDumpTests {
+	@Test func rowsHaveOffsetHexAndASCII() {
+		let dump = HexDump.format(Data([0x41, 0x00, 0x7F] + Array(repeating: 0x62, count: 14)))
+		let lines = dump.split(separator: "\n")
+		#expect(lines.count == 2)
+		#expect(lines[0] == "00000000  41 00 7f 62 62 62 62 62  62 62 62 62 62 62 62 62  |A..bbbbbbbbbbbbb|")
+		#expect(lines[1].hasPrefix("00000010  62 "))
+		#expect(lines[1].hasSuffix("|b|"))
+	}
+}

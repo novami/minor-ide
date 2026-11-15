@@ -103,20 +103,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	private func refuseBinary(_ url: URL) {
 		let alert = NSAlert()
 		alert.messageText = L("“%@” is not a text file.", url.lastPathComponent)
-		alert.informativeText = L("MinorIDE opens text files only. You can preview it in the Finder with Quick Look.")
-		alert.addButton(withTitle: L("Show in Finder"))
+		alert.informativeText = L("MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look.")
+		alert.addButton(withTitle: L("Show Hex"))
 		alert.addButton(withTitle: L("Cancel"))
-		let reveal = { NSWorkspace.shared.activateFileViewerSelecting([url]) }
-		if let window = NSApp.keyWindow {
-			alert.beginSheetModal(for: window) { response in
-				if response == .alertFirstButtonReturn { MainActor.assumeIsolated { reveal() } }
+		alert.addButton(withTitle: L("Show in Finder"))
+		let respond = { [weak self] (response: NSApplication.ModalResponse) in
+			switch response {
+			case .alertFirstButtonReturn: self?.showHex(url)
+			case .alertThirdButtonReturn: NSWorkspace.shared.activateFileViewerSelecting([url])
+			default: break
 			}
-		} else if alert.runModal() == .alertFirstButtonReturn {
-			reveal()
+		}
+		if let window = NSApp.keyWindow {
+			alert.beginSheetModal(for: window) { response in MainActor.assumeIsolated { respond(response) } }
+		} else {
+			respond(alert.runModal())
 		}
 	}
 
+	private var hexWindows: [HexWindow] = []
+
+	private func showHex(_ url: URL) {
+		let hex = HexWindow(url: url)
+		hex.onClose = { [weak self, weak hex] in self?.hexWindows.removeAll { $0 === hex } }
+		hexWindows.append(hex)
+	}
+
 	private var projects: [Project] = []
+	/// Folders of open files outside projects, watched for changes on disk.
+	private var looseWatcher: FileWatcher?
+
+	private func watchLooseFiles() {
+		looseWatcher?.stop()
+		let folders = Set(documents.filter { $0.project == nil }.compactMap { $0.url?.deletingLastPathComponent().path })
+		looseWatcher = FileWatcher(paths: Array(folders)) { [weak self] paths in
+			let changed = Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
+			self?.documents.filter { $0.project == nil && ($0.url.map { changed.contains($0.standardizedFileURL.path) } ?? false) }.forEach { $0.checkDisk() }
+		}
+	}
 	/// Files of closed windows, newest last (File › Reopen Closed Tab).
 	private var closedFiles: [URL] = []
 
@@ -167,6 +191,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		documents.append(doc)
 		doc.show(after: previous)
 		observeClose(doc)
+		if doc.project == nil && doc.url != nil { watchLooseFiles() }
 	}
 
 	private func observeClose(_ doc: DocumentWindow) {
@@ -176,6 +201,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 				let project = doc?.project
 				if let url = doc?.url { self.closedFiles.append(url) }
 				self.documents.removeAll { $0 === doc }
+				if project == nil { self.watchLooseFiles() }
 				// The last window of a project closes the project (stops watching its files).
 				if let project, !self.documents.contains(where: { $0.project === project }) {
 					project.close()
@@ -266,9 +292,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		if let url = sender.representedObject as? URL { open(url) }
 	}
 
-	@objc func saveDocument(_ sender: Any?) { current?.save() }
+	@objc func saveDocument(_ sender: Any?) {
+		let wasUntitled = current?.url == nil
+		if current?.save() == true, wasUntitled { watchLooseFiles() }
+	}
 
-	@objc func saveDocumentAs(_ sender: Any?) { current?.saveAs() }
+	@objc func saveDocumentAs(_ sender: Any?) {
+		if current?.saveAs() == true { watchLooseFiles() }
+	}
 
 	@objc func setLineEnding(_ sender: NSMenuItem) {
 		if let eol = sender.representedObject as? String, let value = LineEnding(rawValue: eol) {

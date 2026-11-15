@@ -1,5 +1,4 @@
 import AppKit
-import CoreServices
 import MinorCore
 
 /// An open folder: the file tree shared by the project's tabs, which folders are expanded,
@@ -13,7 +12,7 @@ final class Project {
 	var onChange: [(FileNode) -> Void] = []
 	/// Called with every changed path (open windows compare their files with the disk).
 	var onFiles: (([String]) -> Void)?
-	private var stream: FSEventStreamRef?
+	private var watcher: FileWatcher?
 
 	init(root url: URL) {
 		root = FileNode(url: url, isDirectory: true)
@@ -44,27 +43,12 @@ final class Project {
 	}
 
 	private func watch() {
-		var context = FSEventStreamContext(version: 0, info: Unmanaged.passUnretained(self).toOpaque(), retain: nil, release: nil, copyDescription: nil)
-		let callback: FSEventStreamCallback = { _, info, count, paths, _, _ in
-			guard let info else { return }
-			let project = Unmanaged<Project>.fromOpaque(info).takeUnretainedValue()
-			let list = (Unmanaged<CFArray>.fromOpaque(paths).takeUnretainedValue() as? [String]) ?? []
-			MainActor.assumeIsolated { project.changed(Array(list.prefix(count))) }
-		}
-		let flags = UInt32(kFSEventStreamCreateFlagUseCFTypes | kFSEventStreamCreateFlagFileEvents | kFSEventStreamCreateFlagNoDefer)
-		guard let stream = FSEventStreamCreate(nil, callback, &context, [url.path] as CFArray,
-		                                       FSEventStreamEventId(kFSEventStreamEventIdSinceNow), 0.3, flags) else { return }
-		FSEventStreamSetDispatchQueue(stream, .main)
-		FSEventStreamStart(stream)
-		self.stream = stream
+		watcher = FileWatcher(paths: [url.path]) { [weak self] paths in self?.changed(paths) }
 	}
 
 	/// Stops the watch; the project must not be used for events afterwards.
 	func close() {
-		guard let stream else { return }
-		FSEventStreamStop(stream)
-		FSEventStreamInvalidate(stream)
-		FSEventStreamRelease(stream)
-		self.stream = nil
+		watcher?.stop()
+		watcher = nil
 	}
 }
