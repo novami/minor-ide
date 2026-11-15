@@ -12,7 +12,7 @@ enum MainMenu {
 		main.add(submenu: "MinorIDE") { m in
 			m.item(L("About MinorIDE"), #selector(AppDelegate.showAbout(_:)), target: target)
 			m.addItem(.separator())
-			m.item(L("Settings…"), #selector(AppDelegate.openUserSettings(_:)), ",", target: target)
+			m.item(L("Settings…"), #selector(AppDelegate.showSettings(_:)), ",", target: target)
 			m.addItem(.separator())
 			let services = m.item(L("Services"), nil)
 			services.submenu = NSMenu()

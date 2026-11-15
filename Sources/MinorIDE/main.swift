@@ -12,6 +12,7 @@ import MinorCore
 //        MINORIDE_FOLD=<line> with --snapshot folds the region headed by that line
 //        MINORIDE_SPLIT=right|down with --snapshot splits the editor and prints the pane frames
 //        MINORIDE_WELCOME=1 with --snapshot saves the welcome window and prints its frames
+//        MINORIDE_SETTINGS=<tab> with --snapshot saves that Settings tab (0 General, 1 Formatting)
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
@@ -54,6 +55,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		if args.first == "--snapshot", args.count >= 2, ProcessInfo.processInfo.environment["MINORIDE_WELCOME"] != nil {
 			showWelcome(nil)
 			WelcomeWindow.shared.snapshot(to: args[args.startIndex + 1])
+			NSApp.terminate(nil)
+			return
+		}
+		if args.first == "--snapshot", args.count >= 2, let tab = ProcessInfo.processInfo.environment["MINORIDE_SETTINGS"].flatMap(Int.init) {
+			SettingsWindow.shared.snapshot(tab: tab, to: args[args.startIndex + 1])
 			NSApp.terminate(nil)
 			return
 		}
@@ -395,8 +401,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	@objc func setTabWidth(_ sender: NSMenuItem) { current?.setTabWidth(sender.tag) }
 
-	/// Opens the user settings file, creating a template on first use. A Settings window
-	/// over the same file replaces this in phase 1e.
+	@objc func showSettings(_ sender: Any?) { SettingsWindow.shared.show() }
+
+	/// Opens the user settings file, creating a template on first use (Settings window).
 	@objc func openUserSettings(_ sender: Any?) {
 		let url = SettingsFile.userURL
 		if !FileManager.default.fileExists(atPath: url.path) {

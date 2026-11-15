@@ -8,6 +8,19 @@ struct FormatTests {
 		FormatResolver.resolve(path: path, user: user, project: project, editorConfig: editorConfig, detected: detected).settings
 	}
 
+	@Test func settingsUpdateKeepsOtherKeys() throws {
+		let start = Data(#"{"detect_indent": true, "other": [1], "format": {"go": {"tab_width": 8}}}"#.utf8)
+		var data = try SettingsFile.updating(start, section: "php", key: "preset", value: .string("nette"))
+		data = try SettingsFile.updating(data, section: "go", key: "tab_width", value: nil)
+		data = try SettingsFile.updating(data, section: nil, key: "detect_indent", value: .bool(false))
+		let file = try SettingsFile(json: data)
+		#expect(file.format == ["php": ["preset": "nette"]])
+		#expect(file.detectIndent == false)
+		#expect(String(decoding: data, as: UTF8.self).contains(#""other" : ["#))
+		#expect(String(decoding: try SettingsFile.updating(nil, section: "*", key: "tab_width", value: .number(4)), as: UTF8.self).contains(#""tab_width" : 4"#))
+		#expect(throws: SettingsFile.UpdateError.self) { try SettingsFile.updating(Data("{oops".utf8), section: nil, key: "a", value: nil) }
+	}
+
 	@Test func binaryFilesHaveNulBytes() {
 		#expect(TextFile.looksBinary(Data([0x89, 0x50, 0x4E, 0x47, 0x00, 0x01])))
 		#expect(!TextFile.looksBinary(Data("<?php echo 1;".utf8)))

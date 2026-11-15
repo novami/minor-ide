@@ -91,7 +91,13 @@ Známé mezery po kroku 1e/4b: `LatencyMonitor` sleduje jen první část; ručn
 
 **Uvítací okno** (2026-11-15): `WelcomeWindow.swift` — při startu bez souboru k otevření a Okno › Vítejte v MinorIDE (⇧⌘1), také klik na Dock bez oken. Vlevo ikona, verze, Otevřít složku nebo soubor…, Nový soubor; vpravo nedávné projekty a soubory (`recentDocumentURLs`, neexistující vynechány), dvojklik nebo Return otevře, kontextové menu Otevřít / Ukázat ve Finderu, prázdný stav. Otevřené okno uvítání zavře. Nápověda doplněna. `MINORIDE_WELCOME=1` (nebo cesty oddělené `:`) se `--snapshot` uloží okno a vypíše rámy. Klonovat z Gitu přibude ve 2b.3, Připojit se k serveru v 6b. Ruční kontrola (vzhled, klávesnice, tmavý režim) zbývá.
 
-**Další:** Nastavení (SwiftUI nad `settings.json`), automatické ukládání a Local History.
+**Nastavení za běhu** (2026-11-15): změna `settings.json` (uživatel, FSEvents na složce Application Support), `.minoride/settings.json` nebo `.editorconfig` (FSEvents projektu a složek volných souborů) přepočítá formát otevřených souborů (`FileDocument.settingsChanged`, rozpoznané konce řádků a odsazení zůstávají; soubor změněný v menu Formát — `formatChosenByUser` — se nemění). Test `FileDocumentTests.editorConfigChangeAppliesUnlessChosenInMenu`.
+
+**Okno Nastavení** (2026-11-15, ⌘,): `SettingsWindow.swift` — `NSTabViewController` s kartami v toolbaru (`toolbarStyle = .preference`), obsah v SwiftUI (`Form` `.grouped`), titulek podle karty. Obecné: Rozpoznat odsazení ze souboru. Formát: jazyk (Všechny jazyky / jazyky z `Language.id`), pro každý klíč „Výchozí“ (klíč se smaže) nebo hodnota; PHP navíc standard kódu (PSR-12 / Nette); ručně zapsaná hodnota mimo nabídku se ukáže. Zápis hned (`SettingsFile.updating` v MinorCore: zachová ostatní klíče, neplatný JSON nepřepíše — okno pak ukáže varování a jen tlačítko Otevřít settings.json). Test `FormatTests.settingsUpdateKeepsOtherKeys`. `MINORIDE_SETTINGS=0|1` se `--snapshot` uloží kartu. Nápověda doplněna.
+
+Známé mezery po Nastavení: zápis přeformátuje celý soubor (klíče seřazené, styl `"klíč" : hodnota` z `JSONEncoder`); nastavení projektu se v okně neupravuje; `max_line_length` se čte, ale editor vodítko nekreslí (proto v okně není); ruční kontrola okna (přepínání karet, změna velikosti, tmavý režim) zbývá.
+
+**Další:** automatické ukládání a Local History, pak stavový řádek s přepínači, varování před znaky, které kódování neumí, obnova sezení.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 
@@ -150,7 +156,7 @@ Taby = nativní taby oken macOS; push zatím ne; zkratky ponechány (`docs/keyma
 - **CI**: první běh (macOS 26.7, Xcode 26.6) — testy prošly, benchmark selhal na jednorázových špičkách virtuálního stroje (první stisk 163 ms, otevření za studena 440 ms; p99 byly pod 8 ms). Opraveno zahřátím a profilem `MINORIDE_BENCH_PROFILE=ci` (hlídá p99 ≤ 8 ms a rope ≤ 4 s). Po pushi ověřit, že běh projde.
 
 ## Poznámky k prostředí
-- Mac má jen **Command Line Tools** (bez Xcode): testy vždy přes `make test` (obchází chybu SwiftPM se Swift Testing).
+- Mac má jen **Command Line Tools** (bez Xcode): testy vždy přes `make test` (obchází chybu SwiftPM se Swift Testing). Makra SwiftUI (`@State`, `@Entry` …) chybí (plugin `SwiftUIMacros`), `@Observable` funguje — stav pohledů držet v `@Observable` modelu.
 - Go 1.27.4 a Composer 2.11 nainstalované přes Homebrew.
 - Push na GitHub: `git push` (token v `GH_TOKEN` má oprávnění `workflow`); pokud git nezná přihlášení, `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push`.
 - Testovací PHP projekt pro skener: `composer create-project nette/web-project <složka> --no-interaction --no-scripts`, pak `server/bin/minoride-server phpscan <složka>`.

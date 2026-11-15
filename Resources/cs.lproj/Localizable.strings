@@ -175,11 +175,19 @@
 "Jump to Selection" = "Přejít na výběr";
 "Format" = "Formát";
 "Line Endings" = "Konce řádků";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift */
 "LF (macOS, Unix)" = "LF (macOS, Unix)";
 "CRLF (Windows)" = "CRLF (Windows)";
 "CR (Classic Mac)" = "CR (starý Mac OS)";
+
+/* MinorIDE/MainMenu.swift */
 "Indentation" = "Odsazení";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift */
 "Tabs" = "Tabulátory";
+
+/* MinorIDE/MainMenu.swift */
 "2 Spaces" = "2 mezery";
 "4 Spaces" = "4 mezery";
 "Convert Indentation" = "Převést odsazení";
@@ -223,6 +231,36 @@
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Soubory projektu";
+
+/* MinorIDE/SettingsWindow.swift */
+"General" = "Obecné";
+"Formatting" = "Formát";
+"Detect indentation from the file" = "Rozpoznat odsazení ze souboru";
+"An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "Existující soubor si ponechá odsazení, které používá, pokud .editorconfig nebo nastavení projektu neříká jinak.";
+"settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here." = "settings.json není platný JSON. Opravte ho v editoru; do té doby tu nastavení nejde měnit.";
+"Settings are stored in settings.json. A project can override them in .minoride/settings.json." = "Nastavení se ukládá do settings.json. Projekt ho může přepsat v .minoride/settings.json.";
+"Open settings.json" = "Otevřít settings.json";
+"Language" = "Jazyk";
+"All Languages" = "Všechny jazyky";
+"Plain Text" = "Prostý text";
+"Applies to every language unless the language sets its own value." = "Platí pro všechny jazyky, pokud jazyk nemá vlastní hodnotu.";
+"Overrides All Languages for this language." = "Pro tento jazyk přepíše hodnoty ze Všech jazyků.";
+"Coding standard" = "Standard kódu";
+"Indent with" = "Odsazení";
+"Spaces" = "Mezery";
+"Indent size" = "Velikost odsazení";
+"Tab width" = "Šířka tabulátoru";
+"Line endings" = "Konce řádků";
+"Encoding" = "Kódování";
+"Newline at end of file" = "Nový řádek na konci souboru";
+"Add" = "Přidat";
+"Don’t add" = "Nepřidávat";
+"Trailing spaces" = "Mezery na konci řádků";
+"Remove from edited lines" = "Odstranit z upravených řádků";
+"Remove from all lines" = "Odstranit ze všech řádků";
+"Keep" = "Ponechat";
+"Default follows the language’s standard, such as PSR-12 for PHP and gofmt for Go. A file’s own line endings, .editorconfig and project settings take precedence." = "Výchozí hodnota se řídí standardem jazyka, například PSR-12 pro PHP a gofmt pro Go. Přednost mají konce řádků samotného souboru, .editorconfig a nastavení projektu.";
+"Default" = "Výchozí";
 
 /* MinorIDE/SidebarMenu.swift */
 "Open in Split Editor" = "Otevřít v rozděleném editoru";

@@ -172,11 +172,19 @@
 "Jump to Selection" = "Jump to Selection";
 "Format" = "Format";
 "Line Endings" = "Line Endings";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift */
 "LF (macOS, Unix)" = "LF (macOS, Unix)";
 "CRLF (Windows)" = "CRLF (Windows)";
 "CR (Classic Mac)" = "CR (Classic Mac)";
+
+/* MinorIDE/MainMenu.swift */
 "Indentation" = "Indentation";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift */
 "Tabs" = "Tabs";
+
+/* MinorIDE/MainMenu.swift */
 "2 Spaces" = "2 Spaces";
 "4 Spaces" = "4 Spaces";
 "Convert Indentation" = "Convert Indentation";
@@ -220,6 +228,36 @@
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Project Files";
+
+/* MinorIDE/SettingsWindow.swift */
+"General" = "General";
+"Formatting" = "Formatting";
+"Detect indentation from the file" = "Detect indentation from the file";
+"An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise.";
+"settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here." = "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here.";
+"Settings are stored in settings.json. A project can override them in .minoride/settings.json." = "Settings are stored in settings.json. A project can override them in .minoride/settings.json.";
+"Open settings.json" = "Open settings.json";
+"Language" = "Language";
+"All Languages" = "All Languages";
+"Plain Text" = "Plain Text";
+"Applies to every language unless the language sets its own value." = "Applies to every language unless the language sets its own value.";
+"Overrides All Languages for this language." = "Overrides All Languages for this language.";
+"Coding standard" = "Coding standard";
+"Indent with" = "Indent with";
+"Spaces" = "Spaces";
+"Indent size" = "Indent size";
+"Tab width" = "Tab width";
+"Line endings" = "Line endings";
+"Encoding" = "Encoding";
+"Newline at end of file" = "Newline at end of file";
+"Add" = "Add";
+"Don’t add" = "Don’t add";
+"Trailing spaces" = "Trailing spaces";
+"Remove from edited lines" = "Remove from edited lines";
+"Remove from all lines" = "Remove from all lines";
+"Keep" = "Keep";
+"Default follows the language’s standard, such as PSR-12 for PHP and gofmt for Go. A file’s own line endings, .editorconfig and project settings take precedence." = "Default follows the language’s standard, such as PSR-12 for PHP and gofmt for Go. A file’s own line endings, .editorconfig and project settings take precedence.";
+"Default" = "Default";
 
 /* MinorIDE/SidebarMenu.swift */
 "Open in Split Editor" = "Open in Split Editor";

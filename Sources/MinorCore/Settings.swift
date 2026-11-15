@@ -60,6 +60,32 @@ public struct SettingsFile: Sendable, Equatable {
 
 	"""
 
+	public enum UpdateError: Error { case unreadable }
+
+	/// settings.json `data` with one value changed and everything else kept (keys come out
+	/// sorted). `section` nil is a top-level key, otherwise a section of "format"; nil `value`
+	/// removes the key and a section left empty. A file that is not a JSON object is not
+	/// overwritten (throws).
+	public static func updating(_ data: Data?, section: String?, key: String, value: JSONValue?) throws -> Data {
+		var root: [String: JSONValue] = [:]
+		if let data, !data.allSatisfy({ $0 == 0x20 || $0 == 0x0A || $0 == 0x0D || $0 == 0x09 }) {
+			guard case .object(let object)? = try? JSONDecoder().decode(JSONValue.self, from: data) else { throw UpdateError.unreadable }
+			root = object
+		}
+		if let section {
+			guard case .object(var format) = root["format"] ?? .object([:]) else { throw UpdateError.unreadable }
+			guard case .object(var props) = format[section] ?? .object([:]) else { throw UpdateError.unreadable }
+			props[key] = value
+			format[section] = props.isEmpty ? nil : .object(props)
+			root["format"] = format.isEmpty ? nil : .object(format)
+		} else {
+			root[key] = value
+		}
+		let encoder = JSONEncoder()
+		encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+		return try encoder.encode(JSONValue.object(root)) + Data("\n".utf8)
+	}
+
 	public static var userURL: URL {
 		FileManager.default.homeDirectoryForCurrentUser
 			.appendingPathComponent("Library/Application Support/MinorIDE/settings.json")
