@@ -5,16 +5,17 @@ Upravuje se v Sponsors dashboardu › Profile a › Tiers. Texty jsou anglicky (
 
 ## Short bio (Introduction)
 
-> Hi, I'm Michal 👋 I build **MinorIDE** — a fast, native code editor for Go and PHP on the Mac.
+> Hi, I'm Michal 👋 I build **MinorIDE** — a fast, native code editor for the Mac, primarily for Go and PHP.
 
 ## Full description
 
 ```markdown
-### A native Mac editor for Go and PHP
+### A native Mac editor, primarily for Go and PHP
 
 I'm building **MinorIDE**: a code editor that feels like a real Mac app — instant typing,
-standard macOS menus and shortcuts, dark mode, and no Electron. It is free and open source
-(MIT), and I make it in my spare time.
+standard macOS menus and shortcuts, dark mode, and no Electron. It is made primarily for
+Go and PHP, and it works for JavaScript, CSS, SQL, Markdown and more too. It is free and
+open source (MIT), and I make it in my spare time.
 
 **Your sponsorship buys focused time** for the things on the roadmap: Git, a terminal,
 smart code completion for PHP and Go, a debugger and database tools.
