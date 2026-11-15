@@ -54,6 +54,7 @@ public final class GutterView: NSRulerView {
 
 	public override func draw(_ dirtyRect: NSRect) {
 		guard let ctx = NSGraphicsContext.current?.cgContext, let editor else { return }
+		EditorView.smoothFonts(ctx)
 		drawCount += 1
 		let start = CACurrentMediaTime()
 		defer { editor.drawSeconds += CACurrentMediaTime() - start }

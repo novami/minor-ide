@@ -121,6 +121,8 @@ Známé mezery po Local History: kopie se dělají i u citlivých souborů (`.en
 
 Známé mezery po zalamování: ⌥+tažení (sloupec) a přístupnost počítají s řádky textu; okno užší než sloupec text ořízne (vodorovný posun editor nemá); zapnutí nad 5 MB souborem blokuje hlavní vlákno ≈ 90 ms; konec zalomeného řádku bez mezery (tvrdý zlom) nejde kurzorem dosáhnout za poslední znak; ruční kontrola zbývá.
 
+**Vyhlazování písma** (2026-11-15, nahlášeno uživatelem): na displeji bez Retiny byly háčky a čárky slabší než písmena. Editor a gutter teď kreslí s vyhlazováním písma jako systémové textové pohledy (`EditorView.smoothFonts`; vypne ho `AppleFontSmoothing = 0`). Ověřeno kreslením do neprůhledné vrstvy Core Animation; snímek `--snapshot` (`cacheDisplay`) vyhlazování neukazuje, potvrzení na obrazovce zbývá.
+
 **Další krok (1f):** sticky header s aktuální funkcí, pak plná přístupnost (čtení po znacích/slovech/řádcích, Zvýšit kontrast, Omezit pohyb) a systémové textové funkce (Vyhledat ⌃⌘D, přetažení textu, výběr emoji).
 
 **Fáze 1e:** z plánu zbývá ruční kontrola nových oken (uvítání, Nastavení, Místní historie, automatické ukládání, obnova, stavový řádek); `.minoride/local.json` až s prvním uživatelem (servery v 6b).

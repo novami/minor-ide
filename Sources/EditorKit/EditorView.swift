@@ -196,6 +196,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	public override func draw(_ dirtyRect: NSRect) {
 		guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+		Self.smoothFonts(ctx)
 		drawCount += 1
 		let drawStart = CACurrentMediaTime()
 		defer { drawSeconds += CACurrentMediaTime() - drawStart }
@@ -224,6 +225,15 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		if !markedText.isEmpty, visible.contains(selections.primary) { drawMarkedText(ctx, at: caret) }
 		let keep = (first - 300)...(max(first, last) + 300)
 		layoutCache.trim(keep: keep, limit: 1500) // bounds memory when scrolling through large files
+	}
+
+	/// Font smoothing, as system text views use on an opaque background. Without it thin
+	/// strokes fade on non-Retina displays: accents (č, ě, ů) look dimmer than the letters.
+	/// Off when the user turned it off (AppleFontSmoothing = 0).
+	static func smoothFonts(_ ctx: CGContext) {
+		let on = UserDefaults.standard.object(forKey: "AppleFontSmoothing") as? Int != 0
+		ctx.setAllowsFontSmoothing(on)
+		ctx.setShouldSmoothFonts(on)
 	}
 
 	public override func viewWillDraw() {
