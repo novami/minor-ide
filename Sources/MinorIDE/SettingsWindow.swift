@@ -122,6 +122,14 @@ struct GeneralSettingsView: View {
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)
+			Section {
+				Toggle(L("Save files automatically"), isOn: Binding(
+					get: { store.file.autoSave ?? false },
+					set: { store.set(nil, "auto_save", .bool($0)) }))
+				Text(L("Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History."))
+					.font(.callout).foregroundStyle(.secondary)
+			}
+			.disabled(store.unreadable)
 			SettingsFileSection(store: store)
 		}
 		.formStyle(.grouped)

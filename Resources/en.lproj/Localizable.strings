@@ -249,6 +249,8 @@
 "Formatting" = "Formatting";
 "Detect indentation from the file" = "Detect indentation from the file";
 "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise.";
+"Save files automatically" = "Save files automatically";
+"Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History." = "Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History.";
 "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here." = "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here.";
 "Settings are stored in settings.json. A project can override them in .minoride/settings.json." = "Settings are stored in settings.json. A project can override them in .minoride/settings.json.";
 "Open settings.json" = "Open settings.json";

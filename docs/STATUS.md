@@ -101,7 +101,9 @@ Známé mezery po Nastavení: zápis přeformátuje celý soubor (klíče seřaz
 
 Známé mezery po Local History: kopie se dělají i u citlivých souborů (`.env`), jen s právy pro uživatele; přejmenovaný soubor historii nepřenese (klíč = cesta); snímky z jiných zdrojů (přenačtení z disku, git checkout) se nedělají; ruční kontrola okna zbývá.
 
-**Další:** automatické ukládání (zapínatelné, výchozí vypnuté), pak stavový řádek s přepínači, varování před znaky, které kódování neumí, obnova sezení.
+**Automatické ukládání** (2026-11-15; výchozí vypnuté, protože plán říká „zapínatelné“ — případně potvrdit s uživatelem): `settings.json` `"auto_save": true`, přepínač v Nastavení › Obecné. Okno, které přestane být klíčové (jiný tab, okno), uloží své soubory, deaktivace aplikace uloží všechny (`FileDocument.autoSave`: ne bez názvu, ne se změnou na disku, ne okno s otevřeným sheetem). Test `FileDocumentTests.autoSaveSkipsUntitledAndFilesChangedOnDisk`. Nápověda doplněna. Ruční kontrola zbývá (zvlášť: dotaz na uložení při zavírání nesmí předběhnout).
+
+**Další:** stavový řádek s přepínači (konce řádků, odsazení, kódování, pozice kurzoru), varování před znaky, které kódování neumí, obnova sezení a obnova po pádu.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 

@@ -259,6 +259,14 @@ public final class FileDocument {
 
 	// MARK: Saving
 
+	/// Saves an edited file in place without asking (auto-save). Skipped for untitled files
+	/// and while the file changed on disk, which would overwrite someone else's changes.
+	@discardableResult
+	public func autoSave() -> Bool {
+		guard isEdited, diskNotice == nil, let url else { return false }
+		return (try? write(to: url)) != nil
+	}
+
 	/// Writes the text with the document's line ending, charset and trimming; the document
 	/// takes `url` (Save As).
 	public func write(to url: URL) throws {

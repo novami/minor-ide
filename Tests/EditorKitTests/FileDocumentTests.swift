@@ -68,6 +68,24 @@ struct FileDocumentTests {
 		#expect(editor.rope.string == "two one\n")
 	}
 
+	@Test func autoSaveSkipsUntitledAndFilesChangedOnDisk() throws {
+		#expect(!FileDocument(text: "x").autoSave())
+		let url = try tempFile("one\n")
+		let doc = try FileDocument.load(url)
+		let editor = EditorView(document: doc.text)
+		editor.setSelections(SelectionSet(caret: 0))
+		editor.insertText("a", replacementRange: NSRange(location: NSNotFound, length: 0))
+		try Data("theirs\n".utf8).write(to: url)
+		try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(5)], ofItemAtPath: url.path)
+		doc.checkDisk()
+		#expect(!doc.autoSave())
+		#expect(try String(contentsOf: url, encoding: .utf8) == "theirs\n")
+		doc.keepMine()
+		#expect(doc.autoSave())
+		#expect(try String(contentsOf: url, encoding: .utf8) == "aone\n")
+		#expect(!doc.isEdited)
+	}
+
 	@Test func diskChangeReloadsCleanAndNotifiesEdited() throws {
 		let url = try tempFile("one\n")
 		let doc = try FileDocument.load(url)

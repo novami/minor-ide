@@ -76,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return
 		}
 		watchUserSettings()
+		observeFocusForAutoSave()
 		if !utilityMode {
 			let history = LocalHistory()
 			FileDocument.history = history
@@ -235,6 +236,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	private static func isSettingsFile(_ path: String) -> Bool {
 		path.hasSuffix("/.editorconfig") || path.hasSuffix("/.minoride/settings.json") || path == SettingsFile.userURL.standardizedFileURL.path
 	}
+
+	/// Auto-save (settings.json "auto_save"): a window losing focus (another tab or window)
+	/// saves its files, the app losing focus saves all.
+	private func observeFocusForAutoSave() {
+		let center = NotificationCenter.default
+		center.addObserver(forName: NSWindow.didResignKeyNotification, object: nil, queue: .main) { [weak self] note in
+			// A sheet taking focus (Save changes?) must not save before the user answers.
+			guard let window = note.object as? NSWindow, window.attachedSheet == nil else { return }
+			let id = ObjectIdentifier(window)
+			MainActor.assumeIsolated {
+				guard let self, Self.autoSaveEnabled else { return }
+				self.documents.first { ObjectIdentifier($0.window) == id }?.documents.forEach { $0.autoSave() }
+			}
+		}
+		center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { _ in
+			MainActor.assumeIsolated {
+				guard Self.autoSaveEnabled else { return }
+				FileDocument.all.forEach { $0.autoSave() }
+			}
+		}
+	}
+
+	private static var autoSaveEnabled: Bool { SettingsFile.load(SettingsFile.userURL)?.autoSave ?? false }
 
 	/// User settings (settings.json in Application Support), watched while the app runs.
 	private var settingsWatcher: FileWatcher?

@@ -15,12 +15,15 @@ public struct SettingsFile: Sendable, Equatable {
 	/// Section ("*" or a language id) → EditorConfig-style properties, plus "preset".
 	public var format: [String: [String: String]] = [:]
 	public var detectIndent: Bool?
+	/// Save edited files when their window or the app loses focus (off unless set).
+	public var autoSave: Bool?
 
 	public init() {}
 
 	public init(json data: Data) throws {
 		let value = try JSONDecoder().decode(JSONValue.self, from: data)
 		if case .bool(let b)? = value["detect_indent"] { detectIndent = b }
+		if case .bool(let b)? = value["auto_save"] { autoSave = b }
 		if case .object(let sections)? = value["format"] {
 			for (section, props) in sections {
 				guard case .object(let p) = props else { continue }

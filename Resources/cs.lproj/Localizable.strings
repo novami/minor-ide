@@ -252,6 +252,8 @@
 "Formatting" = "Formát";
 "Detect indentation from the file" = "Rozpoznat odsazení ze souboru";
 "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "Existující soubor si ponechá odsazení, které používá, pokud .editorconfig nebo nastavení projektu neříká jinak.";
+"Save files automatically" = "Ukládat soubory automaticky";
+"Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History." = "Upravené soubory se uloží při přepnutí na jiný tab, okno nebo aplikaci. Soubory, které se mezitím změnily na disku, se neukládají. Každé uložení se uchová v Místní historii.";
 "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here." = "settings.json není platný JSON. Opravte ho v editoru; do té doby tu nastavení nejde měnit.";
 "Settings are stored in settings.json. A project can override them in .minoride/settings.json." = "Nastavení se ukládá do settings.json. Projekt ho může přepsat v .minoride/settings.json.";
 "Open settings.json" = "Otevřít settings.json";
