@@ -11,6 +11,7 @@ final class StatusBar: NSView {
 	weak var owner: DocumentWindow?
 	private let position = NSTextField(labelWithString: "")
 	private let language = NSTextField(labelWithString: "")
+	private let readOnly = NSTextField(labelWithString: L("Read Only"))
 	private let lineEnding = StatusBar.popUp(L("Line Endings"))
 	private let indentation = StatusBar.popUp(L("Indentation"))
 	private let encoding = StatusBar.popUp(L("Encoding"))
@@ -21,7 +22,7 @@ final class StatusBar: NSView {
 		super.init(frame: .zero)
 		let separator = NSBox()
 		separator.boxType = .separator
-		for label in [position, language] {
+		for label in [position, language, readOnly] {
 			label.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 			label.textColor = .secondaryLabelColor
 			label.lineBreakMode = .byTruncatingTail
@@ -38,7 +39,8 @@ final class StatusBar: NSView {
 		restricted.action = #selector(trustProject(_:))
 		restricted.toolTip = L("MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it.")
 
-		let right = NSStackView(views: [restricted, language, lineEnding, indentation, encoding])
+		readOnly.toolTip = L("Files larger than 256 MB open read-only.")
+		let right = NSStackView(views: [restricted, readOnly, language, lineEnding, indentation, encoding])
 		right.spacing = 10
 		let row = NSStackView(views: [position, right])
 		row.distribution = .fill
@@ -69,7 +71,7 @@ final class StatusBar: NSView {
 
 	/// What the bar shows, for snapshot runs.
 	var summary: String {
-		[position.stringValue, restricted.isHidden ? "" : restricted.title, language.stringValue,
+		[position.stringValue, restricted.isHidden ? "" : restricted.title, readOnly.isHidden ? "" : readOnly.stringValue, language.stringValue,
 		 lineEnding.titleOfSelectedItem ?? lineEnding.itemTitle(at: 0), indentation.itemTitle(at: 0), encoding.itemTitle(at: 0)]
 			.filter { !$0.isEmpty }.joined(separator: " | ")
 	}
@@ -109,6 +111,9 @@ final class StatusBar: NSView {
 		updatePosition()
 		language.stringValue = doc.text.language?.name ?? L("Plain Text")
 		restricted.isHidden = owner.project.map { $0.isTrusted } ?? true
+		readOnly.isHidden = !doc.text.isReadOnly
+		lineEnding.isEnabled = !doc.text.isReadOnly
+		encoding.isEnabled = !doc.text.isReadOnly
 
 		let eol = doc.mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
 		fill(lineEnding, title: eol, [(L("LF (macOS, Unix)"), "lf"), (L("CRLF (Windows)"), "crlf"), (L("CR (Classic Mac)"), "cr")]

@@ -166,6 +166,14 @@ struct FormatTests {
 		#expect((try fm.attributesOfItem(atPath: script.path)[.posixPermissions] as? Int) == 0o755)
 	}
 
+	@Test func loadNormalizesLineEndings() {
+		let mixed = TextFile.load(Data("a\r\nb\r\nc\rd\n\r".utf8))
+		#expect(mixed.text == "a\nb\nc\nd\n\n")
+		#expect(mixed.detected.lineEnding == .crlf && mixed.detected.mixedLineEndings)
+		let lf = TextFile.load(Data("a\nb".utf8), keepLines: false)
+		#expect(lf.text == "a\nb" && lf.detected.lineEnding == .lf && !lf.detected.mixedLineEndings && lf.originalLines.isEmpty)
+	}
+
 	@Test func writeKeepsExtendedAttributes() throws {
 		let fm = FileManager.default
 		let dir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)

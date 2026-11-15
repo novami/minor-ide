@@ -123,6 +123,7 @@ public final class FindController {
 	@discardableResult
 	public func replaceAll() async -> Int {
 		await waitForResults()
+		guard !editor.isReadOnly else { return 0 }
 		guard let edits = try? editor.rope.replacements(of: query, with: replacement, preserveCase: preserveCase),
 		      !edits.isEmpty else { return 0 }
 		editor.replace(edits)

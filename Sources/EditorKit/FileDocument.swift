@@ -71,13 +71,14 @@ public final class FileDocument {
 	public static func load(_ url: URL) throws -> FileDocument {
 		if let open = document(for: url) { return open }
 		let data = try Data(contentsOf: url)
-		let loaded = TextFile.load(data)
+		let loaded = TextFile.load(data, keepLines: data.count <= TextFile.readOnlyBytes)
 		let resolved = resolve(path: url.path, detected: loaded.detected)
 		var format = resolved.settings
 		format.charset = loaded.charset
 		let doc = FileDocument(text: loaded.text, format: format)
 		// Large and minified files open without colouring (plan: simplified mode).
 		doc.text.language = TextFile.needsSimplifiedMode(data) ? nil : Languages.language(forPath: url.path)
+		doc.text.isReadOnly = data.count > TextFile.readOnlyBytes
 		doc.url = url
 		doc.resolved = resolved
 		doc.detected = loaded.detected
@@ -149,7 +150,7 @@ public final class FileDocument {
 	}
 
 	public func setLineEnding(_ eol: LineEnding) {
-		guard format.lineEnding != eol || mixedLineEndings else { return }
+		guard !text.isReadOnly, format.lineEnding != eol || mixedLineEndings else { return }
 		mixedLineEndings = false
 		isEdited = true
 		formatChosenByUser = true
@@ -158,7 +159,7 @@ public final class FileDocument {
 
 	/// Status bar: the encoding the file is saved in (the text is converted when saving).
 	public func setCharset(_ charset: Charset) {
-		guard format.charset != charset else { return }
+		guard !text.isReadOnly, format.charset != charset else { return }
 		isEdited = true
 		formatChosenByUser = true
 		format.charset = charset
@@ -219,8 +220,10 @@ public final class FileDocument {
 	/// Replaces the text with the file on disk as one undoable step.
 	public func reload() {
 		guard let url, let data = try? Data(contentsOf: url) else { return }
-		let loaded = TextFile.load(data, fallback: format.charset)
+		let loaded = TextFile.load(data, fallback: format.charset, keepLines: data.count <= TextFile.readOnlyBytes)
+		text.isReadOnly = false // the file itself changed: let the reload through
 		replaceText(loaded.text)
+		text.isReadOnly = data.count > TextFile.readOnlyBytes
 		originalLines = loaded.originalLines
 		mixedLineEndings = loaded.detected.mixedLineEndings
 		diskStamp = FileStamp(url)

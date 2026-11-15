@@ -29,6 +29,9 @@ public enum TextFile {
 
 	/// Large (> 5 MB) or minified (a line over 10 000 bytes) files open without syntax
 	/// colouring and analysis (plan, phase 1e).
+	/// Larger files open read-only (plan: view only).
+	public static let readOnlyBytes = 256 << 20
+
 	public static func needsSimplifiedMode(_ data: Data, maxBytes: Int = 5 << 20, maxLine: Int = 10_000) -> Bool {
 		if data.count > maxBytes { return true }
 		return data.withUnsafeBytes { (buf: UnsafeRawBufferPointer) -> Bool in
@@ -42,7 +45,8 @@ public enum TextFile {
 	}
 
 	/// Decodes bytes: BOMs first, then UTF-8, then the hint (e.g. windows-1250 for legacy projects).
-	public static func load(_ data: Data, fallback: Charset = .windows1250) -> LoadedText {
+	/// `keepLines: false` skips `originalLines` (read-only files are never saved).
+	public static func load(_ data: Data, fallback: Charset = .windows1250, keepLines: Bool = true) -> LoadedText {
 		var charset = Charset.utf8
 		var text: String
 		if data.starts(with: [0xEF, 0xBB, 0xBF]) {
@@ -65,7 +69,7 @@ public enum TextFile {
 		detected.lineEnding = normalized.dominant
 		detected.mixedLineEndings = normalized.mixed
 		text = normalized.text
-		let lines = Set(text.split(separator: "\n", omittingEmptySubsequences: false))
+		let lines = keepLines ? Set(text.split(separator: "\n", omittingEmptySubsequences: false)) : []
 		return LoadedText(text: text, charset: charset, detected: detected, originalLines: lines)
 	}
 
@@ -142,30 +146,33 @@ public enum TextFile {
 	/// Converts all line endings to "\n" and reports the most common original one.
 	static func normalizeLineEndings(_ text: String) -> (text: String, dominant: LineEnding?, mixed: Bool) {
 		var lf = 0, crlf = 0, cr = 0
-		var out = [UInt8]()
-		let bytes = Array(text.utf8)
-		out.reserveCapacity(bytes.count)
-		var i = 0
-		while i < bytes.count {
-			let b = bytes[i]
-			if b == 0x0D {
-				if i + 1 < bytes.count, bytes[i + 1] == 0x0A {
-					crlf += 1
-					i += 1
-				} else {
+		var source = text
+		// Counted in place; the text is copied only when it has "\r" to remove.
+		let out: [UInt8]? = source.withUTF8 { bytes in
+			for (i, b) in bytes.enumerated() {
+				if b == 0x0A {
+					if i > 0, bytes[i - 1] == 0x0D { crlf += 1 } else { lf += 1 }
+				} else if b == 0x0D, i + 1 == bytes.count || bytes[i + 1] != 0x0A {
 					cr += 1
 				}
-				out.append(0x0A)
-			} else {
-				if b == 0x0A { lf += 1 }
-				out.append(b)
 			}
-			i += 1
+			guard crlf + cr > 0 else { return nil }
+			var out = [UInt8]()
+			out.reserveCapacity(bytes.count)
+			for (i, b) in bytes.enumerated() {
+				if b == 0x0D {
+					if i + 1 < bytes.count, bytes[i + 1] == 0x0A { continue }
+					out.append(0x0A)
+				} else {
+					out.append(b)
+				}
+			}
+			return out
 		}
 		let counts: [(LineEnding, Int)] = [(.lf, lf), (.crlf, crlf), (.cr, cr)]
 		let used = counts.filter { $0.1 > 0 }
 		let dominant = used.max { $0.1 < $1.1 }?.0
-		let normalized = (crlf + cr) == 0 ? text : String(decoding: out, as: UTF8.self)
+		let normalized = out.map { String(decoding: $0, as: UTF8.self) } ?? text
 		return (normalized, dominant, used.count > 1)
 	}
 
@@ -175,10 +182,13 @@ public enum TextFile {
 		var tabLines = 0, spaceLines = 0
 		var steps: [Int: Int] = [:]
 		var previous = 0
-		var scanned = 0
-		for line in text.split(separator: "\n", omittingEmptySubsequences: true) {
-			scanned += 1
-			if scanned > 20_000 { break }
+		// Only the first 20 000 lines; split is eager, so cut the text before splitting.
+		var end = text.utf8.endIndex, newlines = 0
+		for i in text.utf8.indices where text.utf8[i] == 0x0A {
+			newlines += 1
+			if newlines == 20_000 { end = i; break }
+		}
+		for line in text[..<end].split(separator: "\n", omittingEmptySubsequences: true) {
 			guard let first = line.first, first == " " || first == "\t" else {
 				if !line.allSatisfy(\.isWhitespace) { previous = 0 }
 				continue

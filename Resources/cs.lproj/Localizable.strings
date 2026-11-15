@@ -320,8 +320,10 @@
 "New name:" = "Nový název:";
 
 /* MinorIDE/StatusBar.swift */
+"Read Only" = "Jen pro čtení";
 "Restricted Mode" = "Omezený režim";
 "MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it." = "MinorIDE z tohoto projektu nespouští Git, nástroje ani příkazy. Kliknutím mu začnete důvěřovat.";
+"Files larger than 256 MB open read-only." = "Soubory větší než 256 MB se otevírají jen pro čtení.";
 "Status Bar" = "Stavový řádek";
 "Mixed → %@" = "smíšené → %@";
 "%d Spaces" = "%d mezery";

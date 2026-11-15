@@ -13,6 +13,8 @@ public final class TextDocument {
 	public var anchors = AnchorSet()
 	/// Called once after every text change, whichever view made it (dirty tracking).
 	public var onChange: (() -> Void)?
+	/// Shown but not editable (files too large to edit safely); editors refuse every change.
+	public var isReadOnly = false
 
 	/// Indentation and tab display. The buffer always uses "\n"; line endings and charset
 	/// apply when saving.

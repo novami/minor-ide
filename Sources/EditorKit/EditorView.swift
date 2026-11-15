@@ -465,6 +465,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// Applies and records the edit as one transaction.
 	func apply(_ changes: ChangeSet, kind: EditKind, selectionsAfter: (ChangeSet) -> SelectionSet) {
 		guard !changes.isEmpty else { return }
+		guard !isReadOnly else { NSSound.beep(); return }
 		let before = rope, selectionsBefore = selections
 		apply(changes) { selectionsAfter($0) }
 		document.history.record(Transaction(changes, on: before, before: selectionsBefore, after: selections,
@@ -474,6 +475,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// Applies the edit through the document; every editor of it follows.
 	private func apply(_ changes: ChangeSet, selectionsAfter: (ChangeSet) -> SelectionSet) {
 		guard !changes.isEmpty else { return }
+		guard !isReadOnly else { NSSound.beep(); return }
 		document.apply(changes, from: self, selectionsAfter: selectionsAfter)
 	}
 
@@ -808,6 +810,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		for t in step.transactions { apply(t.changes) { _ in t.selectionsAfter } }
 	}
 
+	public var isReadOnly: Bool { document.isReadOnly }
+
 	/// The next edit starts a new undo step.
 	public func sealUndo() { document.history.seal() }
 
@@ -856,6 +860,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	public func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
+		guard !isReadOnly else { return }
 		if !(hasMarkedText() && replacementRange == markedRange()), let range = byteRange(replacementRange) {
 			setSelections(SelectionSet([Selection(anchor: range.lowerBound, head: range.upperBound)]))
 		}
@@ -927,8 +932,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 }
 
 extension EditorView: NSMenuItemValidation {
+	static let editingActions: Set<Selector> = [
+		#selector(undo(_:)), #selector(redo(_:)), #selector(cut(_:)), #selector(paste(_:)), #selector(toggleComment(_:)),
+		#selector(duplicateLines(_:)), #selector(moveLinesUp(_:)), #selector(moveLinesDown(_:)), #selector(convertIndentation(_:)),
+	]
+
 	public func validateMenuItem(_ item: NSMenuItem) -> Bool {
-		switch item.action {
+		if isReadOnly, let action = item.action, Self.editingActions.contains(action) { return false }
+		return switch item.action {
 		case #selector(undo(_:)): history.canUndo
 		case #selector(redo(_:)): history.canRedo
 		case #selector(copy(_:)), #selector(cut(_:)): selections.all.contains { !$0.isEmpty }

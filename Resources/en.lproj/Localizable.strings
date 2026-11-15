@@ -318,8 +318,10 @@
 "New name:" = "New name:";
 
 /* MinorIDE/StatusBar.swift */
+"Read Only" = "Read Only";
 "Restricted Mode" = "Restricted Mode";
 "MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it." = "MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it.";
+"Files larger than 256 MB open read-only." = "Files larger than 256 MB open read-only.";
 "Status Bar" = "Status Bar";
 "Mixed → %@" = "Mixed → %@";
 "%d Spaces" = "%d Spaces";

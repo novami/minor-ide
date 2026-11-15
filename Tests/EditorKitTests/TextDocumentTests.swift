@@ -6,6 +6,21 @@ import TextEngine
 /// Two editors of one document (split view).
 @MainActor
 struct TextDocumentTests {
+	@Test func readOnlyRefusesEditsButSelectsAndCopies() {
+		let a = EditorView(text: "abc")
+		a.document.isReadOnly = true
+		a.setSelections(SelectionSet([Selection(anchor: 0, head: 3)]))
+		a.insertText("x", replacementRange: NSRange(location: NSNotFound, length: 0))
+		a.setMarkedText("ˇ", selectedRange: NSRange(location: 1, length: 0), replacementRange: NSRange(location: NSNotFound, length: 0))
+		a.cut(nil)
+		#expect(a.rope.string == "abc")
+		#expect(!a.hasMarkedText())
+		#expect(!a.history.canUndo)
+		let cut = NSMenuItem(title: "", action: #selector(EditorView.cut(_:)), keyEquivalent: "")
+		let copy = NSMenuItem(title: "", action: #selector(EditorView.copy(_:)), keyEquivalent: "")
+		#expect(!a.validateMenuItem(cut) && a.validateMenuItem(copy))
+	}
+
 	@Test func editsUndoAndFoldsFollowAcrossPanes() {
 		let a = EditorView(text: "func f() {\n\tx\n}\nend")
 		let b = EditorView(document: a.document)
