@@ -39,7 +39,8 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 	@available(*, unavailable)
 	required init?(coder: NSCoder) { fatalError("not supported") }
 
-	/// Expands the folders other tabs had open.
+	/// Expands the folders other tabs had open. The project folder is the single top row,
+	/// expanded unless the user collapsed it.
 	func restoreExpansion() {
 		restoring = true
 		defer { restoring = false }
@@ -50,11 +51,12 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 			}
 		}
 		outline.reloadData()
+		if !project.rootCollapsed { outline.expandItem(project.root) }
 		expand(project.root)
 	}
 
 	private func reload(_ folder: FileNode) {
-		outline.reloadItem(folder === project.root ? nil : folder, reloadChildren: true)
+		outline.reloadItem(folder, reloadChildren: true)
 	}
 
 	/// Selects a file in the tree, expanding its folders.
@@ -62,7 +64,7 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 		guard let node = project.root.node(for: url) else { return }
 		var chain: [FileNode] = []
 		var p = node.parent
-		while let folder = p, folder !== project.root {
+		while let folder = p {
 			chain.insert(folder, at: 0)
 			p = folder.parent
 		}
@@ -90,11 +92,13 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 	// MARK: Data source
 
 	func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-		((item as? FileNode) ?? project.root).children.count
+		guard let node = item as? FileNode else { return 1 }
+		return node.children.count
 	}
 
 	func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
-		((item as? FileNode) ?? project.root).children[index]
+		guard let node = item as? FileNode else { return project.root }
+		return node.children[index]
 	}
 
 	func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
@@ -128,16 +132,21 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 			return c
 		}()
 		cell.textField?.stringValue = node.name
-		cell.imageView?.image = NSImage(systemSymbolName: node.isDirectory ? "folder" : "doc", accessibilityDescription: nil)
+		let symbol = node === project.root ? "folder.fill" : node.isDirectory ? "folder" : "doc"
+		cell.imageView?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+		cell.textField?.font = node === project.root ? .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold) : .systemFont(ofSize: NSFont.systemFontSize)
+		cell.toolTip = node === project.root ? project.url.path : nil
 		cell.imageView?.contentTintColor = node.isDirectory ? .controlAccentColor : .secondaryLabelColor
 		return cell
 	}
 
 	func outlineViewItemDidExpand(_ notification: Notification) {
-		if !restoring, let node = notification.userInfo?["NSObject"] as? FileNode { project.expanded.insert(node.url) }
+		guard !restoring, let node = notification.userInfo?["NSObject"] as? FileNode else { return }
+		if node === project.root { project.rootCollapsed = false } else { project.expanded.insert(node.url) }
 	}
 
 	func outlineViewItemDidCollapse(_ notification: Notification) {
-		if let node = notification.userInfo?["NSObject"] as? FileNode { project.expanded.remove(node.url) }
+		guard let node = notification.userInfo?["NSObject"] as? FileNode else { return }
+		if node === project.root { project.rootCollapsed = true } else { project.expanded.remove(node.url) }
 	}
 }

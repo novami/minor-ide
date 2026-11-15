@@ -74,8 +74,8 @@ extension ProjectSidebar: NSMenuDelegate {
 	}
 
 	private func refresh(_ folder: FileNode) {
-		if folder.reload() { outline.reloadItem(folder === project.root ? nil : folder, reloadChildren: true) }
-		if folder !== project.root { outline.expandItem(folder) }
+		if folder.reload() { outline.reloadItem(folder, reloadChildren: true) }
+		outline.expandItem(folder)
 	}
 
 	@objc private func newFile(_ sender: Any?) {

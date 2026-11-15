@@ -8,6 +8,8 @@ final class Project {
 	let root: FileNode
 	/// Expanded folders, shared so a new tab shows the tree as the previous one did.
 	var expanded: Set<URL> = []
+	/// The project folder's own row was collapsed.
+	var rootCollapsed = false
 	/// Called with the folders whose children changed (the sidebars reload them).
 	var onChange: [(FileNode) -> Void] = []
 	/// Called with every changed path (open windows compare their files with the disk).
