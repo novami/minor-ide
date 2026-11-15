@@ -169,6 +169,10 @@ extension DocumentWindow {
 			guard let self, editor === find.editor else { return }
 			if findBarView.isHidden { find.invalidate() } else { find.refresh(delay: .milliseconds(100)) }
 		}
+		editor.onCaretsChange = { [weak self, weak editor] in
+			guard let self, editor === find.editor else { return }
+			statusBar.setNeedsUpdate()
+		}
 		updateBanner(pane)
 	}
 }

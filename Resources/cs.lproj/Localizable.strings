@@ -95,8 +95,6 @@
 "“%@” contains characters that %@ can’t store, such as “%@”." = "„%@“ obsahuje znaky, které kódování %@ neumí uložit, například „%@“.";
 "Saving in %@ would replace them with question marks. You can save the file in UTF-8 instead, or remove those characters." = "Uložením v %@ by se nahradily otazníky. Soubor můžete místo toho uložit v UTF-8, nebo tyto znaky odstranit.";
 "Save as UTF-8" = "Uložit v UTF-8";
-"Tabs (%d)" = "tabulátory: %d";
-"Mixed → %@" = "smíšené → %@";
 "Do you want to save the changes made to the document “%@”?" = "Chcete uložit změny provedené v dokumentu „%@“?";
 "Your changes will be lost if you don’t save them." = "Pokud změny neuložíte, budou ztraceny.";
 
@@ -120,11 +118,6 @@
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
 "Find" = "Najít";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
-"%d spaces|one" = "%d mezera";
-"%d spaces|few" = "%d mezery";
-"%d spaces|other" = "%d mezer";
 
 /* MinorIDE/EditorSplit.swift */
 "Editor" = "Editor";
@@ -201,23 +194,29 @@
 "Use Selection for Replace" = "Použít výběr pro nahrazení";
 "Jump to Selection" = "Přejít na výběr";
 "Format" = "Formát";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/StatusBar.swift */
 "Line Endings" = "Konce řádků";
 
-/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift */
+/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */
 "LF (macOS, Unix)" = "LF (macOS, Unix)";
 "CRLF (Windows)" = "CRLF (Windows)";
 "CR (Classic Mac)" = "CR (starý Mac OS)";
 
-/* MinorIDE/MainMenu.swift */
+/* MinorIDE/MainMenu.swift, MinorIDE/StatusBar.swift */
 "Indentation" = "Odsazení";
 
-/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift */
+/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */
 "Tabs" = "Tabulátory";
 
 /* MinorIDE/MainMenu.swift */
 "2 Spaces" = "2 mezery";
 "4 Spaces" = "4 mezery";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/StatusBar.swift */
 "Convert Indentation" = "Převést odsazení";
+
+/* MinorIDE/MainMenu.swift */
 "Tab Width" = "Šířka tabulátoru";
 "View" = "Zobrazení";
 "Show Sidebar" = "Zobrazit boční panel";
@@ -272,7 +271,11 @@
 "Open settings.json" = "Otevřít settings.json";
 "Language" = "Jazyk";
 "All Languages" = "Všechny jazyky";
+
+/* MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */
 "Plain Text" = "Prostý text";
+
+/* MinorIDE/SettingsWindow.swift */
 "Applies to every language unless the language sets its own value." = "Platí pro všechny jazyky, pokud jazyk nemá vlastní hodnotu.";
 "Overrides All Languages for this language." = "Pro tento jazyk přepíše hodnoty ze Všech jazyků.";
 "Coding standard" = "Standard kódu";
@@ -281,7 +284,11 @@
 "Indent size" = "Velikost odsazení";
 "Tab width" = "Šířka tabulátoru";
 "Line endings" = "Konce řádků";
+
+/* MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */
 "Encoding" = "Kódování";
+
+/* MinorIDE/SettingsWindow.swift */
 "Newline at end of file" = "Nový řádek na konci souboru";
 "Add" = "Přidat";
 "Don’t add" = "Nepřidávat";
@@ -311,6 +318,30 @@
 "The file could not be created." = "Soubor se nepodařilo vytvořit.";
 "New folder name:" = "Název nové složky:";
 "New name:" = "Nový název:";
+
+/* MinorIDE/StatusBar.swift */
+"Restricted Mode" = "Omezený režim";
+"MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it." = "MinorIDE z tohoto projektu nespouští Git, nástroje ani příkazy. Kliknutím mu začnete důvěřovat.";
+"Status Bar" = "Stavový řádek";
+"Mixed → %@" = "smíšené → %@";
+"%d Spaces" = "%d mezery";
+"Tab Width: %d" = "Šířka tabulátoru: %d";
+"Tabs (%d)" = "tabulátory: %d";
+"Encoding used when saving" = "Kódování použité při uložení";
+"Line %d, Column %d" = "Řádek %d, sloupec %d";
+
+/* MinorIDE/StatusBar.swift, MinorIDE/main.swift */
+"%d spaces|one" = "%d mezera";
+"%d spaces|few" = "%d mezery";
+"%d spaces|other" = "%d mezer";
+
+/* MinorIDE/StatusBar.swift */
+"%d cursors|one" = "%d kurzor";
+"%d cursors|few" = "%d kurzory";
+"%d cursors|other" = "%d kurzorů";
+"%d characters selected|one" = "vybrán %d znak";
+"%d characters selected|few" = "vybrány %d znaky";
+"%d characters selected|other" = "vybráno %d znaků";
 
 /* MinorIDE/ToolsSettings.swift */
 "Git integration" = "Integrace Gitu";

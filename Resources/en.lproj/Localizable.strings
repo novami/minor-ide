@@ -94,8 +94,6 @@
 "“%@” contains characters that %@ can’t store, such as “%@”." = "“%@” contains characters that %@ can’t store, such as “%@”.";
 "Saving in %@ would replace them with question marks. You can save the file in UTF-8 instead, or remove those characters." = "Saving in %@ would replace them with question marks. You can save the file in UTF-8 instead, or remove those characters.";
 "Save as UTF-8" = "Save as UTF-8";
-"Tabs (%d)" = "Tabs (%d)";
-"Mixed → %@" = "Mixed → %@";
 "Do you want to save the changes made to the document “%@”?" = "Do you want to save the changes made to the document “%@”?";
 "Your changes will be lost if you don’t save them." = "Your changes will be lost if you don’t save them.";
 
@@ -119,10 +117,6 @@
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
 "Find" = "Find";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
-"%d spaces|one" = "%d space";
-"%d spaces|other" = "%d spaces";
 
 /* MinorIDE/EditorSplit.swift */
 "Editor" = "Editor";
@@ -198,23 +192,29 @@
 "Use Selection for Replace" = "Use Selection for Replace";
 "Jump to Selection" = "Jump to Selection";
 "Format" = "Format";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/StatusBar.swift */
 "Line Endings" = "Line Endings";
 
-/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift */
+/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */
 "LF (macOS, Unix)" = "LF (macOS, Unix)";
 "CRLF (Windows)" = "CRLF (Windows)";
 "CR (Classic Mac)" = "CR (Classic Mac)";
 
-/* MinorIDE/MainMenu.swift */
+/* MinorIDE/MainMenu.swift, MinorIDE/StatusBar.swift */
 "Indentation" = "Indentation";
 
-/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift */
+/* MinorIDE/MainMenu.swift, MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */
 "Tabs" = "Tabs";
 
 /* MinorIDE/MainMenu.swift */
 "2 Spaces" = "2 Spaces";
 "4 Spaces" = "4 Spaces";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/StatusBar.swift */
 "Convert Indentation" = "Convert Indentation";
+
+/* MinorIDE/MainMenu.swift */
 "Tab Width" = "Tab Width";
 "View" = "View";
 "Show Sidebar" = "Show Sidebar";
@@ -269,7 +269,11 @@
 "Open settings.json" = "Open settings.json";
 "Language" = "Language";
 "All Languages" = "All Languages";
+
+/* MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */
 "Plain Text" = "Plain Text";
+
+/* MinorIDE/SettingsWindow.swift */
 "Applies to every language unless the language sets its own value." = "Applies to every language unless the language sets its own value.";
 "Overrides All Languages for this language." = "Overrides All Languages for this language.";
 "Coding standard" = "Coding standard";
@@ -278,7 +282,11 @@
 "Indent size" = "Indent size";
 "Tab width" = "Tab width";
 "Line endings" = "Line endings";
+
+/* MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */
 "Encoding" = "Encoding";
+
+/* MinorIDE/SettingsWindow.swift */
 "Newline at end of file" = "Newline at end of file";
 "Add" = "Add";
 "Don’t add" = "Don’t add";
@@ -308,6 +316,27 @@
 "The file could not be created." = "The file could not be created.";
 "New folder name:" = "New folder name:";
 "New name:" = "New name:";
+
+/* MinorIDE/StatusBar.swift */
+"Restricted Mode" = "Restricted Mode";
+"MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it." = "MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it.";
+"Status Bar" = "Status Bar";
+"Mixed → %@" = "Mixed → %@";
+"%d Spaces" = "%d Spaces";
+"Tab Width: %d" = "Tab Width: %d";
+"Tabs (%d)" = "Tabs (%d)";
+"Encoding used when saving" = "Encoding used when saving";
+"Line %d, Column %d" = "Line %d, Column %d";
+
+/* MinorIDE/StatusBar.swift, MinorIDE/main.swift */
+"%d spaces|one" = "%d space";
+"%d spaces|other" = "%d spaces";
+
+/* MinorIDE/StatusBar.swift */
+"%d cursors|one" = "%d cursor";
+"%d cursors|other" = "%d cursors";
+"%d characters selected|one" = "%d character selected";
+"%d characters selected|other" = "%d characters selected";
 
 /* MinorIDE/ToolsSettings.swift */
 "Git integration" = "Git integration";

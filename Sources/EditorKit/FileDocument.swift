@@ -156,6 +156,14 @@ public final class FileDocument {
 		format.lineEnding = eol
 	}
 
+	/// Status bar: the encoding the file is saved in (the text is converted when saving).
+	public func setCharset(_ charset: Charset) {
+		guard format.charset != charset else { return }
+		isEdited = true
+		formatChosenByUser = true
+		format.charset = charset
+	}
+
 	/// settings.json or .editorconfig changed: resolve the format again (charset stays),
 	/// unless the user chose it in the Format menu.
 	public func settingsChanged() {

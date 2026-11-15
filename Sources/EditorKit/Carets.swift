@@ -13,6 +13,7 @@ extension EditorView {
 
 	func setNeedsCaretUpdate() {
 		caretsDirty = true
+		onCaretsChange?()
 		// layout() rebuilds the path even when no text needs drawing.
 		needsLayout = true
 	}

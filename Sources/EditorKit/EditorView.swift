@@ -80,6 +80,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	var accessibilityClientSeen = false
 	/// Measures key-to-frame latency when set (benchmark, MINORIDE_LATENCY=1).
 	public var latencyMonitor: LatencyMonitor?
+	/// Carets moved or the text changed (the status bar shows the position); keep it cheap.
+	public var onCaretsChange: (() -> Void)?
 	/// Folded regions as byte ranges (`Rope.foldRange`), sorted by start; nested folds allowed.
 	public internal(set) var folds: [Range<Int>] = []
 	/// Rows on screen after folding.

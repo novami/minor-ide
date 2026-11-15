@@ -329,6 +329,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			if let file = ProcessInfo.processInfo.environment["MINORIDE_OPEN"] { open(URL(fileURLWithPath: file)) }
 			let window = (documents.last ?? doc).window
 			window.displayIfNeeded()
+			if let bar = documents.last?.statusBar {
+				print("status bar", NSStringFromRect(bar.convert(bar.bounds, to: nil)), bar.summary)
+			}
 			if let content = window.contentView, let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds) {
 				content.cacheDisplay(in: content.bounds, to: rep)
 				try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path.replacingOccurrences(of: ".png", with: "-window.png")))

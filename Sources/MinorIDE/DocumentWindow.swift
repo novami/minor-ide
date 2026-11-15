@@ -59,7 +59,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		findBar = FindBar(controller: find)
 		findBar.isHidden = true
 		trustBanner.setContentHuggingPriority(.required, for: .vertical)
-		let content = NSStackView(views: [trustBanner, findBar, editorSplit])
+		let content = NSStackView(views: [trustBanner, findBar, editorSplit, statusBar])
 		content.orientation = .vertical
 		content.spacing = 0
 		content.alignment = .width
@@ -68,6 +68,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		// A split view has no width of its own; .width alignment alone leaves it at zero.
 		editorSplit.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 		findBar.setContentHuggingPriority(.required, for: .vertical)
+		statusBar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 		if let project {
 			// Sidebar and editor in a split view controller (HIG sidebar, View › Show Sidebar).
 			let sidebar = ProjectSidebar(project: project)
@@ -116,8 +117,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 		window.isReleasedWhenClosed = false
 		super.init()
-		// Unified toolbar (HIG): sidebar button for projects, file name with its format as
-		// the subtitle, Find.
+		statusBar.owner = self
+		// Unified toolbar (HIG): sidebar button for projects, file name as the title, Find.
 		let toolbar = NSToolbar(identifier: project == nil ? "Editor" : "ProjectEditor")
 		toolbar.delegate = self
 		toolbar.displayMode = .iconOnly
@@ -152,9 +153,15 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 		first.editor.updateSize()
 		updateTitle()
-		project?.onTrustChange.append { [weak self] in self?.updateTrustBanner() }
+		project?.onTrustChange.append { [weak self] in
+			self?.updateTrustBanner()
+			self?.statusBar.update()
+		}
 		updateTrustBanner()
 	}
+
+	/// Cursor position, language and the file's format under the editor.
+	let statusBar = StatusBar()
 
 	// MARK: Restricted Mode (D18)
 
@@ -511,14 +518,12 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 	}
 
-	/// Title shows what will be written: e.g. "User.php — LF · 4 spaces · UTF-8".
+	/// Title and tab follow the focused pane's file; its format is in the status bar.
 	func updateTitle() {
-		let doc = document, format = doc.format
+		let doc = document
 		let name = doc.url?.lastPathComponent ?? L("Untitled")
-		let indent = format.indentStyle == .tab ? L("Tabs (%d)", format.tabWidth) : LP("%d spaces", one: "%d space", format.indentSize)
-		let eol = doc.mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
 		window.title = name
-		window.subtitle = "\(eol) · \(indent) · \(format.charset.rawValue.uppercased())"
+		statusBar.update()
 		window.representedURL = doc.url
 		window.tab.title = project.map { doc.url == nil ? $0.name : name } ?? name
 		// The dot in the close button: any file of the window has unsaved changes.
