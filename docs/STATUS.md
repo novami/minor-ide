@@ -39,9 +39,13 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Benchmark s displejem ověřen** (2026-11-15, 60 Hz): klávesa→commit p99 0,5 ms, klávesa→snímek p99 ≈ 32 ms = dva snímky (čekání na vsync + složení snímku render serverem; klávesy jdou hned po vsync, tedy nejhorší fáze). Rozpočet: klávesa→commit 8 ms/max 16 ms (plán), klávesa→snímek p99 ≤ 2 snímky + 1 ms (editor nezmešká snímek).
 
-**Další: ruční část „Hotovo když“ 1b** – v aplikaci (`make run`) napsat „čšžýáíéůú“ na české klávesnici (i přes mrtvé klávesy ˇ a ´) a zkusit VoiceOver (⌘F5, šipky nahoru/dolů čtou řádek). Pak fáze 1c.
+**Výklad rozpočtu latence potvrzen uživatelem** (2026-11-15).
 
-Známé mezery po kroku 1b/3: výklad rozpočtu latence z plánu („< 8 ms do vykresleného snímku“) je upraven (viz výše) – k potvrzení s uživatelem; na zamčené obrazovce se sekce latence přeskočí. Gutter má pevnou šířku na 7 číslic a při každém scrollu se kreslí celý (≈ 0,1 ms). Barva kurzoru se nepřepočítá při změně systémové barvy zvýraznění, dokud se kurzor nepohne. `accessibilityValue` vrací celý text (u 10 MB pomalé, jen když se VoiceOver zeptá). Benchmark kreslí synchronně přes `layer.displayIfNeeded()`; `CATransaction.flush()` by čekal na render server (≈ 3,5 ms) a měří se zvlášť přes latenci.
+**Odloženo (připomenout uživateli na začátku další session, od 2026-11-16):** ruční část „Hotovo když“ 1b – v aplikaci (`make run`) napsat „čšžýáíéůú“ na české klávesnici (i přes mrtvé klávesy ˇ a ´) a zkusit VoiceOver (⌘F5, šipky nahoru/dolů čtou řádek). Fázi 1b to neblokuje.
+
+**Další: fáze 1c** (editační příkazy, hledání) podle `docs/PLAN.md`.
+
+Známé mezery po kroku 1b/3: výklad rozpočtu latence z plánu („< 8 ms do vykresleného snímku“) je upraven (viz výše) (potvrzeno); na zamčené obrazovce se sekce latence přeskočí. Gutter má pevnou šířku na 7 číslic a při každém scrollu se kreslí celý (≈ 0,1 ms). Barva kurzoru se nepřepočítá při změně systémové barvy zvýraznění, dokud se kurzor nepohne. `accessibilityValue` vrací celý text (u 10 MB pomalé, jen když se VoiceOver zeptá). Benchmark kreslí synchronně přes `layer.displayIfNeeded()`; `CATransaction.flush()` by čekal na render server (≈ 3,5 ms) a měří se zvlášť přes latenci.
 
 Známé mezery po kroku 1b/2: sloupcový výběr dává na krátkých řádcích prázdný kurzor na konci řádku (nevynechává je); sloupec počítá s x pozicí, ne s vizuálním sloupcem (u tabulátorů a širokých znaků se posune); autoscroll při tažení jen podle `autoscroll(with:)`, bez opakování při stojící myši.
 
