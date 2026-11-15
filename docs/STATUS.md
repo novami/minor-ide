@@ -69,7 +69,9 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 **Fáze 1e, krok 2 hotový** (2026-11-15): změna souboru na disku (`DocumentWindow.checkDisk` při aktivaci okna a aplikace a z FSEvents projektu; porovnává datum změny a velikost): bez neuložených změn tiché přenačtení jako jeden krok Zpět se zachováním kurzorů a posunu, s neuloženými změnami lišta `DiskBanner` „Přenačíst / Ponechat moje“, smazaný soubor zůstane otevřený jako upravený s lištou. Soubor › Znovu otevřít zavřený tab ⇧⌘T. Taby ukazují neuložené změny samy (nativní taby).
 
-**Další: fáze 1e, krok 3** — důvěra projektu a Omezený režim (`trusted.json` mimo projekt; zatím nic nespouštíme, tak jen uložení a sheet), uvítací okno s nedávnými projekty, binární soubory (NUL v prvních 8 KB → neotevírat jako text, nabídnout Quick Look), pak Nastavení (SwiftUI nad `settings.json`), stavový řádek, automatické ukládání a Local History.
+Binární soubory (2026-11-15): NUL v prvních 8 KB (kromě UTF-16 s BOM) → neotevře se jako text, sheet nabídne Ukázat ve Finderu (Quick Look mezerníkem); `TextFile.looksBinary`. Hex náhled z plánu není.
+
+**Další: fáze 1e, krok 3** — důvěra projektu a Omezený režim (`trusted.json` mimo projekt; zatím nic nespouštíme, tak jen uložení a sheet), uvítací okno s nedávnými projekty, pak Nastavení (SwiftUI nad `settings.json`), stavový řádek, automatické ukládání a Local History.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 

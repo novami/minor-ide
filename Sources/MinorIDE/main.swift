@@ -84,6 +84,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			existing.show()
 			return
 		}
+		if let handle = try? FileHandle(forReadingFrom: url) {
+			let head = (try? handle.read(upToCount: 8192)) ?? Data()
+			try? handle.close()
+			if TextFile.looksBinary(head) { return refuseBinary(url) }
+		}
 		let project = projects.first { $0.contains(url) }
 		do {
 			let doc = try DocumentWindow.open(url, project: project)
@@ -91,6 +96,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			NSDocumentController.shared.noteNewRecentDocumentURL(url)
 		} catch {
 			NSAlert(error: error).runModal()
+		}
+	}
+
+	/// Binary files are not opened as text; Finder (Space for Quick Look) can show them.
+	private func refuseBinary(_ url: URL) {
+		let alert = NSAlert()
+		alert.messageText = L("“%@” is not a text file.", url.lastPathComponent)
+		alert.informativeText = L("MinorIDE opens text files only. You can preview it in the Finder with Quick Look.")
+		alert.addButton(withTitle: L("Show in Finder"))
+		alert.addButton(withTitle: L("Cancel"))
+		let reveal = { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+		if let window = NSApp.keyWindow {
+			alert.beginSheetModal(for: window) { response in
+				if response == .alertFirstButtonReturn { MainActor.assumeIsolated { reveal() } }
+			}
+		} else if alert.runModal() == .alertFirstButtonReturn {
+			reveal()
 		}
 	}
 

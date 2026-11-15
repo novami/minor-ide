@@ -19,6 +19,14 @@ public struct LoadedText: Sendable {
 }
 
 public enum TextFile {
+	/// A NUL byte in the first 8 KB marks a binary file (images, archives, compiled code).
+	/// UTF-16 text has NULs too, so a UTF-16 byte order mark keeps it text.
+	public static func looksBinary(_ data: Data) -> Bool {
+		let head = data.prefix(8192)
+		if head.starts(with: [0xFF, 0xFE]) || head.starts(with: [0xFE, 0xFF]) { return false }
+		return head.contains(0)
+	}
+
 	/// Large (> 5 MB) or minified (a line over 10 000 bytes) files open without syntax
 	/// colouring and analysis (plan, phase 1e).
 	public static func needsSimplifiedMode(_ data: Data, maxBytes: Int = 5 << 20, maxLine: Int = 10_000) -> Bool {

@@ -18,8 +18,10 @@
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Save" = "Uložit";
 
-/* MinorIDE/DocumentWindow.swift */
+/* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
 "Cancel" = "Zrušit";
+
+/* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Neukládat";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
@@ -116,3 +118,8 @@
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Soubory projektu";
+
+/* MinorIDE/main.swift */
+"“%@” is not a text file." = "„%@“ není textový soubor.";
+"MinorIDE opens text files only. You can preview it in the Finder with Quick Look." = "MinorIDE otevírá jen textové soubory. Náhled ukáže Finder přes Quick Look.";
+"Show in Finder" = "Ukázat ve Finderu";

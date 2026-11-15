@@ -8,6 +8,12 @@ struct FormatTests {
 		FormatResolver.resolve(path: path, user: user, project: project, editorConfig: editorConfig, detected: detected).settings
 	}
 
+	@Test func binaryFilesHaveNulBytes() {
+		#expect(TextFile.looksBinary(Data([0x89, 0x50, 0x4E, 0x47, 0x00, 0x01])))
+		#expect(!TextFile.looksBinary(Data("<?php echo 1;".utf8)))
+		#expect(!TextFile.looksBinary(Data([0xFF, 0xFE, 0x61, 0x00])))
+	}
+
 	@Test func simplifiedModeForLargeOrMinifiedFiles() {
 		#expect(!TextFile.needsSimplifiedMode(Data("a\nb".utf8)))
 		#expect(TextFile.needsSimplifiedMode(Data(("x\n" + String(repeating: "y", count: 11)).utf8), maxLine: 10))
