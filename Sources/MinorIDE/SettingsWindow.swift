@@ -1,4 +1,5 @@
 import AppKit
+import EditorKit
 import MinorCore
 import SwiftUI
 
@@ -132,6 +133,17 @@ struct GeneralSettingsView: View {
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)
+			Section {
+				Toggle(L("Wrap lines"), isOn: Binding(
+					get: { store.file.wrapLines ?? false },
+					set: { on in
+						store.set(nil, "wrap_lines", .bool(on))
+						EditorView.wrapsLines = on
+					}))
+				Text(L("Long lines continue on the next row at the line length from Format (120 when not set). Large and minified files are not wrapped."))
+					.font(.callout).foregroundStyle(.secondary)
+			}
+			.disabled(store.unreadable)
 			SettingsFileSection(store: store)
 		}
 		.formStyle(.grouped)
@@ -197,6 +209,7 @@ struct FormatSettingsView: View {
 				row(L("Indent with"), "indent_style", [("tab", L("Tabs")), ("space", L("Spaces"))])
 				row(L("Indent size"), "indent_size", numbers(1...8), number: true)
 				row(L("Tab width"), "tab_width", numbers(1...8), number: true)
+				row(L("Line length"), "max_line_length", [80, 100, 120, 160].map { ("\($0)", "\($0)") } + [("off", L("Not set"))], number: true)
 				row(L("Line endings"), "end_of_line", [("lf", L("LF (macOS, Unix)")), ("crlf", L("CRLF (Windows)")), ("cr", L("CR (Classic Mac)"))])
 				row(L("Encoding"), "charset", Charset.allCases.map { ($0.rawValue, $0.rawValue.uppercased()) })
 				row(L("Newline at end of file"), "insert_final_newline", [("true", L("Add")), ("false", L("Don’t add"))])

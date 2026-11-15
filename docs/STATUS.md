@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1e: uvítání, Nastavení, Místní historie, automatické ukládání, nástroje)
+**Poslední aktualizace:** 2026-11-15 (1f: zalamování řádků)
 
 ## Kde jsme
 
@@ -116,6 +116,12 @@ Známé mezery po Local History: kopie se dělají i u citlivých souborů (`.en
 **Bezpečné ukládání doplněno** (2026-11-15): `TextFile.write` zapíše dočasný soubor vedle cíle, přenese na něj metadata starého souboru (`copyfile` `COPYFILE_METADATA`: práva, vlastník, ACL, rozšířené atributy; bez oprávnění ke změně vlastníka aspoň atributy, ACL a práva), nastaví aktuální čas změny (copyfile kopíruje i starý — rozbil by kontrolu změn na disku) a přejmenuje ho na cíl. Test `FormatTests.writeKeepsExtendedAttributes`. Mezery: pevné odkazy se rozpojí (jako dřív); složka bez práva zápisu uložení nedovolí ani u zapisovatelného souboru; vlastník ověřen jen čtením kódu (test by potřeboval root).
 
 **Soubory nad 256 MB jen pro čtení** (2026-11-15, rozhodnutí uživatele: běžný editor jen pro čtení místo náhledu po částech): `TextDocument.isReadOnly` (nastaví `FileDocument.load` a `reload` podle `TextFile.readOnlyBytes`), editor odmítne každou změnu v `apply` (pípnutí) i rozepsaný text, menu vypne úpravy (`EditorView.editingActions`), Nahradit vše nic neudělá, stavový řádek ukáže „Jen pro čtení“ a vypne Konce řádků a Kódování. Načítání zrychleno pro všechny soubory: rozpoznání odsazení dělilo celý text na řádky (teď jen prvních 20 000), převod konců řádků kopíroval text i bez `\r`, u souborů jen pro čtení se nedělá množina původních řádků. 300 MB log: otevření 11,5 s → 2,0 s, paměť 2,0 → 1,55 GB. Testy `TextDocumentTests.readOnlyRefusesEditsButSelectsAndCopies`, `FormatTests.loadNormalizesLineEndings`. Bench BUDGET OK. Nápověda doplněna. Mezery: lišta hledání u takového souboru ukazuje Nahradit; Uložit jako zapíše text bez původních řádků (při ořezu mezer ořízne všechny řádky); paměť ≈ 5× velikost souboru během načtení.
+
+**Fáze 1f, krok 1 hotový — zalamování řádků** (2026-11-15, rozhodnutí uživatele: pevný sloupec `max_line_length`, bez něj 120; pokračování bez odsazení; jeden globální přepínač; zjednodušený režim se nezalamuje): `TextEngine/Wrap.swift` (`WrapMap`: body zlomu v UTF-16 jednotkách řádku, zlom za poslední mezerou, jinak na sloupci, mezery přečnívají, diakritika/spojovače/variační selektory nulové šířky, `update` po editaci), `DisplayMap` rozšířen o řádky navíc (`position(atRow:)` → řádek a jeho zobrazený řádek, `rows(ofLine:)`, `rowCount(lineCount:)`). `EditorKit/Wrapping.swift`: `EditorView.wrapsLines` (globální, notifikace všem editorům), `point(of:line:)` místo dvojice x/y, `rows(inY:)`, `rangeRects` (výběr a shody po zobrazených řádcích), `rowBounds` (⌘←/⌘→ po zobrazených řádcích, ⌃A/⌃E po řádcích textu; konec zalomeného řádku je před posledním znakem — pozice na zlomu patří dalšímu řádku). Kreslení textu sjednoceno do `drawText` (s barvením i bez), záložní řádky (CTLine) se kreslí celé s ořezem. `TextDocument.isSimplified`. `settings.json` `"wrap_lines"`, Zobrazení › Zalamovat řádky (bez zkratky, zapíše settings.json), Nastavení › Obecné, karta Formát má nově Délka řádku. Testy `WrapTests`, `WrapEditorTests`. Bench BUDGET OK: bez zalomení psaní p99 0,14 ms; se zalomením na 40 sloupcích psaní p99 2,4 ms (přestavba `DisplayMap` při změně počtu řádků je O(zalomených řádků)), skok 0,60 ms, přepočet 10 MB 172 ms na hlavním vlákně. `MINORIDE_WRAP=1 --snapshot <png> <soubor>`. Nápověda doplněna.
+
+Známé mezery po zalamování: ⌥+tažení (sloupec) a přístupnost počítají s řádky textu; okno užší než sloupec text ořízne (vodorovný posun editor nemá); zapnutí nad 5 MB souborem blokuje hlavní vlákno ≈ 90 ms; konec zalomeného řádku bez mezery (tvrdý zlom) nejde kurzorem dosáhnout za poslední znak; ruční kontrola zbývá.
+
+**Další krok (1f):** sticky header s aktuální funkcí, pak plná přístupnost (čtení po znacích/slovech/řádcích, Zvýšit kontrast, Omezit pohyb) a systémové textové funkce (Vyhledat ⌃⌘D, přetažení textu, výběr emoji).
 
 **Fáze 1e:** z plánu zbývá ruční kontrola nových oken (uvítání, Nastavení, Místní historie, automatické ukládání, obnova, stavový řádek); `.minoride/local.json` až s prvním uživatelem (servery v 6b).
 

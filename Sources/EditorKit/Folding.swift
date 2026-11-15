@@ -5,25 +5,30 @@ import TextEngine
 /// view shows; a fold hides whole lines under its header line. A caret or selection that
 /// lands in a fold (arrow keys, Find, undo) unfolds it.
 extension EditorView {
-	var rowCount: Int { rope.lineCount - display.hiddenCount }
+	public var rowCount: Int { display.rowCount(lineCount: rope.lineCount) }
 
+	/// Top of the first row of a line.
 	func y(ofLine line: Int) -> CGFloat { CGFloat(display.row(of: line)) * lineHeight }
 
-	func line(atY y: CGFloat) -> Int {
-		let row = min(max(0, Int(y / lineHeight)), rowCount - 1)
-		return display.line(atRow: row)
+	func line(atY y: CGFloat) -> Int { position(atY: y).line }
+
+	/// Line and row of the line at a view y.
+	func position(atY y: CGFloat) -> (line: Int, segment: Int) {
+		display.position(atRow: min(max(0, Int(y / lineHeight)), rowCount - 1))
 	}
 
-	/// Visible lines whose rows intersect the span, in order.
+	/// Visible lines with a row intersecting the span, in order.
 	func lines(inY minY: CGFloat, _ maxY: CGFloat) -> [Int] {
 		let first = max(0, Int(minY / lineHeight)), last = min(rowCount - 1, Int(maxY / lineHeight))
 		guard first <= last else { return [] }
 		if display.isEmpty { return Array(first...last) }
-		return (first...last).map { display.line(atRow: $0) }
+		var lines: [Int] = []
+		for row in rows(inY: minY, maxY) where row.segment == 0 || lines.isEmpty { lines.append(row.line) }
+		return lines
 	}
 
 	func rebuildDisplay() {
-		display = DisplayMap(hidden: folds.map { rope.foldedLines($0) })
+		display = DisplayMap(hidden: folds.map { rope.foldedLines($0) }, wrapped: wraps?.extraRows ?? [])
 		foldedHeaders = Set(folds.map { rope.line(containing: $0.lowerBound) })
 	}
 
@@ -119,7 +124,8 @@ extension EditorView {
 
 	/// Box after a folded header line; clicking it unfolds.
 	func placeholderRect(_ line: Int) -> NSRect {
-		NSRect(x: textInset + layout(line).width + 6, y: y(ofLine: line) + 2, width: lineHeight * 1.6, height: lineHeight - 4)
+		let end = point(of: rope.lineRange(line).upperBound, line: line)
+		return NSRect(x: end.x + 6, y: end.y + 2, width: lineHeight * 1.6, height: lineHeight - 4)
 	}
 
 	func drawFoldPlaceholders(_ ctx: CGContext, lines: [Int]) {

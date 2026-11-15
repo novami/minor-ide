@@ -223,6 +223,7 @@
 "Split Editor Side by Side" = "Rozdělit editor vedle sebe";
 "Split Editor Top and Bottom" = "Rozdělit editor pod sebe";
 "Close Editor Split" = "Zavřít rozdělení editoru";
+"Wrap Lines" = "Zalamovat řádky";
 "Code Folding" = "Sbalování kódu";
 "Fold" = "Sbalit";
 "Unfold" = "Rozbalit";
@@ -266,6 +267,8 @@
 "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "Existující soubor si ponechá odsazení, které používá, pokud .editorconfig nebo nastavení projektu neříká jinak.";
 "Save files automatically" = "Ukládat soubory automaticky";
 "Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History." = "Upravené soubory se uloží při přepnutí na jiný tab, okno nebo aplikaci. Soubory, které se mezitím změnily na disku, se neukládají. Každé uložení se uchová v Místní historii.";
+"Wrap lines" = "Zalamovat řádky";
+"Long lines continue on the next row at the line length from Format (120 when not set). Large and minified files are not wrapped." = "Dlouhé řádky pokračují na dalším řádku po délce řádku z karty Formát (když není nastavená, po 120 znacích). Velké a minifikované soubory se nezalamují.";
 "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here." = "settings.json není platný JSON. Opravte ho v editoru; do té doby tu nastavení nejde měnit.";
 "Settings are stored in settings.json. A project can override them in .minoride/settings.json." = "Nastavení se ukládá do settings.json. Projekt ho může přepsat v .minoride/settings.json.";
 "Open settings.json" = "Otevřít settings.json";
@@ -283,6 +286,8 @@
 "Spaces" = "Mezery";
 "Indent size" = "Velikost odsazení";
 "Tab width" = "Šířka tabulátoru";
+"Line length" = "Délka řádku";
+"Not set" = "Nenastaveno";
 "Line endings" = "Konce řádků";
 
 /* MinorIDE/SettingsWindow.swift, MinorIDE/StatusBar.swift */

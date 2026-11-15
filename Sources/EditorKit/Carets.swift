@@ -76,7 +76,8 @@ extension EditorView {
 		for s in selections.all {
 			let line = rope.line(containing: s.head)
 			guard lines.contains(line) else { continue }
-			rects.append(CGRect(x: x(of: s.head, line: line), y: y(ofLine: line) + 1, width: 2, height: lineHeight - 2))
+			let p = point(of: s.head, line: line)
+			rects.append(CGRect(x: p.x, y: p.y + 1, width: 2, height: lineHeight - 2))
 		}
 		return rects
 	}

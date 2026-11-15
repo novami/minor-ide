@@ -35,7 +35,10 @@ extension EditorView {
 		return runs
 	}
 
-	func drawHighlighted(_ ctx: CGContext, lines: [Int], highlighter: SyntaxHighlighter, textColor: CGColor) {
+	/// Text of the rows, coloured by tokens when there is a highlighter. Each row draws the
+	/// glyphs of its units shifted left by the x of its first unit; fallback lines (CTLine)
+	/// draw whole, clipped to the row.
+	func drawText(_ ctx: CGContext, rows: [(line: Int, segment: Int)], highlighter: SyntaxHighlighter?, textColor: CGColor) {
 		let kinds = TokenKind.allCases.count
 		if colorGlyphs.count != kinds {
 			colorGlyphs = Array(repeating: [], count: kinds)
@@ -45,24 +48,44 @@ extension EditorView {
 			colorGlyphs[k].removeAll(keepingCapacity: true)
 			colorPositions[k].removeAll(keepingCapacity: true)
 		}
-		for line in lines {
-			let l = layout(line)
-			let baseline = y(ofLine: line) + ascent + 1
-			let bytes = rope.bytes(in: rope.lineRange(line))
-			let runs = Self.unitRuns(bytes, highlighter.tokens(line: line, bytes: bytes))
+		var line = -1
+		var l: LineLayout?
+		var runs: [(Range<Int>, TokenKind)] = []
+		var b: [Int] = []
+		for row in rows {
+			if row.line != line {
+				line = row.line
+				l = layout(line)
+				b = breaks(ofLine: line)
+				if let highlighter {
+					let bytes = rope.bytes(in: rope.lineRange(line))
+					runs = Self.unitRuns(bytes, highlighter.tokens(line: line, bytes: bytes))
+				}
+			}
+			guard let l else { continue }
+			let top = y(ofLine: line) + CGFloat(row.segment) * lineHeight
+			let baseline = top + ascent + 1
+			let units = b.isEmpty ? 0..<l.unitCount : segmentUnits(line: line, segment: row.segment, b)
+			let shift = l.x(atUnit: units.lowerBound)
 			if l.ctLine != nil {
 				let colored = runs.compactMap { r, kind in tokenColors[Int(kind.rawValue)].map { (r, $0) } }
-				guard let ct = l.colored(colored, attributes: textAttributes) else { continue }
-				LineLayout.withBaseline(ctx, CGPoint(x: textInset, y: baseline)) { CTLineDraw(ct, ctx) }
+				let ct = highlighter == nil ? l.ctLine : l.colored(colored, attributes: textAttributes)
+				guard let ct else { continue }
+				ctx.saveGState()
+				if !b.isEmpty {
+					ctx.clip(to: CGRect(x: textInset, y: top, width: l.x(atUnit: units.upperBound) - shift + 1, height: lineHeight))
+				}
+				LineLayout.withBaseline(ctx, CGPoint(x: textInset - shift, y: baseline)) { CTLineDraw(ct, ctx) }
+				ctx.restoreGState()
 				continue
 			}
 			var t = 0
-			for g in 0..<l.glyphs.count {
+			for g in units where g < l.glyphs.count {
 				while t < runs.count && runs[t].0.upperBound <= g { t += 1 }
 				let kind = t < runs.count && runs[t].0.lowerBound <= g ? Int(runs[t].1.rawValue) : 0
 				colorGlyphs[kind].append(l.glyphs[g])
 				let p = l.positions[g]
-				colorPositions[kind].append(CGPoint(x: textInset + p.x, y: -baseline))
+				colorPositions[kind].append(CGPoint(x: textInset + p.x - shift, y: -baseline))
 			}
 		}
 		for k in 0..<kinds where !colorGlyphs[k].isEmpty {

@@ -251,6 +251,7 @@ Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 59–74 týdnů; s
 
 **1f. Dokončení (≈ 3–4 týdny)**
 - Zbylé lexery, **zalamování řádků** (mapování řádek ↔ vizuální řádky, vypnuté výchozí, zapnuté pro Markdown), sticky header s aktuální funkcí.
+  - **Rozhodnutí 2026-11-15:** zalamuje se na pevném sloupci (`max_line_length`, bez něj 120), pokračování bez odsazení, jeden globální přepínač (bez výjimky pro Markdown), soubory ve zjednodušeném režimu se nezalamují. Hotovo.
 - **Plná přístupnost editoru**: role textové oblasti pro VoiceOver (čtení po znacích, slovech a řádcích, výběr, pozice kurzoru, oznámení změn), Zvýšit kontrast, Omezit pohyb.
 - **Systémové textové funkce**, které `NSTextView` dává zadarmo a vlastní view je musí doplnit: Vyhledat (⌃⌘D, silný stisk), menu Služby s výběrem, přetažení textu, sdílená schránka hledání (⌘E), diktování, výběr emoji.
 - Hotovo když: VoiceOver přečte a upraví soubor bez myši a každá položka seznamu má test nebo ruční kontrolu v `docs/editor-behaviors.md`.

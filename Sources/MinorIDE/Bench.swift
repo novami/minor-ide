@@ -141,6 +141,36 @@ enum Bench {
 		report("lex 10 MB go", [CACurrentMediaTime() - t])
 		editor.highlighter = nil
 
+		// Soft wrapping at 40 columns, so most lines of the sample wrap: all rows, typing, jumps.
+		let unwrapped = editor.format
+		var narrow = unwrapped
+		narrow.maxLineLength = 40
+		editor.format = narrow
+		t = CACurrentMediaTime()
+		EditorView.wrapsLines = true
+		report("wrap 10 MB", [CACurrentMediaTime() - t])
+		display()
+		samples = []
+		for _ in 0..<1000 {
+			t = CACurrentMediaTime()
+			editor.insertText("x ", replacementRange: NSRange(location: NSNotFound, length: 0))
+			display()
+			samples.append(CACurrentMediaTime() - t)
+		}
+		report("type char wrapped", samples)
+		samples = []
+		for _ in 0..<200 {
+			jump = jump &* 6364136223846793005 &+ 1442695040888963407
+			let row = Int(jump >> 33) % editor.rowCount
+			t = CACurrentMediaTime()
+			editor.scroll(NSPoint(x: 0, y: CGFloat(row) * editor.lineHeight))
+			display()
+			samples.append(CACurrentMediaTime() - t)
+		}
+		report("scroll jump wrapped", samples)
+		EditorView.wrapsLines = false
+		editor.format = unwrapped
+
 		// Raw rope throughput, independent of drawing.
 		var rope = Rope(text)
 		var rng = UInt64(1)
@@ -217,7 +247,7 @@ enum Bench {
 	/// p99 (8 ms) and rope throughput (4 s) are checked there.
 	static func checkBudgets() -> Bool {
 		let ci = ProcessInfo.processInfo.environment["MINORIDE_BENCH_PROFILE"] == "ci"
-		let frames = ["type char", "type newline", "backspace", "scroll 40px", "scroll jump", "type char go", "type quote go", "scroll jump go"]
+		let frames = ["type char", "type newline", "backspace", "scroll 40px", "scroll jump", "type char go", "type quote go", "scroll jump go", "type char wrapped", "scroll jump wrapped"]
 		var checks: [(String, Double?, Double)] = [] // name, measured, limit (seconds)
 		for name in frames {
 			checks.append((name + " p99", p99[name], 0.008))

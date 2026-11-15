@@ -77,7 +77,8 @@ public final class FileDocument {
 		format.charset = loaded.charset
 		let doc = FileDocument(text: loaded.text, format: format)
 		// Large and minified files open without colouring (plan: simplified mode).
-		doc.text.language = TextFile.needsSimplifiedMode(data) ? nil : Languages.language(forPath: url.path)
+		doc.text.isSimplified = TextFile.needsSimplifiedMode(data)
+		doc.text.language = doc.text.isSimplified ? nil : Languages.language(forPath: url.path)
 		doc.text.isReadOnly = data.count > TextFile.readOnlyBytes
 		doc.url = url
 		doc.resolved = resolved

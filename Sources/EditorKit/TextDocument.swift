@@ -15,13 +15,20 @@ public final class TextDocument {
 	public var onChange: (() -> Void)?
 	/// Shown but not editable (files too large to edit safely); editors refuse every change.
 	public var isReadOnly = false
+	/// Large or minified file (simplified mode): no colouring and no soft wrapping.
+	public var isSimplified = false {
+		didSet { if isSimplified != oldValue { for view in views { view.wrapSettingsChanged() } } }
+	}
 
 	/// Indentation and tab display. The buffer always uses "\n"; line endings and charset
 	/// apply when saving.
 	public var format = FormatSettings() {
 		didSet {
-			guard format.tabWidth != oldValue.tabWidth else { return }
-			for view in views { view.tabWidthDidChange() }
+			if format.tabWidth != oldValue.tabWidth {
+				for view in views { view.tabWidthDidChange() }
+			} else if format.maxLineLength != oldValue.maxLineLength {
+				for view in views { view.wrapSettingsChanged() }
+			}
 		}
 	}
 

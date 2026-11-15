@@ -65,6 +65,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return
 		}
 		if args.first == "--snapshot", args.count >= 2 {
+			EditorView.wrapsLines = ProcessInfo.processInfo.environment["MINORIDE_WRAP"] != nil
 			if let file = args.dropFirst(2).first {
 				open(URL(fileURLWithPath: file))
 			} else {
@@ -75,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			NSApp.terminate(nil)
 			return
 		}
+		Self.loadEditorSettings()
 		watchUserSettings()
 		observeFocusForAutoSave()
 		ToolsModel.shared.loadEnvironment() // D22: PATH of the login shell, for tools started later
@@ -236,7 +238,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	/// settings file re-resolves the format of every open file.
 	private static func checkDisk(changed paths: [String]) {
 		let changed = Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
-		if changed.contains(where: isSettingsFile) { FileDocument.all.forEach { $0.settingsChanged() } }
+		if changed.contains(where: isSettingsFile) {
+			FileDocument.all.forEach { $0.settingsChanged() }
+			loadEditorSettings()
+		}
 		FileDocument.all.filter { $0.url.map { changed.contains($0.standardizedFileURL.path) } ?? false }.forEach { $0.checkDisk() }
 	}
 
@@ -262,6 +267,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 				guard Self.autoSaveEnabled else { return }
 				FileDocument.all.forEach { $0.autoSave() }
 			}
+		}
+	}
+
+	/// Settings every editor shares (settings.json in Application Support).
+	static func loadEditorSettings() {
+		EditorView.wrapsLines = SettingsFile.load(SettingsFile.userURL)?.wrapLines ?? false
+	}
+
+	/// View › Wrap Lines: switches wrapping in every editor and keeps it in settings.json.
+	@objc func toggleWrapLines(_ sender: Any?) {
+		EditorView.wrapsLines.toggle()
+		let url = SettingsFile.userURL
+		try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+		if let data = try? SettingsFile.updating(try? Data(contentsOf: url), section: nil, key: "wrap_lines", value: .bool(EditorView.wrapsLines)) {
+			try? data.write(to: url, options: .atomic)
 		}
 	}
 
@@ -540,6 +560,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	func validateMenuItem(_ item: NSMenuItem) -> Bool {
 		if item.action == #selector(reopenClosedTab(_:)) { return !closedFiles.isEmpty }
+		if item.action == #selector(toggleWrapLines(_:)) {
+			item.state = EditorView.wrapsLines ? .on : .off
+			return true
+		}
 		if item.action == #selector(quitTogglingKeepWindows(_:)) {
 			item.title = keepWindowsSetting ? L("Quit and Close All Windows") : L("Quit and Keep Windows")
 			return true

@@ -48,6 +48,14 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Mapa řádků ↔ zobrazených řádků — `FoldRegionTests.displayMapRowsAndLines`
 - [ ] Šipka v gutteru (klik sbalí/rozbalí), „…“ za řádkem (klik rozbalí) — ruční kontrola (zbývá; snímek `MINORIDE_FOLD=4 --snapshot` ověřen)
 
+## Zalamování řádků (1f)
+- [x] Zlom za poslední mezerou v řádku, jinak na sloupci; mezery přečnívají, diakritika zůstane u písmene, tabulátory po zarážkách — `WrapTests.breaksAfterSpacesOrAtTheColumn`
+- [x] Zalomení po editaci odpovídá přepočtu celého souboru — `WrapTests.updateMatchesFullComputation`
+- [x] Mapa řádků se sbalením i zalomením — `WrapTests.displayMapWithWrapsAndFolds`, `WrapEditorTests.foldsAndWrapsTogether`
+- [x] Šipky nahoru/dolů po zobrazených řádcích, ⌘←/⌘→ na začátek a konec zobrazeného řádku, ⌃A/⌃E po řádcích textu, klik na pokračování — `WrapEditorTests.rowsCaretsAndMoves`
+- [x] Psaní mění počet zobrazených řádků, Zpět, vypnutí — `WrapEditorTests.editsChangeRowsAndSwitchOff`
+- [ ] Vzhled (výběr přes zlom, emoji a čeština v pokračování, gutter, „…“ za sbaleným zalomeným řádkem) — snímek `MINORIDE_WRAP=1 --snapshot` ověřen; ruční kontrola zbývá
+
 ## Jazykové příkazy (Go, PHP, SQL, NEON, Latte, JSON)
 - [x] ⌘/ zakomentuje řádky na společném odsazení, podruhé odkomentuje; prázdné řádky vynechá — `LanguageCommandTests.lineCommentsToggleAtCommonIndent`
 - [x] Latte `{* *}`, HTML části PHP `<!-- -->` (podle stavu lexeru na řádku) — `LanguageCommandTests.blockCommentsInLatteAndHTMLPartsOfPHP`
