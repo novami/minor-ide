@@ -3,6 +3,18 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Editor" = "Editor";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Cut" = "Cut";
+"Copy" = "Copy";
+"Paste" = "Paste";
+"Comment Selection" = "Comment Selection";
+"Find…" = "Find…";
+
+/* MinorIDE/DocumentWindow.swift */
+"Speech" = "Speech";
+"Start Speaking" = "Start Speaking";
+"Stop Speaking" = "Stop Speaking";
 "The file was deleted from disk. Saving creates it again." = "The file was deleted from disk. Saving creates it again.";
 "OK" = "OK";
 "The file changed on disk." = "The file changed on disk.";
@@ -71,17 +83,12 @@
 "Edit" = "Edit";
 "Undo" = "Undo";
 "Redo" = "Redo";
-"Cut" = "Cut";
-"Copy" = "Copy";
-"Paste" = "Paste";
 "Select All" = "Select All";
 "Select Next Occurrence" = "Select Next Occurrence";
 "Select All Occurrences" = "Select All Occurrences";
 "Duplicate Line" = "Duplicate Line";
 "Move Line Up" = "Move Line Up";
 "Move Line Down" = "Move Line Down";
-"Comment Selection" = "Comment Selection";
-"Find…" = "Find…";
 "Find and Replace…" = "Find and Replace…";
 "Use Selection for Find" = "Use Selection for Find";
 "Use Selection for Replace" = "Use Selection for Replace";

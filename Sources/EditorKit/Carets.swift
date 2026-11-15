@@ -90,7 +90,9 @@ extension EditorView {
 		guard on > 0, off > 0, !caretLayer.isHidden else { return }
 		let blink = CAKeyframeAnimation(keyPath: "opacity")
 		blink.values = [1, 0]
-		blink.keyTimes = [0, NSNumber(value: on / (on + off))]
+		// Discrete animations need one key time more than values (ending at 1), else Core
+		// Animation ignores them and the caret never blinks.
+		blink.keyTimes = [0, NSNumber(value: on / (on + off)), 1]
 		blink.calculationMode = .discrete
 		blink.duration = on + off
 		blink.repeatCount = .infinity

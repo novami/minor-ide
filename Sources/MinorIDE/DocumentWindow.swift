@@ -82,6 +82,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		sidebar?.onOpen = { url in (NSApp.delegate as? AppDelegate)?.open(url) }
 		if let url { sidebar?.reveal(url) }
 		window.delegate = self
+		editor.contextMenuProvider = { _ in DocumentWindow.contextMenu() }
 		editor.onChange = { [weak self] in
 			guard let self else { return }
 			markEdited()
@@ -164,6 +165,23 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		placed = true
 		window.makeKeyAndOrderFront(nil)
 		window.makeFirstResponder(editor)
+	}
+
+	/// Right-click menu of the editor (AppKit adds Services for the selection).
+	static func contextMenu() -> NSMenu {
+		let menu = NSMenu()
+		menu.item(L("Cut"), #selector(NSText.cut(_:)))
+		menu.item(L("Copy"), #selector(NSText.copy(_:)))
+		menu.item(L("Paste"), #selector(NSText.paste(_:)))
+		menu.addItem(.separator())
+		menu.item(L("Comment Selection"), #selector(EditorView.toggleComment(_:)))
+		menu.item(L("Find…"), #selector(DocumentWindow.showFind(_:)))
+		menu.addItem(.separator())
+		let speech = menu.item(L("Speech"), nil)
+		speech.submenu = NSMenu(title: L("Speech"))
+		speech.submenu!.item(L("Start Speaking"), #selector(EditorView.startSpeaking(_:)))
+		speech.submenu!.item(L("Stop Speaking"), #selector(EditorView.stopSpeaking(_:)))
+		return menu
 	}
 
 	// MARK: Changes on disk

@@ -1,3 +1,4 @@
+import AVFoundation
 import AppKit
 import CoreText
 import QuartzCore
@@ -96,6 +97,12 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		}
 	}
 	var backgroundHighlightRunning = false
+	private var clipObserver: (any NSObjectProtocol)?
+	/// Builds the right-click menu (localized by the app).
+	public var contextMenuProvider: ((EditorView) -> NSMenu)?
+	let speech = AVSpeechSynthesizer()
+	/// The caret move in progress, for the VoiceOver notification.
+	var accessibilityMove: AccessibilityMove?
 	var tokenColors: [NSColor?] = []
 	var colorGlyphs: [[CGGlyph]] = []
 	var colorPositions: [[CGPoint]] = []
@@ -126,6 +133,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		super.init(frame: .zero)
 		wantsLayer = true
 		layerContentsRedrawPolicy = .onSetNeedsDisplay
+		clipsToBounds = true // drawing stays inside the view (default is false since macOS 14)
 		setUpCaretLayer()
 		updateTokenColors()
 	}
@@ -150,7 +158,25 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public func updateSize() {
 		// The gutter (vertical ruler) floats over the clip view and insets it.
 		let width = enclosingScrollView.map { $0.contentSize.width - $0.contentView.contentInsets.left - $0.contentView.contentInsets.right } ?? frame.width
-		setFrameSize(NSSize(width: width, height: CGFloat(rowCount) * lineHeight + lineHeight))
+		let size = NSSize(width: max(0, width), height: CGFloat(rowCount) * lineHeight + lineHeight)
+		guard size != frame.size else { return }
+		let widthChanged = size.width != frame.width
+		setFrameSize(size)
+		// Layer contents are redrawn only on request (.onSetNeedsDisplay), not on resize.
+		if widthChanged { needsDisplay = true }
+	}
+
+	/// The clip view does not resize its document view, so the width follows its frame here
+	/// (window resize, sidebar, layout of a window built before it had a size).
+	public override func viewDidMoveToSuperview() {
+		super.viewDidMoveToSuperview()
+		if let token = clipObserver { NotificationCenter.default.removeObserver(token) }
+		clipObserver = nil
+		guard let clip = superview as? NSClipView else { return }
+		clip.postsFrameChangedNotifications = true
+		clipObserver = NotificationCenter.default.addObserver(forName: NSView.frameDidChangeNotification, object: clip, queue: .main) { [weak self] _ in
+			MainActor.assumeIsolated { self?.updateSize() }
+		}
 	}
 
 	public func setText(_ text: String) {
@@ -532,7 +558,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public override func mouseDown(with event: NSEvent) {
 		if hasMarkedText() { // a click drops a pending dead key or composition
 			inputContext?.discardMarkedText()
-			unmarkText()
+			discardMarkedText()
 		}
 		mouseDown(at: convert(event.locationInWindow, from: nil), clicks: event.clickCount, modifiers: event.modifierFlags)
 	}
@@ -606,6 +632,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	public override func doCommand(by selector: Selector) {
+		accessibilityMove = EditorView.accessibilityMove(for: selector)
+		defer { accessibilityMove = nil }
 		var page: Int { max(1, Int(min(visibleRect.height, 1e6) / lineHeight) - 1) }
 		let lineStart = { (o: Int) in self.rope.offset(ofLine: self.rope.line(containing: o)) }
 		let lineEnd = { (o: Int) in self.rope.lineRange(self.rope.line(containing: o)).upperBound }
@@ -759,13 +787,13 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	// MARK: Undo, clipboard
 
 	@objc public func undo(_ sender: Any?) {
-		unmarkText()
+		discardMarkedText()
 		guard let step = history.undo() else { return }
 		for t in step.transactions.reversed() { apply(t.inverse) { _ in t.selectionsBefore } }
 	}
 
 	@objc public func redo(_ sender: Any?) {
-		unmarkText()
+		discardMarkedText()
 		guard let step = history.redo() else { return }
 		for t in step.transactions { apply(t.changes) { _ in t.selectionsAfter } }
 	}
@@ -804,8 +832,11 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	public func insertText(_ string: Any, replacementRange: NSRange) {
 		let text = (string as? NSAttributedString)?.string ?? (string as? String) ?? ""
-		markedText = ""
-		if let range = byteRange(replacementRange) {
+		// Marked text is drawn over the document, not stored in it: replacing "its" range
+		// means inserting at the caret, not overwriting the text after it.
+		let replacesMarked = hasMarkedText() && replacementRange == markedRange()
+		discardMarkedText()
+		if !replacesMarked, let range = byteRange(replacementRange) {
 			// Press-and-hold accents and some input methods replace text already in the document.
 			apply(ChangeSet([(range, text)]), kind: .other) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
 			return
@@ -815,14 +846,24 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	public func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
-		if let range = byteRange(replacementRange) {
+		if !(hasMarkedText() && replacementRange == markedRange()), let range = byteRange(replacementRange) {
 			setSelections(SelectionSet([Selection(anchor: range.lowerBound, head: range.upperBound)]))
 		}
 		markedText = (string as? NSAttributedString)?.string ?? (string as? String) ?? ""
 		setNeedsDisplay(lineRect(rope.line(containing: caret)))
 	}
 
+	/// The input method accepts the marked text as typed (dictation commits this way).
 	public func unmarkText() {
+		guard hasMarkedText() else { return }
+		let text = markedText
+		discardMarkedText()
+		replaceSelections(.typing) { _ in text }
+	}
+
+	/// Drops a pending dead key or composition (click, undo).
+	func discardMarkedText() {
+		guard hasMarkedText() else { return }
 		markedText = ""
 		setNeedsDisplay(lineRect(rope.line(containing: caret)))
 	}
@@ -884,6 +925,7 @@ extension EditorView: NSMenuItemValidation {
 		case #selector(paste(_:)): NSPasteboard.general.string(forType: .string) != nil
 		case #selector(unfold(_:)), #selector(unfoldAll(_:)): !folds.isEmpty
 		case #selector(toggleComment(_:)): language != nil
+		case #selector(stopSpeaking(_:)): speech.isSpeaking
 		case #selector(moveLinesUp(_:)): selectedLineBlocks().first.map { $0.lowerBound > 0 } ?? false
 		case #selector(moveLinesDown(_:)): selectedLineBlocks().last.map { $0.upperBound < rope.lineCount - 1 } ?? false
 		default: true

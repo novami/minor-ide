@@ -65,3 +65,24 @@ struct TextInputTests {
 		#expect(e.rope.string == "\nfoo_barqxu")
 	}
 }
+
+@MainActor
+struct DictationTests {
+	/// Dictation shows partial text as marked text and commits it with unmarkText.
+	@Test func unmarkTextCommitsMarkedText() {
+		let e = EditorView(text: "ab")
+		e.moveCaret(to: 1)
+		e.setMarkedText("ahoj", selectedRange: NSRange(location: 4, length: 0), replacementRange: NSRange(location: NSNotFound, length: 0))
+		e.setMarkedText("ahoj světe", selectedRange: NSRange(location: 10, length: 0), replacementRange: e.markedRange())
+		e.unmarkText()
+		#expect(e.rope.string == "aahoj světeb")
+	}
+
+	@Test func insertingOverMarkedRangeKeepsFollowingText() {
+		let e = EditorView(text: "xyz")
+		e.moveCaret(to: 0)
+		e.setMarkedText("ab", selectedRange: NSRange(location: 2, length: 0), replacementRange: NSRange(location: NSNotFound, length: 0))
+		e.insertText("abc", replacementRange: e.markedRange())
+		#expect(e.rope.string == "abcxyz")
+	}
+}

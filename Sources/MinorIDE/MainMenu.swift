@@ -1,4 +1,5 @@
 import AppKit
+import Carbon
 import EditorKit
 
 /// Standard macOS menu bar (Apple HIG): app, File, Edit, Format, View, Window, Help.
@@ -51,7 +52,7 @@ enum MainMenu {
 			m.item(L("Duplicate Line"), #selector(EditorView.duplicateLines(_:)), "d", [.command, .shift])
 			m.item(L("Move Line Up"), #selector(EditorView.moveLinesUp(_:)), up, [.command, .option])
 			m.item(L("Move Line Down"), #selector(EditorView.moveLinesDown(_:)), down, [.command, .option])
-			m.item(L("Comment Selection"), #selector(EditorView.toggleComment(_:)), "/")
+			KeyboardLayout.bind(m.item(L("Comment Selection"), #selector(EditorView.toggleComment(_:)), "/"), keyCode: UInt16(kVK_ANSI_Slash))
 			m.addItem(.separator())
 			let find = m.item(L("Find"), nil)
 			find.submenu = NSMenu(title: L("Find"))
@@ -142,7 +143,7 @@ final class RecentMenu: NSMenu, NSMenuDelegate {
 	}
 }
 
-private extension NSMenu {
+extension NSMenu {
 	func add(submenu title: String, _ build: (NSMenu) -> Void) {
 		let menu = NSMenu(title: title)
 		build(menu)

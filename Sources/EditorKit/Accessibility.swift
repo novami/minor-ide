@@ -78,9 +78,46 @@ extension EditorView {
 	}
 
 	/// Tells assistive apps about edits and caret moves; free until one has asked us anything.
+	/// VoiceOver decides what to speak (the character, word or line reached) from the text
+	/// state keys NSTextView sends too; without them it stays silent on caret moves.
 	func postAccessibilityChange(edited: Bool) {
+		defer { accessibilityMove = nil }
 		guard accessibilityClientSeen else { return }
 		if edited { NSAccessibility.post(element: self, notification: .valueChanged) }
-		NSAccessibility.post(element: self, notification: .selectedTextChanged)
+		var info: [NSAccessibility.NotificationUserInfoKey: Any] = [:]
+		if let move = accessibilityMove, !edited {
+			info[.init(rawValue: "AXTextStateChangeType")] = move.extend ? 3 : 2 // selection extend / move
+			info[.init(rawValue: "AXTextSelectionDirection")] = move.direction.rawValue
+			info[.init(rawValue: "AXTextSelectionGranularity")] = move.granularity.rawValue
+		}
+		NSAccessibility.post(element: self, notification: .selectedTextChanged, userInfo: info.isEmpty ? nil : info)
 	}
+
+	/// What kind of caret move a command made, from its selector name.
+	static func accessibilityMove(for selector: Selector) -> AccessibilityMove? {
+		let name = NSStringFromSelector(selector)
+		guard name.hasPrefix("move") || name.hasPrefix("page") || name.hasPrefix("scrollPage") else { return nil }
+		let extend = name.contains("ModifySelection")
+		let back = ["Left", "Up", "Backward", "Beginning"].contains { name.contains($0) }
+		let granularity: AccessibilityMove.Granularity
+		if name.contains("Document") { granularity = .document }
+		else if name.contains("Paragraph") { granularity = .paragraph }
+		else if name.contains("OfLine") || name.contains("EndOfLine") { granularity = .line }
+		else if name.contains("Word") { granularity = .word }
+		else if name.contains("Up") || name.contains("Down") { granularity = .line }
+		else if name.hasPrefix("page") || name.hasPrefix("scrollPage") { granularity = .page }
+		else { granularity = .character }
+		let boundary = name.contains("Beginning") || name.contains("EndOf") || name.contains("ToLeftEnd") || name.contains("ToRightEnd")
+		let direction: AccessibilityMove.Direction = boundary ? (back ? .beginning : .end) : (back ? .previous : .next)
+		return AccessibilityMove(extend: extend, direction: direction, granularity: granularity)
+	}
+}
+
+/// Values of the AXTextSelectionDirection and AXTextSelectionGranularity keys.
+struct AccessibilityMove {
+	enum Direction: Int { case beginning = 1, end, previous, next, discontiguous }
+	enum Granularity: Int { case character = 1, word, line, sentence, paragraph, page, document, all }
+	var extend: Bool
+	var direction: Direction
+	var granularity: Granularity
 }

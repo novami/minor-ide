@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1e/2)
+**Poslední aktualizace:** 2026-11-15 (ruční kontrola)
 
 ## Kde jsme
 
@@ -108,6 +108,18 @@ Pak zbytek 1c (hledání, folding), 1d (lexery a zvýraznění) a po ní jazykov
 - 1b: klávesy mimo keymapu přes `doCommandBySelector`;
 - důvěra projektu mimo projekt (`trusted.json`), `.minoride/local.json` se v Omezeném režimu nečte;
 - prostředí ze shellu přes `-l -i -c` (D22).
+
+## Ruční kontrola s uživatelem (2026-11-15) a opravy
+Prošlo: čeština a mrtvé klávesy, hledání, sbalování, označování, nastavení s taby, diktování, kontextové menu s Řečí, ⌘/ (na české klávesnici ⌘-). VoiceOver uživatel nezkoušel (není jasné ovládání; ⌘F5 a šipky).
+Opravené chyby, které offscreen snímky neukázaly (regresní testy `WindowRegressionTests`):
+- editor měl šířku 0 (clip view nemění velikost dokumentu) → sleduje rám clip view a po změně šířky se překreslí;
+- gutter (`NSRulerView`) bez ořezu (výchozí od macOS 14) zakrýval celý editor → `clipsToBounds` u gutteru i editoru;
+- kurzor neblikal (diskrétní animace potřebuje o jeden `keyTime` víc než hodnot);
+- diktování nevkládalo text (`unmarkText` musí rozepsaný text potvrdit; nahrazení „rozsahu“ rozepsaného textu nesmí mazat text za kurzorem);
+- VoiceOver: oznámení o pohybu kurzoru nesou typ, směr a krok (`AXTextStateChangeType` …), jinak VoiceOver mlčí — neověřeno;
+- ⌘/ podle fyzické klávesy (`KeyboardLayout`, menu ukazuje znak aktuálního rozložení, přepočet při změně rozložení).
+Nové: kontextové menu editoru (Vyjmout, Kopírovat, Vložit, Zakomentovat, Najít, Řeč › Začít/Přestat mluvit, Služby macOS přes `NSServicesMenuRequestor`).
+Poznámka k prostředí: aplikace spuštěná z prostředí Clauda (`open` v jeho shellu) se vykreslí, ale nedostává vstup uživatele (běží mimo jeho sezení) — ruční testy musí uživatel spustit z Finderu.
 
 ## Rozhodnutí uživatele (2026-11-15)
 Taby = nativní taby oken macOS; push zatím ne; zkratky ponechány (`docs/keymap.md`); témata jen vestavěná. Ruční kontroly (čeština, VoiceOver, lišta hledání, folding, barvy) čekají na uživatele.

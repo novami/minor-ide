@@ -26,6 +26,9 @@ public final class GutterView: NSRulerView {
 		reservedThicknessForAccessoryView = 0
 		ruleThickness = editor.gutterWidth
 		editor.gutter = self
+		// Views do not clip by default since macOS 14: the ruler's layer would grow over the
+		// text and its background would cover the editor.
+		clipsToBounds = true
 	}
 
 	@available(*, unavailable)
@@ -54,6 +57,8 @@ public final class GutterView: NSRulerView {
 		drawCount += 1
 		let start = CACurrentMediaTime()
 		defer { editor.drawSeconds += CACurrentMediaTime() - start }
+		let dirtyRect = dirtyRect.intersection(bounds)
+		guard !dirtyRect.isEmpty else { return }
 		ctx.setFillColor(NSColor.windowBackgroundColor.cgColor)
 		ctx.fill(dirtyRect)
 		// Line numbers are laid out in editor coordinates and shifted into the gutter.
