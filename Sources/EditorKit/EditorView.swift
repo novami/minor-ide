@@ -570,6 +570,11 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	public override func mouseUp(with event: NSEvent) { drag = nil }
 
+	/// Text cursor (I-beam) over the text, as in every macOS text view.
+	public override func resetCursorRects() {
+		addCursorRect(bounds, cursor: .iBeam) // AppKit clips it to the visible part
+	}
+
 	/// Click: caret; double: word; triple: line. Shift extends the primary selection,
 	/// Option adds a selection (Option+drag selects a column).
 	func mouseDown(at point: NSPoint, clicks: Int, modifiers: NSEvent.ModifierFlags) {
