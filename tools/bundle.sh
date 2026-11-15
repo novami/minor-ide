@@ -18,6 +18,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Helpers" "$APP/Contents/Resources"
 cp .build/release/MinorIDE "$APP/Contents/MacOS/MinorIDE"
 cp server/bin/minoride-server "$APP/Contents/Helpers/minoride-server"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/" # drawn by tools/make-icon.swift
 
 # Every Resources/<lang>.lproj becomes a declared localization (new languages need no edit here).
 LOCALIZATIONS=""
@@ -29,6 +30,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key><string>MinorIDE</string>
+	<key>CFBundleIconFile</key><string>AppIcon</string>
 	<key>CFBundleIdentifier</key><string>cz.novami.minoride</string>
 	<key>CFBundleName</key><string>MinorIDE</string>
 	<key>CFBundleDevelopmentRegion</key><string>en</string>

@@ -118,6 +118,7 @@ Opravené chyby, které offscreen snímky neukázaly (regresní testy `WindowReg
 - diktování nevkládalo text (`unmarkText` musí rozepsaný text potvrdit; nahrazení „rozsahu“ rozepsaného textu nesmí mazat text za kurzorem);
 - VoiceOver: oznámení o pohybu kurzoru nesou typ, směr a krok (`AXTextStateChangeType` …), jinak VoiceOver mlčí — neověřeno;
 - ⌘/ podle fyzické klávesy (`KeyboardLayout`, menu ukazuje znak aktuálního rozložení, přepočet při změně rozložení).
+Ikona aplikace (rozhodnutí uživatele: tmavá královská modrá, „{M“ a kurzor; `tools/make-icon.swift`, `make icon` → `Resources/AppIcon.icns`). Sjednocený panel nástrojů (rozhodnutí: jednoduchý): tlačítko bočního panelu u projektu, název souboru a formát jako podtitul okna, Hledat.
 Nové: kontextové menu editoru (Vyjmout, Kopírovat, Vložit, Zakomentovat, Najít, Řeč › Začít/Přestat mluvit, Služby macOS přes `NSServicesMenuRequestor`).
 Poznámka k prostředí: aplikace spuštěná z prostředí Clauda (`open` v jeho shellu) se vykreslí, ale nedostává vstup uživatele (běží mimo jeho sezení) — ruční testy musí uživatel spustit z Finderu.
 

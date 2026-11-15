@@ -7,7 +7,7 @@ import TextEngine
 /// One editor window bound to a file (or untitled). Holds what is needed to save the file
 /// back in its own conventions: line ending, charset and the lines as loaded.
 @MainActor
-final class DocumentWindow: NSObject, NSWindowDelegate {
+final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 	let window: NSWindow
 	let editor: EditorView
 	private(set) var url: URL?
@@ -79,6 +79,14 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		}
 		window.isReleasedWhenClosed = false
 		super.init()
+		// Unified toolbar (HIG): sidebar button for projects, file name with its format as
+		// the subtitle, Find.
+		let toolbar = NSToolbar(identifier: project == nil ? "Editor" : "ProjectEditor")
+		toolbar.delegate = self
+		toolbar.displayMode = .iconOnly
+		toolbar.allowsUserCustomization = false
+		window.toolbar = toolbar
+		window.toolbarStyle = .unified
 		sidebar?.onOpen = { url in (NSApp.delegate as? AppDelegate)?.open(url) }
 		if let url { sidebar?.reveal(url) }
 		window.delegate = self
@@ -352,7 +360,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate {
 		let name = url?.lastPathComponent ?? L("Untitled")
 		let indent = format.indentStyle == .tab ? L("Tabs (%d)", format.tabWidth) : LP("%d spaces", one: "%d space", format.indentSize)
 		let eol = mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
-		window.title = "\(name) — \(eol) · \(indent) · \(format.charset.rawValue.uppercased())"
+		window.title = name
+		window.subtitle = "\(eol) · \(indent) · \(format.charset.rawValue.uppercased())"
 		window.representedURL = url
 		window.tab.title = project.map { url == nil ? $0.name : name } ?? name
 	}
@@ -404,5 +413,31 @@ struct FileStamp: Equatable {
 		      values.contentModificationDate != nil else { return nil }
 		date = values.contentModificationDate
 		size = values.fileSize
+	}
+}
+
+// MARK: Toolbar
+
+extension DocumentWindow {
+	static let findItem = NSToolbarItem.Identifier("find")
+
+	func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+		(project == nil ? [] : [.toggleSidebar, .sidebarTrackingSeparator]) + [.flexibleSpace, Self.findItem]
+	}
+
+	func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+		toolbarDefaultItemIdentifiers(toolbar)
+	}
+
+	func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+		guard id == Self.findItem else { return nil }
+		let item = NSToolbarItem(itemIdentifier: id)
+		item.label = L("Find")
+		item.toolTip = L("Find")
+		item.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: L("Find"))
+		item.action = #selector(showFind(_:))
+		item.target = self
+		item.isBordered = true
+		return item
 	}
 }

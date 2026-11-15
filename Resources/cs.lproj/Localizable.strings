@@ -36,6 +36,9 @@
 /* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Neukládat";
 
+/* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
+"Find" = "Najít";
+
 /* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
 "%d spaces|one" = "%d mezera";
 "%d spaces|few" = "%d mezery";
@@ -46,11 +49,6 @@
 "Whole Word" = "Celá slova";
 "Regular Expression" = "Regulární výraz";
 "Preserve Case" = "Zachovat velikost písmen";
-
-/* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
-"Find" = "Najít";
-
-/* MinorIDE/FindBar.swift */
 "Replace" = "Nahradit";
 
 /* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */

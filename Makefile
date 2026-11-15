@@ -44,5 +44,8 @@ bundle: server
 run: bundle
 	open build/MinorIDE.app
 
+icon:
+	swift tools/make-icon.swift build/AppIcon.iconset && iconutil -c icns build/AppIcon.iconset -o Resources/AppIcon.icns
+
 clean:
 	rm -rf .build build server/bin

@@ -35,6 +35,9 @@
 /* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Don’t Save";
 
+/* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
+"Find" = "Find";
+
 /* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
 "%d spaces|one" = "%d space";
 "%d spaces|other" = "%d spaces";
@@ -44,11 +47,6 @@
 "Whole Word" = "Whole Word";
 "Regular Expression" = "Regular Expression";
 "Preserve Case" = "Preserve Case";
-
-/* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
-"Find" = "Find";
-
-/* MinorIDE/FindBar.swift */
 "Replace" = "Replace";
 
 /* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
