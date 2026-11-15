@@ -130,6 +130,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	}
 
 	private var projects: [Project] = []
+
+	/// Windows of renamed files (or files in a renamed folder) follow the new path.
+	func filesMoved(from old: URL, to new: URL) {
+		let oldPath = old.standardizedFileURL.path
+		for doc in documents {
+			guard let path = doc.url?.standardizedFileURL.path else { continue }
+			if path == oldPath {
+				doc.fileMoved(to: new)
+			} else if path.hasPrefix(oldPath + "/") {
+				doc.fileMoved(to: URL(fileURLWithPath: new.path + path.dropFirst(oldPath.count)))
+			}
+		}
+	}
 	/// Folders of open files outside projects, watched for changes on disk.
 	private var looseWatcher: FileWatcher?
 

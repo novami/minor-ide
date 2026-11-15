@@ -8,6 +8,8 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 	let outline = NSOutlineView()
 	/// Opens a file (the window puts it in a tab).
 	var onOpen: ((URL) -> Void)?
+	/// A file or folder was renamed (open windows follow it).
+	var onMoved: ((URL, URL) -> Void)?
 	private var restoring = false
 
 	init(project: Project) {
@@ -30,6 +32,7 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 		hasVerticalScroller = true
 		drawsBackground = false
 		project.onChange.append { [weak self] folder in self?.reload(folder) }
+		installMenu()
 		restoreExpansion()
 	}
 

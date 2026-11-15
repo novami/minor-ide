@@ -88,6 +88,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 		window.toolbar = toolbar
 		window.toolbarStyle = .unified
 		sidebar?.onOpen = { url in (NSApp.delegate as? AppDelegate)?.open(url) }
+		sidebar?.onMoved = { from, to in (NSApp.delegate as? AppDelegate)?.filesMoved(from: from, to: to) }
 		if let url { sidebar?.reveal(url) }
 		window.delegate = self
 		editor.contextMenuProvider = { _ in DocumentWindow.contextMenu() }
@@ -190,6 +191,13 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 		speech.submenu!.item(L("Start Speaking"), #selector(EditorView.startSpeaking(_:)))
 		speech.submenu!.item(L("Stop Speaking"), #selector(EditorView.stopSpeaking(_:)))
 		return menu
+	}
+
+	/// The file was renamed or its folder moved: follow it without touching the text.
+	func fileMoved(to newURL: URL) {
+		url = newURL
+		diskStamp = FileStamp(newURL)
+		updateTitle()
 	}
 
 	// MARK: Changes on disk

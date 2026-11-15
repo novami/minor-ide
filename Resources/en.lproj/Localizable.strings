@@ -16,7 +16,11 @@
 "Start Speaking" = "Start Speaking";
 "Stop Speaking" = "Stop Speaking";
 "The file was deleted from disk. Saving creates it again." = "The file was deleted from disk. Saving creates it again.";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
 "OK" = "OK";
+
+/* MinorIDE/DocumentWindow.swift */
 "The file changed on disk." = "The file changed on disk.";
 "Reload" = "Reload";
 "Keep Mine" = "Keep Mine";
@@ -29,7 +33,7 @@
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Save" = "Save";
 
-/* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Cancel";
 
 /* MinorIDE/DocumentWindow.swift */
@@ -125,8 +129,26 @@
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Project Files";
 
+/* MinorIDE/SidebarMenu.swift */
+"New File…" = "New File…";
+"New Folder…" = "New Folder…";
+"Rename…" = "Rename…";
+"Move to Trash" = "Move to Trash";
+
+/* MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Show in Finder" = "Show in Finder";
+
+/* MinorIDE/SidebarMenu.swift */
+"Copy Path" = "Copy Path";
+"Copy Relative Path" = "Copy Relative Path";
+"“%@” is not a valid file name." = "“%@” is not a valid file name.";
+"“%@” already exists." = "“%@” already exists.";
+"New file name:" = "New file name:";
+"The file could not be created." = "The file could not be created.";
+"New folder name:" = "New folder name:";
+"New name:" = "New name:";
+
 /* MinorIDE/main.swift */
 "“%@” is not a text file." = "“%@” is not a text file.";
 "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look." = "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look.";
 "Show Hex" = "Show Hex";
-"Show in Finder" = "Show in Finder";

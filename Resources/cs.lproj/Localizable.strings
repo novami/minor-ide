@@ -17,7 +17,11 @@
 "Start Speaking" = "Začít mluvit";
 "Stop Speaking" = "Přestat mluvit";
 "The file was deleted from disk. Saving creates it again." = "Soubor byl z disku smazán. Uložením se vytvoří znovu.";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift */
 "OK" = "OK";
+
+/* MinorIDE/DocumentWindow.swift */
 "The file changed on disk." = "Soubor se na disku změnil.";
 "Reload" = "Přenačíst";
 "Keep Mine" = "Ponechat moje";
@@ -30,7 +34,7 @@
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Save" = "Uložit";
 
-/* MinorIDE/DocumentWindow.swift, MinorIDE/main.swift */
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Zrušit";
 
 /* MinorIDE/DocumentWindow.swift */
@@ -128,8 +132,26 @@
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Soubory projektu";
 
+/* MinorIDE/SidebarMenu.swift */
+"New File…" = "Nový soubor…";
+"New Folder…" = "Nová složka…";
+"Rename…" = "Přejmenovat…";
+"Move to Trash" = "Přesunout do koše";
+
+/* MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Show in Finder" = "Ukázat ve Finderu";
+
+/* MinorIDE/SidebarMenu.swift */
+"Copy Path" = "Kopírovat cestu";
+"Copy Relative Path" = "Kopírovat relativní cestu";
+"“%@” is not a valid file name." = "„%@“ není platný název souboru.";
+"“%@” already exists." = "„%@“ už existuje.";
+"New file name:" = "Název nového souboru:";
+"The file could not be created." = "Soubor se nepodařilo vytvořit.";
+"New folder name:" = "Název nové složky:";
+"New name:" = "Nový název:";
+
 /* MinorIDE/main.swift */
 "“%@” is not a text file." = "„%@“ není textový soubor.";
 "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look." = "MinorIDE upravuje jen textové soubory. Můžete si prohlédnout jeho bajty nebo náhled ve Finderu přes Quick Look.";
 "Show Hex" = "Zobrazit hex";
-"Show in Finder" = "Ukázat ve Finderu";
