@@ -99,12 +99,8 @@ Pak zbytek 1c (hledání, folding), 1d (lexery a zvýraznění) a po ní jazykov
 - důvěra projektu mimo projekt (`trusted.json`), `.minoride/local.json` se v Omezeném režimu nečte;
 - prostředí ze shellu přes `-l -i -c` (D22).
 
-## Otázky pro uživatele (připravené 2026-11-15, před fází 1e)
-1. **Push**: lokálně je řada nepushnutých commitů (1a–1d). Pushnout a ověřit CI (benchmark má nové sekce `type char go`, `scroll jump go`)?
-2. **Taby v projektovém okně (1e)**: (a, doporučeno) vlastní lišta tabů v editorové oblasti (umožní split vertikálně i horizontálně a „Znovu otevřít zavřený tab“), nativní tabování oken vypnuté; (b) nativní taby oken macOS (HIG, ale split a přesuny mezi skupinami jsou omezené).
-3. **Zkratky zvolené bez keymapy**: Duplikovat řádek ⇧⌘D, Přesunout řádek ⌥⌘↑/↓, Sbalit/Rozbalit ⌥⌘←/→ (vše ⌥⇧⌘←/→), Zakomentovat ⌘/, výskyty ⌃G / ⌃⌘G. Ponechat do `docs/keymap.md`?
-4. **Barvy témat**: vestavěné světlé/tmavé jsou vlastní paleta. Mají být v 1e uživatelská témata (JSON v `~/Library/Application Support/MinorIDE/themes/`) a výběr v Nastavení?
-5. **Ruční kontroly** (čekají na uživatele): čeština na skutečné klávesnici a mrtvé klávesy, VoiceOver, lišta hledání (Return/Shift+Return/Esc, tmavý režim), klik na šipky foldingu a „…“, barvy v tmavém i světlém režimu.
+## Rozhodnutí uživatele (2026-11-15)
+Taby = nativní taby oken macOS; push zatím ne; zkratky ponechány (`docs/keymap.md`); témata jen vestavěná. Ruční kontroly (čeština, VoiceOver, lišta hledání, folding, barvy) čekají na uživatele.
 
 ## Otevřené věci mimo kód
 - **Apple Developer účet** (potřeba pro fázi 2: podepsané aktualizace).

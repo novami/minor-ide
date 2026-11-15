@@ -232,6 +232,7 @@ Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 59–74 týdnů; s
 **1e. Projekt a pracovní prostředí (≈ 2 týdny)**
 - Otevření složky, strom souborů (NSOutlineView, lazy), FSEvents, `vendor/` sbalený, poslední projekty, víc oken.
 - Taby, split (vertikální i horizontální), „Reopen closed tab“, indikace neuložených změn.
+- **Rozhodnutí 2026-11-15:** taby jsou nativní taby oken macOS (ne vlastní lišta); split se řeší zvlášť. Témata jen vestavěná světlá/tmavá (bez uživatelských). Zkratky z 1c ponechány, seznam v `docs/keymap.md`.
 - Nastavení: `~/Library/Application Support/MinorIDE/settings.json` + `.minoride/settings.json`, UI v SwiftUI.
 - **Keymapa** v `docs/keymap.md`. Písmenné zkratky podle znaku (QWERTZ i QWERTY), **interpunkční zkratky podle fyzické klávesy** (keyCode), aby fungovaly na **české klávesnici**, kde `[ ] / \` vyžadují Alt; menu ukazuje skutečnou klávesu. Alternativy, např. zpět/vpřed i Cmd+Opt+←/→.
 - **Formát souborů** ([format-settings.md](format-settings.md)), **jádro hotové** (`MinorCore`: `FormatSettings`, `FormatDefaults`, `EditorConfig`, `FormatResolver`, `TextFile`):
