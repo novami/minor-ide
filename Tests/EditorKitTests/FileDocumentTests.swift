@@ -68,6 +68,35 @@ struct FileDocumentTests {
 		#expect(editor.rope.string == "two one\n")
 	}
 
+	@Test func backupsLiveUntilSavedAndRecoverMarksEdited() throws {
+		let root = FileManager.default.temporaryDirectory.appendingPathComponent("FileDocumentBackups-\(UUID().uuidString)")
+		let store = BackupStore(root: root)
+		FileDocument.backups = store
+		defer { FileDocument.backups = nil; try? FileManager.default.removeItem(at: root) }
+		let url = try tempFile("one\n")
+		let doc = try FileDocument.load(url)
+		let editor = EditorView(document: doc.text)
+		editor.setSelections(SelectionSet(caret: 0))
+		editor.insertText("x", replacementRange: NSRange(location: NSNotFound, length: 0))
+		doc.backUpNow()
+		FileDocument.flushBackups()
+		#expect(store.all().map(\.text) == ["xone\n"])
+		#expect(store.all().first?.path == url.standardizedFileURL.path)
+		try doc.write(to: url)
+		FileDocument.flushBackups()
+		#expect(store.all().isEmpty)
+
+		let untitled = FileDocument(text: "")
+		_ = EditorView(document: untitled.text)
+		untitled.recover("lost text")
+		FileDocument.flushBackups()
+		#expect(untitled.isEdited)
+		#expect(store.all().map(\.text) == ["lost text"])
+		untitled.discardChanges()
+		FileDocument.flushBackups()
+		#expect(store.all().isEmpty)
+	}
+
 	@Test func autoSaveSkipsUntitledAndFilesChangedOnDisk() throws {
 		#expect(!FileDocument(text: "x").autoSave())
 		let url = try tempFile("one\n")

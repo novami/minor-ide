@@ -83,13 +83,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			FileDocument.history = history
 			Task.detached(priority: .utility) { history.prune() }
 		}
+		let backups = BackupStore()
 		let session = Session.take() // read once even when not restored
 		if let file = args.first {
 			open(URL(fileURLWithPath: file))
 		} else if let session {
 			restore(session)
 		}
+		let recovered = recover(from: backups) // left behind by a crash
+		FileDocument.backups = backups
 		if documents.isEmpty { showWelcome(nil) }
+		if recovered > 0 { tellRecovered(recovered) }
 		NSApp.activate()
 	}
 
@@ -429,12 +433,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	func applicationWillTerminate(_ notification: Notification) {
 		guard !utilityMode else { return }
+		FileDocument.flushBackups() // saved or discarded documents have removed theirs
 		let windows = documents.compactMap { doc -> Session.Window? in
 			guard doc.project != nil || doc.url != nil else { return nil } // untitled windows are not kept
 			return Session.Window(project: doc.project?.url.path, file: doc.url?.path)
 		}
 		let front = current.flatMap { $0.url?.path ?? $0.project?.url.path }
 		try? Session(windows: windows, front: front, restore: keepWindowsSetting != invertKeepWindows).save()
+	}
+
+	// MARK: Crash recovery
+
+	/// Puts text backed up before a crash back into editors (unsaved); a file that no longer
+	/// exists gets an untitled window. Returns how many documents got text back.
+	private func recover(from store: BackupStore) -> Int {
+		var count = 0
+		for backup in store.all() {
+			var doc: FileDocument?
+			if let path = backup.path, FileManager.default.fileExists(atPath: path) {
+				let url = URL(fileURLWithPath: path)
+				open(url)
+				doc = FileDocument.document(for: url)
+			}
+			if doc == nil {
+				openWindow(text: "", title: "")
+				doc = documents.last?.document
+			}
+			FileDocument.backups = store // the recovered text is backed up again under its new id
+			doc?.recover(backup.text)
+			FileDocument.backups = nil
+			if doc?.isEdited == true { count += 1 }
+			store.remove(backup.id)
+		}
+		return count
+	}
+
+	private func tellRecovered(_ count: Int) {
+		let alert = NSAlert()
+		alert.messageText = LP("MinorIDE recovered unsaved changes in %d files.", one: "MinorIDE recovered unsaved changes in %d file.", count)
+		alert.informativeText = L("MinorIDE quit unexpectedly. The recovered text isn’t saved yet: save the files to keep it, or close them without saving.")
+		if let window = current?.window { alert.beginSheetModal(for: window) } else { alert.runModal() }
 	}
 
 	/// Reopens projects and files in their order; the window that was in front comes last.

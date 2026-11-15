@@ -35,5 +35,21 @@
 			<string>%d matches</string>
 		</dict>
 	</dict>
+	<key>MinorIDE recovered unsaved changes in %d files.</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>MinorIDE recovered unsaved changes in %d file.</string>
+			<key>other</key>
+			<string>MinorIDE recovered unsaved changes in %d files.</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

@@ -28,6 +28,8 @@
 <p>MinorIDE follows <b>Close windows when quitting an application</b> in System Settings › Desktop &amp; Dock. When it is off, the projects and files you had open come back the next time you open MinorIDE (untitled windows don’t). Hold Option in the MinorIDE menu for <b>Quit and Keep Windows</b> or <b>Quit and Close All Windows</b> to do the opposite once.</p>
 <h2>Saving automatically</h2>
 <p>Turn on <b>Save files automatically</b> in <b>MinorIDE › Settings…</b> (⌘,), tab <b>General</b>. Edited files are then saved when you switch to another tab, window or app. A file that changed on disk meanwhile is not saved automatically, so you don’t overwrite someone else’s changes; untitled files are not saved either.</p>
+<h2>After a crash</h2>
+<p>While you edit, MinorIDE backs up unsaved text every few seconds. If it quits unexpectedly, the next launch puts the text back into the editors, still unsaved, and tells you how many files were recovered. The backups are stored in your Library folder, readable only by you, and are removed when you save or close without saving.</p>
 <h2>Local History</h2>
 <p>Each time you save a file, MinorIDE keeps a copy of it for 14 days (the first save also keeps the version that was on disk before). Choose <b>File › Local History…</b> to see the versions, each compared with the text in the editor. <b>Restore This Version</b> puts it into the editor; you can undo it with ⌘Z, and it is saved only when you save the file. The copies are stored in your Library folder, readable only by you; files over 5 MB are not copied.</p>
 <h2>Binary and large files</h2>

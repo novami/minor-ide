@@ -341,4 +341,7 @@
 "“%@” is not a text file." = "“%@” is not a text file.";
 "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look." = "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look.";
 "Show Hex" = "Show Hex";
+"MinorIDE quit unexpectedly. The recovered text isn’t saved yet: save the files to keep it, or close them without saving." = "MinorIDE quit unexpectedly. The recovered text isn’t saved yet: save the files to keep it, or close them without saving.";
 "Quit and Close All Windows" = "Quit and Close All Windows";
+"MinorIDE recovered unsaved changes in %d files.|one" = "MinorIDE recovered unsaved changes in %d file.";
+"MinorIDE recovered unsaved changes in %d files.|other" = "MinorIDE recovered unsaved changes in %d files.";

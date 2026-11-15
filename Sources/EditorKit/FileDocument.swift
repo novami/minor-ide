@@ -34,7 +34,9 @@ public final class FileDocument {
 	/// Set by Format menu changes: settings files no longer change this document's format.
 	public var formatChosenByUser = false
 	public private(set) var mixedLineEndings = false
-	public private(set) var isEdited = false
+	public private(set) var isEdited = false {
+		didSet { if oldValue && !isEdited { removeBackup() } } // saved, reloaded or discarded
+	}
 	public private(set) var diskNotice: DiskNotice?
 	private var originalLines: Set<Substring> = []
 	/// Modification date and size of the file as last loaded or saved.
@@ -45,7 +47,10 @@ public final class FileDocument {
 		self.text = TextDocument(text: text)
 		self.format = format
 		self.text.format = format
-		self.text.onChange = { [weak self] in self?.markEdited() }
+		self.text.onChange = { [weak self] in
+			self?.markEdited()
+			self?.scheduleBackup()
+		}
 	}
 
 	// MARK: One document per file
@@ -232,6 +237,55 @@ public final class FileDocument {
 			})
 			view.scroll(origin)
 		}
+	}
+
+	// MARK: Crash recovery
+
+	/// Where unsaved text is backed up; nil (tests, benchmark) keeps none.
+	public static var backups: BackupStore?
+	/// Backups are written and removed in order, off the main thread.
+	private static let backupQueue = DispatchQueue(label: "MinorIDE.backups", qos: .utility)
+	private let backupID = UUID().uuidString
+	private var backupPending = false
+	private var hasBackup = false
+
+	/// Backs up the text at most every 2 seconds while it is being edited.
+	private func scheduleBackup() {
+		guard Self.backups != nil, !backupPending else { return }
+		backupPending = true
+		Task { @MainActor [weak self] in
+			try? await Task.sleep(for: .seconds(2))
+			self?.backUpNow()
+		}
+	}
+
+	/// Writes the backup now (also right after recovering text).
+	public func backUpNow() {
+		backupPending = false
+		guard isEdited, let store = Self.backups else { return }
+		let rope = text.rope, id = backupID, path = url.map(Self.key)
+		hasBackup = true
+		Self.backupQueue.async { try? store.save(DocumentBackup(id: id, path: path, text: rope.string)) }
+	}
+
+	private func removeBackup() {
+		guard hasBackup, let store = Self.backups else { return }
+		hasBackup = false
+		let id = backupID
+		Self.backupQueue.async { store.remove(id) }
+	}
+
+	/// Waits until queued backups are written or removed (quitting).
+	public static func flushBackups() { backupQueue.sync {} }
+
+	/// Puts text recovered after a crash into the editor; the document stays unsaved and
+	/// is backed up again at once.
+	public func recover(_ string: String) {
+		replaceText(string)
+		if !isEdited { // the text equals the file: nothing was lost
+			return
+		}
+		backUpNow()
 	}
 
 	// MARK: Local History

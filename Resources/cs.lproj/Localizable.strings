@@ -344,4 +344,8 @@
 "“%@” is not a text file." = "„%@“ není textový soubor.";
 "MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look." = "MinorIDE upravuje jen textové soubory. Můžete si prohlédnout jeho bajty nebo náhled ve Finderu přes Quick Look.";
 "Show Hex" = "Zobrazit hex";
+"MinorIDE quit unexpectedly. The recovered text isn’t saved yet: save the files to keep it, or close them without saving." = "MinorIDE se neočekávaně ukončil. Obnovený text ještě není uložený: soubory uložte, nebo je zavřete bez uložení.";
 "Quit and Close All Windows" = "Ukončit a zavřít všechna okna";
+"MinorIDE recovered unsaved changes in %d files.|one" = "MinorIDE obnovil neuložené změny v %d souboru.";
+"MinorIDE recovered unsaved changes in %d files.|few" = "MinorIDE obnovil neuložené změny v %d souborech.";
+"MinorIDE recovered unsaved changes in %d files.|other" = "MinorIDE obnovil neuložené změny v %d souborech.";
