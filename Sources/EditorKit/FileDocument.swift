@@ -29,6 +29,10 @@ public final class FileDocument {
 		}
 	}
 	public private(set) var resolved: ResolvedFormat?
+	/// What the file itself showed when loaded (indentation, line endings), for re-resolving.
+	private var detected: DetectedFormat?
+	/// Set by Format menu changes: settings files no longer change this document's format.
+	public var formatChosenByUser = false
 	public private(set) var mixedLineEndings = false
 	public private(set) var isEdited = false
 	public private(set) var diskNotice: DiskNotice?
@@ -71,6 +75,7 @@ public final class FileDocument {
 		doc.text.language = TextFile.needsSimplifiedMode(data) ? nil : Languages.language(forPath: url.path)
 		doc.url = url
 		doc.resolved = resolved
+		doc.detected = loaded.detected
 		doc.originalLines = loaded.originalLines
 		doc.diskStamp = FileStamp(url)
 		doc.mixedLineEndings = loaded.detected.mixedLineEndings
@@ -142,7 +147,19 @@ public final class FileDocument {
 		guard format.lineEnding != eol || mixedLineEndings else { return }
 		mixedLineEndings = false
 		isEdited = true
+		formatChosenByUser = true
 		format.lineEnding = eol
+	}
+
+	/// settings.json or .editorconfig changed: resolve the format again (charset stays),
+	/// unless the user chose it in the Format menu.
+	public func settingsChanged() {
+		guard let url, !formatChosenByUser else { return }
+		let resolved = Self.resolve(path: url.path, detected: detected)
+		self.resolved = resolved
+		var format = resolved.settings
+		format.charset = self.format.charset
+		if format != self.format { self.format = format }
 	}
 
 	// MARK: Changes on disk

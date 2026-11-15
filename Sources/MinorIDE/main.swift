@@ -68,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			NSApp.terminate(nil)
 			return
 		}
+		watchUserSettings()
 		if let file = args.first {
 			open(URL(fileURLWithPath: file))
 		} else if documents.isEmpty {
@@ -211,10 +212,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		NSDocumentController.shared.noteNewRecentDocumentURL(root)
 	}
 
-	/// Open files among `paths` (FSEvents) compare themselves with the disk.
+	/// Open files among `paths` (FSEvents) compare themselves with the disk; a changed
+	/// settings file re-resolves the format of every open file.
 	private static func checkDisk(changed paths: [String]) {
 		let changed = Set(paths.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
+		if changed.contains(where: isSettingsFile) { FileDocument.all.forEach { $0.settingsChanged() } }
 		FileDocument.all.filter { $0.url.map { changed.contains($0.standardizedFileURL.path) } ?? false }.forEach { $0.checkDisk() }
+	}
+
+	private static func isSettingsFile(_ path: String) -> Bool {
+		path.hasSuffix("/.editorconfig") || path.hasSuffix("/.minoride/settings.json") || path == SettingsFile.userURL.standardizedFileURL.path
+	}
+
+	/// User settings (settings.json in Application Support), watched while the app runs.
+	private var settingsWatcher: FileWatcher?
+
+	private func watchUserSettings() {
+		let folder = SettingsFile.userURL.deletingLastPathComponent()
+		try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+		settingsWatcher = FileWatcher(paths: [folder.path]) { paths in Self.checkDisk(changed: paths) }
 	}
 
 	/// Adds a file's window as a tab of the project's window group.

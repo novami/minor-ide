@@ -379,10 +379,14 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		var format = document.format
 		format.indentStyle = style
 		format.indentSize = size
+		document.formatChosenByUser = true
 		document.format = format
 	}
 
-	func setTabWidth(_ width: Int) { document.format.tabWidth = width }
+	func setTabWidth(_ width: Int) {
+		document.formatChosenByUser = true
+		document.format.tabWidth = width
+	}
 
 	// MARK: Find (Edit › Find; the window delegate is in the responder chain of the editor and the bar)
 

@@ -30,6 +30,23 @@ struct FileDocumentTests {
 		#expect(try String(contentsOf: url, encoding: .utf8) == "// package a\n")
 	}
 
+	@Test func editorConfigChangeAppliesUnlessChosenInMenu() throws {
+		let url = try tempFile("{\n\n}\n") // no indented line: nothing to detect
+		let config = url.deletingLastPathComponent().appendingPathComponent(".editorconfig")
+		try Data("[*]\nindent_style = space\nindent_size = 2\n".utf8).write(to: config)
+		let doc = try FileDocument.load(url)
+		#expect(doc.format.indentSize == 2)
+		try Data("[*]\nindent_style = space\nindent_size = 3\n".utf8).write(to: config)
+		doc.settingsChanged()
+		#expect(doc.format.indentSize == 3)
+		#expect(!doc.isEdited)
+
+		doc.formatChosenByUser = true
+		try Data("[*]\nindent_style = space\nindent_size = 5\n".utf8).write(to: config)
+		doc.settingsChanged()
+		#expect(doc.format.indentSize == 3)
+	}
+
 	@Test func diskChangeReloadsCleanAndNotifiesEdited() throws {
 		let url = try tempFile("one\n")
 		let doc = try FileDocument.load(url)
