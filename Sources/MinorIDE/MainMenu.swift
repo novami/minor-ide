@@ -35,6 +35,8 @@ enum MainMenu {
 			m.item(L("Reopen Closed Tab"), #selector(AppDelegate.reopenClosedTab(_:)), "t", [.command, .shift], target: target)
 			m.item(L("Save"), #selector(AppDelegate.saveDocument(_:)), "s", target: target)
 			m.item(L("Save As…"), #selector(AppDelegate.saveDocumentAs(_:)), "s", [.command, .shift], target: target)
+			m.addItem(.separator())
+			m.item(L("Trust Project…"), #selector(DocumentWindow.toggleProjectTrust(_:)))
 		}
 
 		main.add(submenu: L("Edit")) { m in

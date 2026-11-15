@@ -20,6 +20,9 @@
 <p>Show or hide the tree with <b>View › Show Sidebar</b> (⌃⌘S), the right panel with ⌃⌘I and the bottom panel with ⌃`.</p>
 <h2>Files changed on disk</h2>
 <p>When a file changes outside MinorIDE (for example after <code>git checkout</code>) and you have no unsaved changes, it reloads quietly and keeps your cursor. If you have unsaved changes, a bar offers <b>Reload</b>, <b>Keep Mine</b> or <b>Compare</b>. A deleted file stays open; saving creates it again.</p>
+<h2><a name="restricted-mode"></a>Restricted Mode</h2>
+<p>A project you open for the first time is in Restricted Mode, shown by a bar above the editor. Git, language servers, tools such as PHPStan, run configurations and the debugger can run code from a project’s files and settings, so MinorIDE doesn’t start them for the project, and it doesn’t read <code>.minoride/local.json</code>. Editing, colouring and search work as usual.</p>
+<p>If you trust the project’s authors, choose <b>Trust Project…</b> in the bar or in the File menu. MinorIDE remembers the choice for the folder outside the project, so a downloaded repository cannot trust itself. <b>File › Restrict Project</b> takes the trust back.</p>
 <h2>Binary and large files</h2>
 <p>Binary files are not opened as text; you can view their bytes with <b>Show Hex</b> or preview them in the Finder. Files over 5 MB or with very long lines open without syntax colouring to stay fast.</p>
 </main>

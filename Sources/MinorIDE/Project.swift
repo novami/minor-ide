@@ -1,5 +1,6 @@
 import AppKit
 import MinorCore
+import SecretsKit
 
 /// An open folder: the file tree shared by the project's tabs, which folders are expanded,
 /// and an FSEvents watch that refreshes loaded folders when files change on disk.
@@ -14,11 +15,26 @@ final class Project {
 	var onChange: [(FileNode) -> Void] = []
 	/// Called with every changed path (open windows compare their files with the disk).
 	var onFiles: (([String]) -> Void)?
+	/// Called after the project was trusted or restricted (its windows update the banner).
+	var onTrustChange: [() -> Void] = []
 	private var watcher: FileWatcher?
+	private let trust: ProjectTrust
 
-	init(root url: URL) {
+	init(root url: URL, trust: ProjectTrust = ProjectTrust()) {
 		root = FileNode(url: url, isDirectory: true)
+		self.trust = trust
+		isTrusted = trust.isTrusted(url)
 		watch()
+	}
+
+	/// False = Restricted Mode (D18): nothing from the project may be run. Every feature that
+	/// starts a process for the project (Git, gopls, tools, run, debugger) checks this first.
+	private(set) var isTrusted: Bool
+
+	func setTrusted(_ trusted: Bool) throws {
+		try trust.setTrusted(trusted, url)
+		isTrusted = trusted
+		for handler in onTrustChange { handler() }
 	}
 
 	var name: String { root.name }

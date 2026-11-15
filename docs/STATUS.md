@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (1e/4b)
+**Poslední aktualizace:** 2026-11-15 (1e, důvěra projektu)
 
 ## Kde jsme
 
@@ -87,7 +87,9 @@ Známé mezery po kroku 1e/4b: `LatencyMonitor` sleduje jen první část; ručn
 
 **Nápověda, O aplikaci a podpora** (2026-11-15, na přání uživatele): Help Book `MinorIDE.help` (zdroje `Resources/Help/{en,cs}.lproj`, společné `shared/help.css`; `tools/bundle.sh` ho složí, zaindexuje přes `hiutil` a zapíše `CFBundleHelpBook*`), stránky: úvod, soubory a projekty, úpravy, hledání, formát a nastavení, zkratky, zpětná vazba a podpora — popisují jen hotové funkce, při nové funkci doplnit. O aplikaci (`About.swift`): autor Michal Novák, novami.cz, MIT, poděkování testerům (issues na GitHubu), vývojářům (PR z forku) a projektům Swift, Go, SQLite (doplnit při nové závislosti), GitHub Sponsors a BTC adresa. Nápověda › Nahlásit problém…, Podpořit MinorIDE… (okno s tlačítkem Sponsors, QR kódem `bitcoin:` adresy — ověřeno dekódováním — a Kopírovat adresu). Návrh profilu Sponsors v `docs/sponsors.md`, `.github/FUNDING.yml`. Ruční kontrola (Help Viewer, hledání v menu Nápověda, vzhled oken) zbývá.
 
-**Další:** důvěra projektu a Omezený režim, uvítací okno s nedávnými projekty, Nastavení (SwiftUI nad `settings.json`), automatické ukládání a Local History.
+**Důvěra projektu a Omezený režim** (2026-11-15, D18): nový modul `Sources/SecretsKit/` (podle plánu; zatím jen `ProjectTrust`: `~/Library/Application Support/MinorIDE/trusted.json`, klíč = cesta s rozřešenými symlinky, čte se při každém dotazu, nečitelný soubor = nic důvěryhodné). `Project.isTrusted` / `setTrusted` / `onTrustChange` — **každá budoucí funkce, která pro projekt spouští proces (Git, gopls, nástroje, run, debugger) a čtení `.minoride/local.json`, musí nejdřív ověřit `project.isTrusted`.** UI: lišta nad editorem v každém tabu nedůvěryhodného projektu (Důvěřovat projektu… / Další informace / Skrýt, bez výchozího tlačítka na Return), Soubor › Důvěřovat projektu… (sheet s potvrzením) / Omezit projekt (hned). Nápověda „Soubory a projekty“ › Omezený režim (kotva `restricted-mode`). Test `ProjectTrustTests`. Zatím se nic nespouští, takže Omezený režim reálně nic neblokuje; samostatné soubory mimo projekt nemají stav důvěry (rozhodne se u prvního nástroje). Ruční kontrola (lišta, sheet, Další informace v Help Vieweru) zbývá.
+
+**Další:** uvítací okno s nedávnými projekty, Nastavení (SwiftUI nad `settings.json`), automatické ukládání a Local History.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 

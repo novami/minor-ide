@@ -58,7 +58,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		find = FindController(editor: first.editor)
 		findBar = FindBar(controller: find)
 		findBar.isHidden = true
-		let content = NSStackView(views: [findBar, editorSplit])
+		trustBanner.setContentHuggingPriority(.required, for: .vertical)
+		let content = NSStackView(views: [trustBanner, findBar, editorSplit])
 		content.orientation = .vertical
 		content.spacing = 0
 		content.alignment = .width
@@ -151,6 +152,57 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 		first.editor.updateSize()
 		updateTitle()
+		project?.onTrustChange.append { [weak self] in self?.updateTrustBanner() }
+		updateTrustBanner()
+	}
+
+	// MARK: Restricted Mode (D18)
+
+	/// Bar in every tab of a project that is not trusted; hiding it lasts for the tab.
+	private let trustBanner = DiskBanner(symbol: "shield.lefthalf.filled", tint: .secondaryLabelColor, returnKey: false)
+	private var trustBannerDismissed = false
+
+	private func updateTrustBanner() {
+		guard let project, !project.isTrusted, !trustBannerDismissed else {
+			trustBanner.isHidden = true
+			return
+		}
+		trustBanner.show(L("Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project."), [
+			(L("Trust Project…"), { [weak self] in self?.toggleProjectTrust(nil) }, false),
+			(L("Learn More"), { Self.openHelp(anchor: "restricted-mode") }, false),
+			(L("Hide"), { [weak self] in self?.trustBannerDismissed = true }, true),
+		])
+	}
+
+	static func openHelp(anchor: String) {
+		guard let book = Bundle.main.object(forInfoDictionaryKey: "CFBundleHelpBookName") as? String else { return }
+		NSHelpManager.shared.openHelpAnchor(anchor, inBook: book)
+	}
+
+	/// File › Trust Project… asks first; Restrict Project applies at once (the safe direction).
+	@objc func toggleProjectTrust(_ sender: Any?) {
+		guard let project else { return }
+		if project.isTrusted {
+			setTrust(false, project)
+			return
+		}
+		let alert = NSAlert()
+		alert.messageText = L("Trust the project “%@”?", project.name)
+		alert.informativeText = L("A trusted project can run code when MinorIDE uses Git, language servers, tools, run configurations or the debugger on it. Trust only projects from authors you trust.")
+		alert.addButton(withTitle: L("Trust"))
+		alert.addButton(withTitle: L("Cancel"))
+		alert.beginSheetModal(for: window) { [weak self] response in
+			guard response == .alertFirstButtonReturn else { return }
+			self?.setTrust(true, project)
+		}
+	}
+
+	private func setTrust(_ trusted: Bool, _ project: Project) {
+		do {
+			try project.setTrusted(trusted)
+		} catch {
+			NSAlert(error: error).beginSheetModal(for: window)
+		}
 	}
 
 	/// Another document was saved over this window's file: its panes show that document.
@@ -298,6 +350,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			item.title = bottom.isCollapsed ? L("Show Bottom Panel") : L("Hide Bottom Panel")
 		case #selector(closeEditorSplit(_:)):
 			return splitEditor != nil
+		case #selector(toggleProjectTrust(_:)):
+			guard let project else { return false }
+			item.title = project.isTrusted ? L("Restrict Project") : L("Trust Project…")
 		case #selector(toggleRightPanel(_:)):
 			guard let right = panels?.inspector else { return false }
 			item.title = right.isCollapsed ? L("Show Right Panel") : L("Hide Right Panel")

@@ -1,20 +1,23 @@
 import AppKit
 
 /// Bar above the editor when the file changed or vanished on disk while the window has
-/// unsaved changes: a message and buttons (the first is the default).
+/// unsaved changes, or when a project opens in Restricted Mode: a message and buttons
+/// (the first is the default when `returnKey` is set).
 @MainActor
 final class DiskBanner: NSView {
+	private let returnKey: Bool
 	private let label = NSTextField(labelWithString: "")
 	private var row: NSStackView!
 	private var buttons: [NSButton] = []
 	private var actions: [() -> Void] = []
 
-	init() {
+	init(symbol: String = "exclamationmark.triangle.fill", tint: NSColor = .systemYellow, returnKey: Bool = true) {
+		self.returnKey = returnKey
 		super.init(frame: .zero)
 		label.lineBreakMode = .byTruncatingTail
 		label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-		let icon = NSImageView(image: NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: nil) ?? NSImage())
-		icon.contentTintColor = .systemYellow
+		let icon = NSImageView(image: NSImage(systemSymbolName: symbol, accessibilityDescription: nil) ?? NSImage())
+		icon.contentTintColor = tint
 		row = NSStackView(views: [icon, label, NSView()])
 		row.orientation = .horizontal
 		row.spacing = 8
@@ -53,7 +56,7 @@ final class DiskBanner: NSView {
 			b.bezelStyle = .rounded
 			b.controlSize = .small
 			b.tag = i
-			if i == 0 { b.keyEquivalent = "\r" }
+			if i == 0, returnKey { b.keyEquivalent = "\r" }
 			return b
 		}
 		for b in buttons.reversed() { row.addArrangedSubview(b) }

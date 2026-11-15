@@ -25,6 +25,22 @@
 "The versions are identical." = "The versions are identical.";
 "Comparison" = "Comparison";
 
+/* MinorIDE/DocumentWindow.swift */
+"Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project." = "Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project.";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Trust Project…" = "Trust Project…";
+
+/* MinorIDE/DocumentWindow.swift */
+"Learn More" = "Learn More";
+"Hide" = "Hide";
+"Trust the project “%@”?" = "Trust the project “%@”?";
+"A trusted project can run code when MinorIDE uses Git, language servers, tools, run configurations or the debugger on it. Trust only projects from authors you trust." = "A trusted project can run code when MinorIDE uses Git, language servers, tools, run configurations or the debugger on it. Trust only projects from authors you trust.";
+"Trust" = "Trust";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Cancel";
+
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Cut" = "Cut";
 "Copy" = "Copy";
@@ -52,6 +68,7 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Hide Bottom Panel" = "Hide Bottom Panel";
+"Restrict Project" = "Restrict Project";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Show Right Panel" = "Show Right Panel";
@@ -66,9 +83,6 @@
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift */
 "Replace" = "Replace";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Cancel";
 
 /* MinorIDE/DocumentWindow.swift */
 "Tabs (%d)" = "Tabs (%d)";

@@ -26,6 +26,22 @@
 "The versions are identical." = "Verze jsou stejné.";
 "Comparison" = "Porovnání";
 
+/* MinorIDE/DocumentWindow.swift */
+"Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project." = "Omezený režim: MinorIDE nespouští Git, nástroje ani příkazy z tohoto projektu.";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Trust Project…" = "Důvěřovat projektu…";
+
+/* MinorIDE/DocumentWindow.swift */
+"Learn More" = "Další informace";
+"Hide" = "Skrýt";
+"Trust the project “%@”?" = "Důvěřovat projektu „%@“?";
+"A trusted project can run code when MinorIDE uses Git, language servers, tools, run configurations or the debugger on it. Trust only projects from authors you trust." = "Důvěryhodný projekt může spustit kód, když na něm MinorIDE použije Git, jazykové servery, nástroje, konfigurace spuštění nebo debugger. Důvěřujte jen projektům od autorů, kterým věříte.";
+"Trust" = "Důvěřovat";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Zrušit";
+
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Cut" = "Vyjmout";
 "Copy" = "Kopírovat";
@@ -53,6 +69,7 @@
 
 /* MinorIDE/DocumentWindow.swift */
 "Hide Bottom Panel" = "Skrýt spodní panel";
+"Restrict Project" = "Omezit projekt";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Show Right Panel" = "Zobrazit pravý panel";
@@ -67,9 +84,6 @@
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift */
 "Replace" = "Nahradit";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Zrušit";
 
 /* MinorIDE/DocumentWindow.swift */
 "Tabs (%d)" = "tabulátory: %d";

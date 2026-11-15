@@ -13,10 +13,12 @@ let package = Package(
 		.target(name: "Highlight", dependencies: ["TextEngine"]),
 		.target(name: "EditorKit", dependencies: ["TextEngine", "MinorCore", "Highlight"]),
 		.target(name: "DBKit", dependencies: ["MinorCore"]),
-		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit", "Highlight"]),
+		.target(name: "SecretsKit"),
+		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit", "Highlight", "SecretsKit"]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
 		.testTarget(name: "MinorCoreTests", dependencies: ["MinorCore"]),
 		.testTarget(name: "DBKitTests", dependencies: ["DBKit"]),
+		.testTarget(name: "SecretsKitTests", dependencies: ["SecretsKit"]),
 		.testTarget(name: "EditorKitTests", dependencies: ["EditorKit", "MinorCore"]),
 		.testTarget(name: "HighlightTests", dependencies: ["Highlight", "TextEngine"], exclude: ["Golden"]),
 	]

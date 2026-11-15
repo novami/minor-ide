@@ -20,6 +20,9 @@
 <p>Strom zobrazíte nebo skryjete přes <b>Zobrazení › Zobrazit boční panel</b> (⌃⌘S), pravý panel ⌃⌘I a spodní panel ⌃`.</p>
 <h2>Soubory změněné na disku</h2>
 <p>Když se soubor změní mimo MinorIDE (třeba po <code>git checkout</code>) a nemáte v něm neuložené změny, tiše se přenačte a kurzor zůstane na místě. Máte-li neuložené změny, lišta nabídne <b>Přenačíst</b>, <b>Ponechat moje</b> nebo <b>Porovnat</b>. Smazaný soubor zůstane otevřený; uložením se znovu vytvoří.</p>
+<h2><a name="restricted-mode"></a>Omezený režim</h2>
+<p>Projekt, který otevřete poprvé, je v Omezeném režimu; ukazuje to lišta nad editorem. Git, jazykové servery, nástroje jako PHPStan, konfigurace spuštění a debugger umějí spustit kód ze souborů a nastavení projektu, proto je MinorIDE pro takový projekt nespouští a nečte <code>.minoride/local.json</code>. Úpravy, barvení a hledání fungují jako obvykle.</p>
+<p>Pokud autorům projektu důvěřujete, zvolte <b>Důvěřovat projektu…</b> v liště nebo v menu Soubor. MinorIDE si volbu pamatuje pro danou složku mimo projekt, takže stažený repozitář si důvěru nemůže přinést sám. <b>Soubor › Omezit projekt</b> důvěru odebere.</p>
 <h2>Binární a velké soubory</h2>
 <p>Binární soubory se neotevírají jako text; jejich bajty ukáže <b>Zobrazit hex</b>, náhled nabídne Finder. Soubory nad 5 MB nebo s velmi dlouhými řádky se kvůli rychlosti otevřou bez barvení syntaxe.</p>
 </main>
