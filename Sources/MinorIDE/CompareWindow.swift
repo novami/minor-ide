@@ -13,6 +13,22 @@ final class CompareWindow: NSObject, NSWindowDelegate {
 		let scroll = NSTextView.scrollableTextView()
 		let view = scroll.documentView as! NSTextView
 		view.isEditable = false
+		view.textStorage?.setAttributedString(Self.diff(old: old, new: new, oldLabel: oldLabel, newLabel: newLabel))
+		view.setAccessibilityLabel(L("Comparison"))
+		window.contentView = scroll
+		window.title = title
+		window.subtitle = L("Comparison")
+		window.isReleasedWhenClosed = false
+		super.init()
+		window.delegate = self
+		window.center()
+		window.makeKeyAndOrderFront(nil)
+	}
+
+	func windowWillClose(_ notification: Notification) { onClose?() }
+
+	/// Unified line diff, removed lines red and added lines green.
+	static func diff(old: String, new: String, oldLabel: String, newLabel: String) -> NSAttributedString {
 		let font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
 		let text = NSMutableAttributedString()
 		let lines = LineDiff.unified(old.components(separatedBy: "\n"), new.components(separatedBy: "\n"))
@@ -30,17 +46,6 @@ final class CompareWindow: NSObject, NSWindowDelegate {
 			}
 			text.append(NSAttributedString(string: (prefix == "@" ? "" : String(prefix)) + line + "\n", attributes: attrs))
 		}
-		view.textStorage?.setAttributedString(text)
-		view.setAccessibilityLabel(L("Comparison"))
-		window.contentView = scroll
-		window.title = title
-		window.subtitle = L("Comparison")
-		window.isReleasedWhenClosed = false
-		super.init()
-		window.delegate = self
-		window.center()
-		window.makeKeyAndOrderFront(nil)
+		return text
 	}
-
-	func windowWillClose(_ notification: Notification) { onClose?() }
 }

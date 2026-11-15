@@ -11,6 +11,7 @@ import MinorCore
 //        MINORIDE_FIND=<query> with --snapshot opens Find and Replace and saves the bar too
 //        MINORIDE_FOLD=<line> with --snapshot folds the region headed by that line
 //        MINORIDE_SPLIT=right|down with --snapshot splits the editor and prints the pane frames
+//        MINORIDE_HISTORY=1 with --snapshot shows Local History of the file (temporary versions)
 //        MINORIDE_WELCOME=1 with --snapshot saves the welcome window and prints its frames
 //        MINORIDE_SETTINGS=<tab> with --snapshot saves that Settings tab (0 General, 1 Formatting)
 
@@ -75,6 +76,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return
 		}
 		watchUserSettings()
+		if !utilityMode {
+			let history = LocalHistory()
+			FileDocument.history = history
+			Task.detached(priority: .utility) { history.prune() }
+		}
 		if let file = args.first {
 			open(URL(fileURLWithPath: file))
 		} else if documents.isEmpty {
@@ -305,6 +311,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 				print("pane", pane.enclosingScrollView.map { NSStringFromRect($0.convert($0.bounds, to: nil)) } ?? "-",
 				      "editor", NSStringFromSize(pane.frame.size), "caret", pane.caret, "first responder", doc.window.firstResponder === pane)
 			}
+		}
+		// MINORIDE_HISTORY=1 fills a temporary Local History with two versions of the file and
+		// also saves its window as <png>-history.png (the file itself is not written).
+		if ProcessInfo.processInfo.environment["MINORIDE_HISTORY"] != nil, let doc = documents.last, let url = doc.url {
+			let history = LocalHistory(root: FileManager.default.temporaryDirectory.appendingPathComponent("MinorIDE-history-\(UUID().uuidString)"))
+			FileDocument.history = history
+			let text = doc.document.text.rope.string
+			try? history.record(Data(("// older\n" + text).utf8), for: url.standardizedFileURL.path, date: Date().addingTimeInterval(-90_000))
+			try? history.record(Data(text.replacingOccurrences(of: "\n", with: "\n\n", options: [], range: text.range(of: "\n")).utf8), for: url.standardizedFileURL.path)
+			doc.showLocalHistory(nil)
+			if let window = NSApp.windows.first(where: { $0.subtitle == L("Local History") }), let content = window.contentView {
+				window.displayIfNeeded()
+				print("history", NSStringFromSize(content.bounds.size), doc.document.versions.count)
+				if let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds) {
+					content.cacheDisplay(in: content.bounds, to: rep)
+					try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path.replacingOccurrences(of: ".png", with: "-history.png")))
+				}
+			}
+			try? FileManager.default.removeItem(at: history.root)
 		}
 		// MINORIDE_FIND=<query> opens Find and Replace first and also saves the bar as <png>-find.png.
 		if let query = ProcessInfo.processInfo.environment["MINORIDE_FIND"], let doc = documents.last {

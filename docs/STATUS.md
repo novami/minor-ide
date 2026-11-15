@@ -97,7 +97,11 @@ Známé mezery po kroku 1e/4b: `LatencyMonitor` sleduje jen první část; ručn
 
 Známé mezery po Nastavení: zápis přeformátuje celý soubor (klíče seřazené, styl `"klíč" : hodnota` z `JSONEncoder`); nastavení projektu se v okně neupravuje; `max_line_length` se čte, ale editor vodítko nekreslí (proto v okně není); ruční kontrola okna (přepínání karet, změna velikosti, tmavý režim) zbývá.
 
-**Další:** automatické ukládání a Local History, pak stavový řádek s přepínači, varování před znaky, které kódování neumí, obnova sezení.
+**Local History** (2026-11-15): `MinorCore/LocalHistory.swift` — kopie při každém uložení do `~/Library/Application Support/MinorIDE/History/<sha256 cesty>/<ms>.snap` (složka 0700, soubory 0600, soubor `path` s cestou), stejná verze jako poslední se nepřidá, nad 5 MB se nekopíruje, první uložení uchová i předchozí obsah disku (s jeho datem změny), mazání po 14 dnech při startu na pozadí. `FileDocument.history` (nil v testech a benchmarku), `versions`, `text(of:)`, `restore` (jeden krok Zpět, soubor zůstane neuložený). Okno Soubor › Místní historie… (`LocalHistoryWindow.swift`: verze s relativním datem a velikostí, rozdíl proti editoru přes `CompareWindow.diff`, Obnovit tuto verzi). Testy `LocalHistoryTests`, `FileDocumentTests.localHistoryKeepsSavedVersionsAndRestores`. `MINORIDE_HISTORY=1` se `--snapshot <png> <soubor>` ukáže okno nad dočasnou historií. Nápověda doplněna.
+
+Známé mezery po Local History: kopie se dělají i u citlivých souborů (`.env`), jen s právy pro uživatele; přejmenovaný soubor historii nepřenese (klíč = cesta); snímky z jiných zdrojů (přenačtení z disku, git checkout) se nedělají; ruční kontrola okna zbývá.
+
+**Další:** automatické ukládání (zapínatelné, výchozí vypnuté), pak stavový řádek s přepínači, varování před znaky, které kódování neumí, obnova sezení.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 

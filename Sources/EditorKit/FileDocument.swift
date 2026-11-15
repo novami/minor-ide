@@ -207,19 +207,7 @@ public final class FileDocument {
 	public func reload() {
 		guard let url, let data = try? Data(contentsOf: url) else { return }
 		let loaded = TextFile.load(data, fallback: format.charset)
-		let views = text.views
-		if loaded.text != text.rope.string, let source = views.first {
-			let states = views.map { ($0.selections, $0.visibleRect.origin) }
-			source.replace([(0..<text.rope.byteCount, loaded.text)])
-			let rope = text.rope
-			for (view, (selections, origin)) in zip(views, states) {
-				view.setSelections(selections.map { s in
-					Selection(anchor: rope.scalarBoundary(atOrBefore: min(s.anchor, rope.byteCount)),
-					          head: rope.scalarBoundary(atOrBefore: min(s.head, rope.byteCount)))
-				})
-				view.scroll(origin)
-			}
-		}
+		replaceText(loaded.text)
 		originalLines = loaded.originalLines
 		mixedLineEndings = loaded.detected.mixedLineEndings
 		diskStamp = FileStamp(url)
@@ -229,13 +217,60 @@ public final class FileDocument {
 		post()
 	}
 
+	/// Replaces the whole text as one undoable step, keeping carets and scroll positions of
+	/// every editor where they still fit. Needs an editor showing the document.
+	private func replaceText(_ string: String) {
+		let views = text.views
+		guard string != text.rope.string, let source = views.first else { return }
+		let states = views.map { ($0.selections, $0.visibleRect.origin) }
+		source.replace([(0..<text.rope.byteCount, string)])
+		let rope = text.rope
+		for (view, (selections, origin)) in zip(views, states) {
+			view.setSelections(selections.map { s in
+				Selection(anchor: rope.scalarBoundary(atOrBefore: min(s.anchor, rope.byteCount)),
+				          head: rope.scalarBoundary(atOrBefore: min(s.head, rope.byteCount)))
+			})
+			view.scroll(origin)
+		}
+	}
+
+	// MARK: Local History
+
+	/// Where saved versions are copied; nil (tests, benchmark) keeps no history.
+	public static var history: LocalHistory?
+
+	/// Saved versions of this file, newest first.
+	public var versions: [LocalHistory.Version] {
+		guard let url, let history = Self.history else { return [] }
+		return history.versions(of: Self.key(url))
+	}
+
+	/// The text of a saved version, decoded like the file.
+	public func text(of version: LocalHistory.Version) -> String? {
+		guard let data = try? Data(contentsOf: version.url) else { return nil }
+		return TextFile.load(data, fallback: format.charset).text
+	}
+
+	/// Puts a saved version into the editor as one undoable step; saving is up to the user.
+	public func restore(_ version: LocalHistory.Version) {
+		guard let string = text(of: version) else { return }
+		replaceText(string)
+	}
+
 	// MARK: Saving
 
 	/// Writes the text with the document's line ending, charset and trimming; the document
 	/// takes `url` (Save As).
 	public func write(to url: URL) throws {
 		let string = text.rope.string
-		try TextFile.write(TextFile.save(string, settings: format, originalLines: originalLines), to: url)
+		let data = TextFile.save(string, settings: format, originalLines: originalLines)
+		let key = Self.key(url)
+		// The first save also keeps the version that was on disk before.
+		if let history = Self.history, history.versions(of: key).isEmpty, let old = try? Data(contentsOf: url) {
+			try? history.record(old, for: key, date: FileStamp(url)?.date ?? Date())
+		}
+		try TextFile.write(data, to: url)
+		try? Self.history?.record(data, for: key)
 		// Saved content becomes the new baseline for "trim modified lines".
 		originalLines = Set(string.split(separator: "\n", omittingEmptySubsequences: false))
 		if url.standardizedFileURL != self.url?.standardizedFileURL {

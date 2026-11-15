@@ -24,6 +24,8 @@
 <h2><a name="restricted-mode"></a>Restricted Mode</h2>
 <p>A project you open for the first time is in Restricted Mode, shown by a bar above the editor. Git, language servers, tools such as PHPStan, run configurations and the debugger can run code from a project’s files and settings, so MinorIDE doesn’t start them for the project, and it doesn’t read <code>.minoride/local.json</code>. Editing, colouring and search work as usual.</p>
 <p>If you trust the project’s authors, choose <b>Trust Project…</b> in the bar or in the File menu. MinorIDE remembers the choice for the folder outside the project, so a downloaded repository cannot trust itself. <b>File › Restrict Project</b> takes the trust back.</p>
+<h2>Local History</h2>
+<p>Each time you save a file, MinorIDE keeps a copy of it for 14 days (the first save also keeps the version that was on disk before). Choose <b>File › Local History…</b> to see the versions, each compared with the text in the editor. <b>Restore This Version</b> puts it into the editor; you can undo it with ⌘Z, and it is saved only when you save the file. The copies are stored in your Library folder, readable only by you; files over 5 MB are not copied.</p>
 <h2>Binary and large files</h2>
 <p>Binary files are not opened as text; you can view their bytes with <b>Show Hex</b> or preview them in the Finder. Files over 5 MB or with very long lines open without syntax colouring to stay fast.</p>
 </main>

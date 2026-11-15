@@ -24,6 +24,8 @@
 <h2><a name="restricted-mode"></a>Omezený režim</h2>
 <p>Projekt, který otevřete poprvé, je v Omezeném režimu; ukazuje to lišta nad editorem. Git, jazykové servery, nástroje jako PHPStan, konfigurace spuštění a debugger umějí spustit kód ze souborů a nastavení projektu, proto je MinorIDE pro takový projekt nespouští a nečte <code>.minoride/local.json</code>. Úpravy, barvení a hledání fungují jako obvykle.</p>
 <p>Pokud autorům projektu důvěřujete, zvolte <b>Důvěřovat projektu…</b> v liště nebo v menu Soubor. MinorIDE si volbu pamatuje pro danou složku mimo projekt, takže stažený repozitář si důvěru nemůže přinést sám. <b>Soubor › Omezit projekt</b> důvěru odebere.</p>
+<h2>Místní historie</h2>
+<p>Při každém uložení souboru si MinorIDE ponechá jeho kopii na 14 dní (první uložení uchová i verzi, která byla na disku předtím). Verze zobrazíte přes <b>Soubor › Místní historie…</b>, každá je porovnaná s textem v editoru. <b>Obnovit tuto verzi</b> ji vloží do editoru; vrátíte to přes ⌘Z a na disk se zapíše až uložením. Kopie jsou ve vaší složce Knihovna a číst je můžete jen vy; soubory nad 5 MB se nekopírují.</p>
 <h2>Binární a velké soubory</h2>
 <p>Binární soubory se neotevírají jako text; jejich bajty ukáže <b>Zobrazit hex</b>, náhled nabídne Finder. Soubory nad 5 MB nebo s velmi dlouhými řádky se kvůli rychlosti otevřou bez barvení syntaxe.</p>
 </main>

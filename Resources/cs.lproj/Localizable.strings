@@ -22,9 +22,11 @@
 "Copy Address" = "Kopírovat adresu";
 "Copied" = "Zkopírováno";
 
+/* MinorIDE/CompareWindow.swift, MinorIDE/LocalHistoryWindow.swift */
+"Comparison" = "Porovnání";
+
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "Verze jsou stejné.";
-"Comparison" = "Porovnání";
 
 /* MinorIDE/DocumentWindow.swift */
 "Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project." = "Omezený režim: MinorIDE nespouští Git, nástroje ani příkazy z tohoto projektu.";
@@ -77,7 +79,11 @@
 /* MinorIDE/DocumentWindow.swift */
 "Hide Right Panel" = "Skrýt pravý panel";
 "%@ (on disk)" = "%@ (na disku)";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/LocalHistoryWindow.swift */
 "%@ (in the editor)" = "%@ (v editoru)";
+
+/* MinorIDE/DocumentWindow.swift */
 "Untitled" = "Bez názvu";
 "“%@” is open with unsaved changes. Do you want to replace it?" = "Soubor „%@“ je otevřený s neuloženými změnami. Chcete ho nahradit?";
 "Its unsaved changes will be lost." = "Jeho neuložené změny se ztratí.";
@@ -145,6 +151,14 @@
 "Showing the first 1 MB of %@." = "Zobrazen je první 1 MB z %@.";
 "Hex View" = "Hexadecimální náhled";
 
+/* MinorIDE/LocalHistoryWindow.swift */
+"No saved versions yet. A copy of the file is kept each time you save it, for 14 days." = "Zatím žádné uložené verze. Při každém uložení se kopie souboru uchová na 14 dní.";
+"Saved Versions" = "Uložené verze";
+"Restore This Version" = "Obnovit tuto verzi";
+
+/* MinorIDE/LocalHistoryWindow.swift, MinorIDE/main.swift */
+"Local History" = "Místní historie";
+
 /* MinorIDE/MainMenu.swift */
 "About MinorIDE" = "O aplikaci MinorIDE";
 "Settings…" = "Nastavení…";
@@ -160,6 +174,7 @@
 "Close" = "Zavřít";
 "Reopen Closed Tab" = "Znovu otevřít zavřený tab";
 "Save As…" = "Uložit jako…";
+"Local History…" = "Místní historie…";
 "Edit" = "Úpravy";
 "Undo" = "Zpět";
 "Redo" = "Znovu";

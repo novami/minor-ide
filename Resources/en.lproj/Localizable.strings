@@ -21,9 +21,11 @@
 "Copy Address" = "Copy Address";
 "Copied" = "Copied";
 
+/* MinorIDE/CompareWindow.swift, MinorIDE/LocalHistoryWindow.swift */
+"Comparison" = "Comparison";
+
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "The versions are identical.";
-"Comparison" = "Comparison";
 
 /* MinorIDE/DocumentWindow.swift */
 "Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project." = "Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project.";
@@ -76,7 +78,11 @@
 /* MinorIDE/DocumentWindow.swift */
 "Hide Right Panel" = "Hide Right Panel";
 "%@ (on disk)" = "%@ (on disk)";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/LocalHistoryWindow.swift */
 "%@ (in the editor)" = "%@ (in the editor)";
+
+/* MinorIDE/DocumentWindow.swift */
 "Untitled" = "Untitled";
 "“%@” is open with unsaved changes. Do you want to replace it?" = "“%@” is open with unsaved changes. Do you want to replace it?";
 "Its unsaved changes will be lost." = "Its unsaved changes will be lost.";
@@ -142,6 +148,14 @@
 "Showing the first 1 MB of %@." = "Showing the first 1 MB of %@.";
 "Hex View" = "Hex View";
 
+/* MinorIDE/LocalHistoryWindow.swift */
+"No saved versions yet. A copy of the file is kept each time you save it, for 14 days." = "No saved versions yet. A copy of the file is kept each time you save it, for 14 days.";
+"Saved Versions" = "Saved Versions";
+"Restore This Version" = "Restore This Version";
+
+/* MinorIDE/LocalHistoryWindow.swift, MinorIDE/main.swift */
+"Local History" = "Local History";
+
 /* MinorIDE/MainMenu.swift */
 "About MinorIDE" = "About MinorIDE";
 "Settings…" = "Settings…";
@@ -157,6 +171,7 @@
 "Close" = "Close";
 "Reopen Closed Tab" = "Reopen Closed Tab";
 "Save As…" = "Save As…";
+"Local History…" = "Local History…";
 "Edit" = "Edit";
 "Undo" = "Undo";
 "Redo" = "Redo";

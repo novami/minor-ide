@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Testing
+import MinorCore
 import TextEngine
 @testable import EditorKit
 
@@ -45,6 +46,26 @@ struct FileDocumentTests {
 		try Data("[*]\nindent_style = space\nindent_size = 5\n".utf8).write(to: config)
 		doc.settingsChanged()
 		#expect(doc.format.indentSize == 3)
+	}
+
+	@Test func localHistoryKeepsSavedVersionsAndRestores() throws {
+		let root = FileManager.default.temporaryDirectory.appendingPathComponent("FileDocumentHistory-\(UUID().uuidString)")
+		FileDocument.history = LocalHistory(root: root)
+		defer { FileDocument.history = nil; try? FileManager.default.removeItem(at: root) }
+		let url = try tempFile("one\n")
+		let doc = try FileDocument.load(url)
+		let editor = EditorView(document: doc.text)
+		editor.setSelections(SelectionSet(caret: 0))
+		editor.insertText("two ", replacementRange: NSRange(location: NSNotFound, length: 0))
+		try doc.write(to: url)
+		#expect(doc.versions.count == 2) // the original from disk and the saved text
+
+		doc.restore(doc.versions[1])
+		#expect(editor.rope.string == "one\n")
+		#expect(doc.isEdited)
+		doc.text.history.seal()
+		editor.undo(nil)
+		#expect(editor.rope.string == "two one\n")
 	}
 
 	@Test func diskChangeReloadsCleanAndNotifiesEdited() throws {
