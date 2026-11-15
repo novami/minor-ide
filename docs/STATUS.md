@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-15 (ruční kontrola)
+**Poslední aktualizace:** 2026-11-15 (1e/3)
 
 ## Kde jsme
 
@@ -71,7 +71,9 @@ Repozitář: https://github.com/novami/minor-ide (větev `main`). **Lokálně ne
 
 Binární soubory (2026-11-15): NUL v prvních 8 KB (kromě UTF-16 s BOM) → neotevře se jako text, sheet nabídne Ukázat ve Finderu (Quick Look mezerníkem); `TextFile.looksBinary`. Hex náhled z plánu není.
 
-**Další: fáze 1e, krok 3** — důvěra projektu a Omezený režim (`trusted.json` mimo projekt; zatím nic nespouštíme, tak jen uložení a sheet), uvítací okno s nedávnými projekty, pak Nastavení (SwiftUI nad `settings.json`), stavový řádek, automatické ukládání a Local History.
+**Fáze 1e, krok 3 hotový** (2026-11-15): sledování souborů mimo projekt (`FileWatcher` sdílený s projektem, složky otevřených souborů); hex náhled binárních souborů (`HexDump` v MinorCore, `HexWindow`, první 1 MB, tlačítko Zobrazit hex ve varování); kontextové menu stromu (`SidebarMenu.swift`: Nový soubor…, Nová složka…, Přejmenovat…, Přesunout do koše, Ukázat ve Finderu, Kopírovat cestu / relativní cestu; přejmenování přenese otevřená okna); porovnání verzí (`TextEngine/LineDiff.swift`: Myers po řádcích + sjednocený diff, `CompareWindow`, tlačítko Porovnat v liště změny na disku). Testy `LineDiffTests`, `HexDumpTests`.
+
+**Další: fáze 1e, krok 4** — split editoru (návrh: sdílený model dokumentu `Document` s ropem, historií a kotvami, víc `EditorView` nad ním; editace z jednoho se promítnou do druhého přes `ChangeSet`; Zobrazení › Rozdělit editor vedle sebe/pod sebe. Je to změna architektury EditorView, proto napřed odsouhlasit s uživatelem), důvěra projektu a Omezený režim, uvítací okno s nedávnými projekty, Nastavení (SwiftUI nad `settings.json`), automatické ukládání a Local History.
 
 Známé mezery po kroku 1e/2: tlačítko „Porovnat“ z plánu chybí (není diff); soubory mimo projekt se kontrolují jen při aktivaci okna nebo aplikace; přenačtení bere původní kódování dokumentu jako záložní (nová detekce jen u UTF-8/BOM); ruční kontrola zbývá.
 

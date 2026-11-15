@@ -2,6 +2,10 @@
    Entries marked "TODO translate" still show English: translate the value and delete the marker.
    Run "make l10n" after changing source strings, "make l10n-check" to verify. */
 
+/* MinorIDE/CompareWindow.swift */
+"The versions are identical." = "Verze jsou stejné.";
+"Comparison" = "Porovnání";
+
 /* MinorIDE/DocumentWindow.swift */
 "Editor" = "Editor";
 
@@ -25,6 +29,9 @@
 "The file changed on disk." = "Soubor se na disku změnil.";
 "Reload" = "Přenačíst";
 "Keep Mine" = "Ponechat moje";
+"Compare" = "Porovnat";
+"%@ (on disk)" = "%@ (na disku)";
+"%@ (in the editor)" = "%@ (v editoru)";
 "Untitled" = "Bez názvu";
 "Tabs (%d)" = "tabulátory: %d";
 "Mixed → %@" = "smíšené → %@";

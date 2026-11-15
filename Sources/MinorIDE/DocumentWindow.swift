@@ -24,6 +24,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 	private let diskBanner = DiskBanner()
 	/// Modification date and size of the file as last loaded or saved.
 	private var diskStamp: FileStamp?
+	private var compareWindow: CompareWindow?
 	private(set) var sidebar: ProjectSidebar?
 
 	init(text: String, url: URL?, format: FormatSettings, project: Project? = nil) {
@@ -212,7 +213,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 			guard diskStamp != nil else { return }
 			diskStamp = nil
 			markEdited() // saving recreates the file
-			diskBanner.show(L("The file was deleted from disk. Saving creates it again."), [(L("OK"), {})])
+			diskBanner.show(L("The file was deleted from disk. Saving creates it again."), [(L("OK"), {}, true)])
 			return
 		}
 		guard now != diskStamp else { return }
@@ -220,10 +221,22 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 			reload()
 		} else {
 			diskBanner.show(L("The file changed on disk."), [
-				(L("Reload"), { [weak self] in self?.reload() }),
-				(L("Keep Mine"), { [weak self] in self?.diskStamp = now }),
+				(L("Reload"), { [weak self] in self?.reload() }, true),
+				(L("Keep Mine"), { [weak self] in self?.diskStamp = now }, true),
+				(L("Compare"), { [weak self] in self?.compareWithDisk() }, false),
 			])
 		}
+	}
+
+	/// Diff of the file on disk against the editor's text, in its own window.
+	func compareWithDisk() {
+		guard let url, let data = try? Data(contentsOf: url) else { return }
+		let disk = TextFile.load(data, fallback: format.charset).text
+		let name = url.lastPathComponent
+		let compare = CompareWindow(title: name, old: disk, new: editor.rope.string,
+		                            oldLabel: L("%@ (on disk)", name), newLabel: L("%@ (in the editor)", name))
+		compare.onClose = { [weak self] in self?.compareWindow = nil }
+		compareWindow = compare
 	}
 
 	/// Replaces the text with the file on disk as one undoable step.
