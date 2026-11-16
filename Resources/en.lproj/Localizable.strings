@@ -48,6 +48,7 @@
 "Shown in red and opened read-only by default." = "Shown in red and opened read-only by default.";
 
 /* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
+"Available In:" = "Available In:";
 "Type:" = "Type:";
 "Name:" = "Name:";
 "Host:" = "Host:";
@@ -308,10 +309,14 @@
 "Start Terminal" = "Start Terminal";
 
 /* MinorIDE/SavedListView.swift */
+"All Projects" = "All Projects";
+"Only “%@”" = "Only “%@”";
+"Trust the project to save settings in it." = "Trust the project to save settings in it.";
 "Delete “%@”?" = "Delete “%@”?";
 "Delete" = "Delete";
 "Edit…" = "Edit…";
 "Delete…" = "Delete…";
+"This project" = "This project";
 "Production" = "Production";
 "Databases" = "Databases";
 "Add Database…" = "Add Database…";

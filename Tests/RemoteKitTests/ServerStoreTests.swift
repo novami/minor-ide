@@ -40,4 +40,30 @@ import Testing
 		s.user = "u"
 		#expect(s.isComplete)
 	}
+
+	@Test func projectServersShareLocalSettingsAndStayOutOfGit() throws {
+		let project = FileManager.default.temporaryDirectory.appendingPathComponent("prj-" + UUID().uuidString)
+		defer { try? FileManager.default.removeItem(at: project) }
+		let local = ServerStore.projectURL(project)
+		try FileManager.default.createDirectory(at: local.deletingLastPathComponent(), withIntermediateDirectories: true)
+		try #"{"paths": {"php": "/opt/php"}, "databases": [5]}"#.write(to: local, atomically: true, encoding: .utf8)
+
+		let store = ServerStore(project: project)
+		let web = RemoteServer(name: "web", host: "example.com", port: 2222)
+		try store.save(web)
+		#expect(store.load() == [web])
+		let json = try JSONSerialization.jsonObject(with: Data(contentsOf: local)) as? [String: Any]
+		#expect((json?["paths"] as? [String: String]) == ["php": "/opt/php"])
+		#expect((json?["databases"] as? [Int]) == [5])
+
+		let ignore = project.appendingPathComponent(".minoride/.gitignore")
+		#expect(try String(contentsOf: ignore, encoding: .utf8) == "local.json\n")
+		try store.save(web)
+		#expect(try String(contentsOf: ignore, encoding: .utf8) == "local.json\n")
+
+		try "{ broken".write(to: local, atomically: true, encoding: .utf8)
+		#expect(store.load().isEmpty)
+		#expect(throws: (any Error).self) { try store.save(web) }
+		#expect(try String(contentsOf: local, encoding: .utf8) == "{ broken")
+	}
 }

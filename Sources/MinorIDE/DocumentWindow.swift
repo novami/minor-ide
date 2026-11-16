@@ -103,7 +103,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			center.splitView.autosaveName = "ProjectBottomPanel"
 			// Database and server browsers on the right.
 			let inspector = NSViewController()
-			inspector.view = PanelView.inspector()
+			inspector.view = PanelView.inspector(project: project)
 			let inspectorItem = NSSplitViewItem(inspectorWithViewController: inspector)
 			inspectorItem.minimumThickness = 240
 			inspectorItem.canCollapse = true

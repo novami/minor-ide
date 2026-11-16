@@ -10,19 +10,29 @@ extension Notification.Name {
 /// Saving and deleting connections: the settings file without passwords, the password in the
 /// Keychain. Keychain calls can block (a system prompt), so they run off the main thread.
 enum Databases {
-	static let store = ConnectionStore()
+	static let global = ConnectionStore()
 	static let keychain = Keychain()
 
-	static func save(_ connection: DatabaseConnection, password: String?) async throws {
+	static func store(_ scope: SavedScope) -> ConnectionStore {
+		switch scope {
+		case .global: global
+		case .project(let url): ConnectionStore(project: url)
+		}
+	}
+
+	/// Saves into `scope`; `old` is where the connection was, it moves out of there.
+	static func save(_ connection: DatabaseConnection, password: String?, in scope: SavedScope,
+	                 from old: SavedScope?) async throws {
 		if let password {
 			try await Task.detached { try keychain.setPassword(password, connection.passwordID) }.value
 		}
-		try store.save(connection)
+		try store(scope).save(connection)
+		if let old, old != scope { try store(old).remove(id: connection.id) }
 		NotificationCenter.default.post(name: .databasesDidChange, object: nil)
 	}
 
-	static func delete(_ connection: DatabaseConnection) async throws {
-		try store.remove(id: connection.id)
+	static func delete(_ connection: DatabaseConnection, in scope: SavedScope) async throws {
+		try store(scope).remove(id: connection.id)
 		NotificationCenter.default.post(name: .databasesDidChange, object: nil)
 		try await Task.detached { try keychain.delete(connection.passwordID) }.value
 	}
@@ -41,6 +51,8 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 
 	private var connection: DatabaseConnection
 	private let isNew: Bool
+	private let scope: ScopePicker
+	private let oldScope: SavedScope?
 	private let panel: NSPanel
 	private let grid: NSGridView
 	private let kind = NSPopUpButton()
@@ -63,15 +75,18 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 	private var fileRows: [NSGridRow] = []
 	private var sshRows: [NSGridRow] = []
 
-	/// Shows the sheet on `window`; `connection` nil adds a new one.
-	static func present(on window: NSWindow, editing connection: DatabaseConnection? = nil) {
-		let sheet = DatabaseSheet(connection: connection)
+	/// Shows the sheet on `window`; `connection` nil adds a new one, `scope` is where it is saved.
+	static func present(on window: NSWindow, project: Project, editing connection: DatabaseConnection? = nil,
+	                    in scope: SavedScope? = nil) {
+		let sheet = DatabaseSheet(connection: connection, project: project, scope: scope)
 		// The completion handler keeps the sheet alive while it is shown.
 		window.beginSheet(sheet.panel) { _ in _ = sheet }
 	}
 
-	private init(connection: DatabaseConnection?) {
+	private init(connection: DatabaseConnection?, project: Project, scope: SavedScope?) {
 		isNew = connection == nil
+		self.scope = ScopePicker(project: project, current: scope)
+		oldScope = scope
 		self.connection = connection ?? DatabaseConnection()
 		panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 460, height: 300), styleMask: [.titled], backing: .buffered, defer: true)
 		saveButton = NSButton(title: connection == nil ? L("Add") : L("Save"), target: nil, action: nil)
@@ -133,6 +148,7 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 		productionNote.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		productionNote.textColor = .secondaryLabelColor
 
+		grid.addRow(with: [label(L("Available In:")), scope.popup])
 		grid.addRow(with: [label(L("Type:")), kind])
 		grid.addRow(with: [label(L("Name:")), name])
 		networkRows = [
@@ -272,7 +288,7 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 		saveButton.isEnabled = false
 		Task {
 			do {
-				try await Databases.save(c, password: pass)
+				try await Databases.save(c, password: pass, in: scope.scope, from: oldScope)
 				close()
 			} catch {
 				saveButton.isEnabled = true

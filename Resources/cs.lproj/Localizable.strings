@@ -49,6 +49,7 @@
 "Shown in red and opened read-only by default." = "Zobrazí se červeně a ve výchozím stavu se otevře jen pro čtení.";
 
 /* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
+"Available In:" = "Dostupné v:";
 "Type:" = "Typ:";
 "Name:" = "Název:";
 "Host:" = "Hostitel:";
@@ -310,10 +311,14 @@
 "Start Terminal" = "Spustit terminál";
 
 /* MinorIDE/SavedListView.swift */
+"All Projects" = "Všech projektech";
+"Only “%@”" = "Jen v projektu „%@“";
+"Trust the project to save settings in it." = "Pro uložení do projektu mu nejdřív důvěřujte.";
 "Delete “%@”?" = "Smazat „%@“?";
 "Delete" = "Smazat";
 "Edit…" = "Upravit…";
 "Delete…" = "Smazat…";
+"This project" = "Tento projekt";
 "Production" = "Produkce";
 "Databases" = "Databáze";
 "Add Database…" = "Přidat databázi…";

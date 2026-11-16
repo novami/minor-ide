@@ -130,7 +130,7 @@ final class PanelView: NSView {
 
 extension PanelView {
 	/// Right panel (an AppKit inspector item): saved databases and server browsers (phases 6 and 6b fill them).
-	static func inspector() -> PanelView {
+	static func inspector(project: Project) -> PanelView {
 		let panel = PanelView(sections: [
 			Section(title: L("Database"), symbol: "cylinder.split.1x2",
 			        emptyTitle: L("No Databases"),
@@ -140,8 +140,8 @@ extension PanelView {
 			        emptyText: L("Files on servers connected over SFTP or FTPS will appear here.")),
 		], label: L("Right Panel"), defaultsKey: "InspectorSection",
 		   hide: (#selector(DocumentWindow.toggleRightPanel(_:)), "chevron.right", L("Hide Right Panel")))
-		panel.setContent(SavedListView(.databases), at: 0)
-		panel.setContent(SavedListView(.servers), at: 1)
+		panel.setContent(SavedListView(.databases, project: project), at: 0)
+		panel.setContent(SavedListView(.servers, project: project), at: 1)
 		return panel
 	}
 

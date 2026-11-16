@@ -83,11 +83,16 @@ public struct DatabaseConnection: SavedItem, Equatable {
 	}
 }
 
-/// Saved connections in `databases.json` (see `SavedItemStore`).
+/// Saved connections in `databases.json` for all projects, or a project's own (see `SavedItemStore`).
 public typealias ConnectionStore = SavedItemStore<DatabaseConnection>
 
 extension SavedItemStore where Item == DatabaseConnection {
 	public init(storeURL: URL = ConnectionStore.defaultURL("databases.json")) {
 		self.init(storeURL: storeURL, key: "databases")
+	}
+
+	/// The project's own databases in `.minoride/local.json`.
+	public init(project: URL) {
+		self.init(storeURL: ConnectionStore.projectURL(project), key: "databases")
 	}
 }

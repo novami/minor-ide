@@ -78,11 +78,16 @@ public struct RemoteServer: SavedItem, Equatable {
 	}
 }
 
-/// Saved servers in `servers.json` (see `SavedItemStore`).
+/// Saved servers in `servers.json` for all projects, or a project's own (see `SavedItemStore`).
 public typealias ServerStore = SavedItemStore<RemoteServer>
 
 extension SavedItemStore where Item == RemoteServer {
 	public init(storeURL: URL = ServerStore.defaultURL("servers.json")) {
 		self.init(storeURL: storeURL, key: "servers")
+	}
+
+	/// The project's own servers in `.minoride/local.json`.
+	public init(project: URL) {
+		self.init(storeURL: ServerStore.projectURL(project), key: "servers")
 	}
 }

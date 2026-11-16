@@ -10,19 +10,28 @@ extension Notification.Name {
 /// Saving and deleting servers: the settings file without passwords, the password in the
 /// Keychain (off the main thread, see `Databases`).
 enum Servers {
-	static let store = ServerStore()
+	static let global = ServerStore()
 	static let keychain = Keychain()
 
-	static func save(_ server: RemoteServer, password: String?) async throws {
+	static func store(_ scope: SavedScope) -> ServerStore {
+		switch scope {
+		case .global: global
+		case .project(let url): ServerStore(project: url)
+		}
+	}
+
+	/// Saves into `scope`; `old` is where the server was, it moves out of there.
+	static func save(_ server: RemoteServer, password: String?, in scope: SavedScope, from old: SavedScope?) async throws {
 		if let password {
 			try await Task.detached { try keychain.setPassword(password, server.passwordID) }.value
 		}
-		try store.save(server)
+		try store(scope).save(server)
+		if let old, old != scope { try store(old).remove(id: server.id) }
 		NotificationCenter.default.post(name: .serversDidChange, object: nil)
 	}
 
-	static func delete(_ server: RemoteServer) async throws {
-		try store.remove(id: server.id)
+	static func delete(_ server: RemoteServer, in scope: SavedScope) async throws {
+		try store(scope).remove(id: server.id)
 		NotificationCenter.default.post(name: .serversDidChange, object: nil)
 		try await Task.detached { try keychain.delete(server.passwordID) }.value
 	}
@@ -42,6 +51,8 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 
 	private var server: RemoteServer
 	private let isNew: Bool
+	private let scope: ScopePicker
+	private let oldScope: SavedScope?
 	private let panel: NSPanel
 	private let grid = NSGridView()
 	private let kind = NSPopUpButton()
@@ -61,15 +72,18 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 	private var keyRow: NSGridRow!
 	private var passwordRow: NSGridRow!
 
-	/// Shows the sheet on `window`; `server` nil adds a new one.
-	static func present(on window: NSWindow, editing server: RemoteServer? = nil) {
-		let sheet = ServerSheet(server: server)
+	/// Shows the sheet on `window`; `server` nil adds a new one, `scope` is where it is saved.
+	static func present(on window: NSWindow, project: Project, editing server: RemoteServer? = nil,
+	                    in scope: SavedScope? = nil) {
+		let sheet = ServerSheet(server: server, project: project, scope: scope)
 		// The completion handler keeps the sheet alive while it is shown.
 		window.beginSheet(sheet.panel) { _ in _ = sheet }
 	}
 
-	private init(server: RemoteServer?) {
+	private init(server: RemoteServer?, project: Project, scope: SavedScope?) {
 		isNew = server == nil
+		self.scope = ScopePicker(project: project, current: scope)
+		oldScope = scope
 		self.server = server ?? RemoteServer()
 		panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 460, height: 300), styleMask: [.titled], backing: .buffered, defer: true)
 		saveButton = NSButton(title: server == nil ? L("Add") : L("Save"), target: nil, action: nil)
@@ -126,6 +140,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 		productionNote.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		productionNote.textColor = .secondaryLabelColor
 
+		grid.addRow(with: [label(L("Available In:")), scope.popup])
 		grid.addRow(with: [label(L("Type:")), kind])
 		grid.addRow(with: [label(L("Name:")), name])
 		grid.addRow(with: [label(L("Host:")), hostRow])
@@ -237,7 +252,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 		saveButton.isEnabled = false
 		Task {
 			do {
-				try await Servers.save(s, password: pass)
+				try await Servers.save(s, password: pass, in: scope.scope, from: oldScope)
 				close()
 			} catch {
 				saveButton.isEnabled = true
