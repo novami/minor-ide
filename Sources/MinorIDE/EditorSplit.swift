@@ -166,6 +166,7 @@ extension DocumentWindow {
 			find.editor = focused
 			updateTitle()
 			revealInSidebar()
+			if let url { project?.noteOpened(url) }
 		}
 		// Matches follow the text of the focused pane's file, whichever editor changed it.
 		editor.onTextChange = { [weak self, weak editor] in

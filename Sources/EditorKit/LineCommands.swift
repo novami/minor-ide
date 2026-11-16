@@ -133,6 +133,21 @@ extension EditorView {
 		setSelections(SelectionSet(matches.map { Selection(anchor: $0.lowerBound, head: $0.upperBound) }, primary: primary))
 	}
 
+	/// Selects `range` (byte offsets, clamped) and scrolls it to the middle (open a file at a
+	/// line, search results).
+	public func reveal(_ range: Range<Int>) {
+		let lo = rope.scalarBoundary(atOrBefore: min(range.lowerBound, rope.byteCount))
+		let hi = rope.scalarBoundary(atOrBefore: min(max(range.upperBound, lo), rope.byteCount))
+		setSelections(SelectionSet([Selection(anchor: lo, head: hi)]))
+		doCommand(by: #selector(NSResponder.centerSelectionInVisibleArea(_:)))
+	}
+
+	/// Caret at the start of `line` (0-based, clamped), scrolled to the middle.
+	public func reveal(line: Int) {
+		let start = rope.offset(ofLine: min(max(0, line), rope.lineCount - 1))
+		reveal(start..<start)
+	}
+
 	/// Jump to Selection (⌘J) from the menu; the key binding route goes through doCommand.
 	@objc public override func centerSelectionInVisibleArea(_ sender: Any?) {
 		doCommand(by: #selector(NSResponder.centerSelectionInVisibleArea(_:)))

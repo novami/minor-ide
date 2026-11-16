@@ -23,11 +23,25 @@ final class Project {
 	private(set) var gitHead: GitHead?
 	private var watcher: FileWatcher?
 	private let trust: ProjectTrust
+	/// Every file of the project, for Open Quickly.
+	let paths: PathIndex
+	/// Project files used most recently first (relative paths), ranked higher in Open Quickly.
+	private(set) var recentFiles: [String] = []
+
+	func noteOpened(_ file: URL) {
+		guard let rel = paths.relative(file.standardizedFileURL.path), !rel.isEmpty else { return }
+		recentFiles.removeAll { $0 == rel }
+		recentFiles.insert(rel, at: 0)
+		if recentFiles.count > 50 { recentFiles.removeLast() }
+	}
 
 	init(root url: URL, trust: ProjectTrust = ProjectTrust()) {
 		root = FileNode(url: url, isDirectory: true)
 		self.trust = trust
 		isTrusted = trust.isTrusted(url)
+		paths = PathIndex(root: url)
+		paths.build()
+		for file in NSDocumentController.shared.recentDocumentURLs.reversed() where contains(file) { noteOpened(file) }
 		watch()
 		refreshGitHead()
 	}
@@ -63,6 +77,7 @@ final class Project {
 	/// Re-reads loaded folders that FSEvents reported (or the parents of reported files).
 	private func changed(_ paths: [String]) {
 		onFiles?(paths)
+		self.paths.update(changed: paths)
 		if paths.contains(where: { $0.hasSuffix("/HEAD") }) { refreshGitHead() }
 		var folders: [FileNode] = []
 		for path in paths {

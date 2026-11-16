@@ -307,6 +307,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		revealInSidebar()
 		documents.forEach { $0.checkDisk() }
 		project?.refreshGitHead()
+		if let url { project?.noteOpened(url) }
 	}
 
 	/// Shows the pane's bar when its file changed or vanished on disk while it has unsaved changes.
@@ -447,6 +448,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			return splitEditor != nil
 		case #selector(showLocalHistory(_:)):
 			return document.url != nil && FileDocument.history != nil
+		case #selector(openQuickly(_:)):
+			return project != nil
 		case #selector(toggleProjectTrust(_:)):
 			guard let project else { return false }
 			item.title = project.isTrusted ? L("Restrict Project") : L("Trust Project…")
@@ -459,6 +462,16 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	}
 
 	private var historyWindow: LocalHistoryWindow?
+	private weak var quickOpen: QuickOpenPanel?
+
+	/// File › Open Quickly… (⇧⌘O): a project file by name.
+	@objc func openQuickly(_ sender: Any?) {
+		guard let project else { return }
+		if let quickOpen { return quickOpen.makeKeyAndOrderFront(nil) }
+		let panel = QuickOpenPanel(project: project, owner: self)
+		quickOpen = panel
+		panel.show(over: window)
+	}
 
 	/// File › Local History…: saved versions of the focused file.
 	@objc func showLocalHistory(_ sender: Any?) {

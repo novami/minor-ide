@@ -1,6 +1,7 @@
 import AppKit
 import EditorKit
 import Highlight
+import MinorCore
 import QuartzCore
 import TextEngine
 
@@ -172,6 +173,8 @@ enum Bench {
 		EditorView.wrapsLines = false
 		editor.format = unwrapped
 
+		quickOpen()
+
 		// Raw rope throughput, independent of drawing.
 		var rope = Rope(text)
 		var rng = UInt64(1)
@@ -246,6 +249,35 @@ enum Bench {
 	/// open under 300 ms, 1M rope edits under 2 s. MINORIDE_BENCH_PROFILE=ci is for shared
 	/// virtual machines without a GPU: one-off stalls of the VM are not the editor's, so only
 	/// p99 (8 ms) and rope throughput (4 s) are checked there.
+	/// Open file by name in a project of 20 000 files: every keystroke of a query (plan 2b:
+	/// result within 50 ms of the key press).
+	static func quickOpen() {
+		let fm = FileManager.default
+		let root = fm.temporaryDirectory.appendingPathComponent("MinorIDE-bench-\(getpid())")
+		defer { try? fm.removeItem(at: root) }
+		for i in 0..<20_000 {
+			let dir = root.appendingPathComponent("vendor/package\(i % 250)/src/Module\(i % 37)")
+			if i < 250 * 37 { try? fm.createDirectory(at: dir, withIntermediateDirectories: true) }
+			fm.createFile(atPath: dir.appendingPathComponent("SomeClass\(i)Presenter.php").path, contents: nil)
+		}
+		let index = PathIndex(root: root)
+		var t = CACurrentMediaTime()
+		index.build()
+		let done = DispatchSemaphore(value: 0)
+		index.whenReady { done.signal() }
+		done.wait()
+		report("index 20k files", [CACurrentMediaTime() - t])
+		var samples: [Double] = []
+		for query in ["somepres", "mod12 class", "vendorpackage1src", "x"] {
+			for n in 1...query.count {
+				t = CACurrentMediaTime()
+				_ = index.search(String(query.prefix(n)))
+				samples.append(CACurrentMediaTime() - t)
+			}
+		}
+		report("quick open key", samples)
+	}
+
 	static func checkBudgets() -> Bool {
 		let ci = ProcessInfo.processInfo.environment["MINORIDE_BENCH_PROFILE"] == "ci"
 		let frames = ["type char", "type newline", "backspace", "scroll 40px", "scroll jump", "type char go", "type quote go", "scroll jump go", "type char wrapped", "scroll jump wrapped"]
@@ -255,6 +287,7 @@ enum Bench {
 			if !ci { checks.append((name + " max", worst[name], 0.016)) }
 		}
 		checks.append(("1M rope edits", worst["1M rope edits"], ci ? 4.0 : 2.0))
+		checks.append(("quick open key max", worst["quick open key"], ci ? 0.1 : 0.05))
 		// Keystroke latency. The app's own work (key to commit) gets the plan's frame budget.
 		// On screen, a committed change waits for the next vsync and is composed for one more
 		// frame, so key to frame is up to two display frames; more means the editor missed one.

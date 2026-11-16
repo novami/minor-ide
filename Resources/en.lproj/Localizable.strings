@@ -205,6 +205,7 @@
 "File" = "File";
 "New" = "New";
 "Open…" = "Open…";
+"Open Quickly…" = "Open Quickly…";
 "Open Recent" = "Open Recent";
 "Close" = "Close";
 "Reopen Closed Tab" = "Reopen Closed Tab";
@@ -307,6 +308,13 @@
 "Start a new shell in the project folder." = "Start a new shell in the project folder.";
 "In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder." = "In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder.";
 "Start Terminal" = "Start Terminal";
+
+/* MinorIDE/QuickOpen.swift */
+"Open Quickly" = "Open Quickly";
+"File name" = "File name";
+"Matching files" = "Matching files";
+"No recent files" = "No recent files";
+"No matching files" = "No matching files";
 
 /* MinorIDE/SavedListView.swift */
 "All Projects" = "All Projects";

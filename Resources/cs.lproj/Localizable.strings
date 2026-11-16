@@ -207,6 +207,7 @@
 "File" = "Soubor";
 "New" = "Nový";
 "Open…" = "Otevřít…";
+"Open Quickly…" = "Rychle otevřít…";
 "Open Recent" = "Otevřít nedávné";
 "Close" = "Zavřít";
 "Reopen Closed Tab" = "Znovu otevřít zavřený tab";
@@ -309,6 +310,13 @@
 "Start a new shell in the project folder." = "Spusťte nový shell ve složce projektu.";
 "In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder." = "V Omezeném režimu se terminál nespouští sám, protože výzva shellu může ve složce projektu spustit Git.";
 "Start Terminal" = "Spustit terminál";
+
+/* MinorIDE/QuickOpen.swift */
+"Open Quickly" = "Rychle otevřít";
+"File name" = "Název souboru";
+"Matching files" = "Nalezené soubory";
+"No recent files" = "Žádné nedávné soubory";
+"No matching files" = "Žádný soubor neodpovídá";
 
 /* MinorIDE/SavedListView.swift */
 "All Projects" = "Všech projektech";

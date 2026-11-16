@@ -12,6 +12,7 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Akce | Zkratka | Menu |
 |---|---|---|
 | Nový / Otevřít… / Zavřít | ⌘N / ⌘O / ⌘W | Soubor |
+| Rychle otevřít… (soubor projektu podle jména, `název:řádek`; ⌥Return do druhé části) | ⇧⌘O | Soubor |
 | Uložit / Uložit jako… | ⌘S / ⇧⌘S | Soubor |
 | Nastavení… | ⌘, | MinorIDE |
 | Zpět / Znovu | ⌘Z / ⇧⌘Z | Úpravy |

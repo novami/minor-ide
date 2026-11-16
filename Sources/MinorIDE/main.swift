@@ -15,6 +15,7 @@ import MinorCore
 //        MINORIDE_HISTORY=1 with --snapshot shows Local History of the file (temporary versions)
 //        MINORIDE_WELCOME=1 with --snapshot saves the welcome window and prints its frames
 //        MINORIDE_SETTINGS=<tab> with --snapshot saves that Settings tab (0 General, 1 Formatting)
+//        MINORIDE_QUICKOPEN=<query> with --snapshot <png> <folder> prints Open Quickly's rows and frame
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
@@ -130,6 +131,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		let doc = DocumentWindow(document: file, project: project)
 		if let project { addTab(doc, in: project) } else { add(doc) }
 		NSDocumentController.shared.noteNewRecentDocumentURL(url)
+	}
+
+	/// Opens a file and selects a place in it: a line (0-based) or a byte range.
+	func open(_ url: URL, line: Int? = nil, range: Range<Int>? = nil, inSplitOf window: DocumentWindow? = nil) {
+		if let window { open(url, inSplitOf: window) } else { open(url) }
+		guard line != nil || range != nil,
+		      let pane = documents.lazy.compactMap({ $0.pane(showing: url) }).first else { return }
+		if let range { pane.editor.reveal(range) } else if let line { pane.editor.reveal(line: line) }
+		pane.editor.window?.makeFirstResponder(pane.editor)
 	}
 
 	/// Opens a file of the project in the other pane of `window`'s editor.
@@ -378,6 +388,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 				print("status bar", NSStringFromRect(bar.convert(bar.bounds, to: nil)), bar.summary)
 			}
 			if ProcessInfo.processInfo.environment["MINORIDE_BOTTOM_CHECK"] != nil { documents.last?.checkBottomPanelButton() }
+			if let query = ProcessInfo.processInfo.environment["MINORIDE_QUICKOPEN"], let doc = documents.last {
+				doc.openQuickly(nil)
+				let panel = window.childWindows?.compactMap { $0 as? QuickOpenPanel }.first
+				panel?.typeForSnapshot(query)
+				let deadline = Date().addingTimeInterval(3)
+				while panel?.rowsForSnapshot.isEmpty != false && Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.01)) }
+				print("quick open", NSStringFromRect(panel?.frame ?? .zero), "in", NSStringFromRect(window.frame))
+				for row in panel?.rowsForSnapshot ?? [] { print("  ", row) }
+			}
 			if let content = window.contentView, let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds) {
 				content.cacheDisplay(in: content.bounds, to: rep)
 				try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path.replacingOccurrences(of: ".png", with: "-window.png")))
