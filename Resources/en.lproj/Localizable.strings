@@ -261,6 +261,13 @@
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Project Files";
 
+/* MinorIDE/ProjectTerminal.swift */
+"The Shell Exited" = "The Shell Exited";
+"Terminal Not Started" = "Terminal Not Started";
+"Start a new shell in the project folder." = "Start a new shell in the project folder.";
+"In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder." = "In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder.";
+"Start Terminal" = "Start Terminal";
+
 /* MinorIDE/SettingsWindow.swift */
 "General" = "General";
 "Formatting" = "Formatting";

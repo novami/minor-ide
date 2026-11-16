@@ -7,6 +7,10 @@ let package = Package(
 	products: [
 		.executable(name: "MinorIDE", targets: ["MinorIDE"]),
 	],
+	dependencies: [
+		// Pinned exactly (security: dependencies are updated by hand after reading the changes).
+		.package(url: "https://github.com/migueldeicaza/SwiftTerm", exact: "1.20.0"),
+	],
 	targets: [
 		.target(name: "MinorCore"),
 		.target(name: "TextEngine"),
@@ -14,7 +18,8 @@ let package = Package(
 		.target(name: "EditorKit", dependencies: ["TextEngine", "MinorCore", "Highlight"]),
 		.target(name: "DBKit", dependencies: ["MinorCore"]),
 		.target(name: "SecretsKit"),
-		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit", "Highlight", "SecretsKit"]),
+		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit", "Highlight", "SecretsKit",
+		                                                .product(name: "SwiftTerm", package: "SwiftTerm")]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
 		.testTarget(name: "MinorCoreTests", dependencies: ["MinorCore"]),
 		.testTarget(name: "DBKitTests", dependencies: ["DBKit"]),

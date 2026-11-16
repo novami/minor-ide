@@ -263,6 +263,13 @@
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Soubory projektu";
 
+/* MinorIDE/ProjectTerminal.swift */
+"The Shell Exited" = "Shell skončil";
+"Terminal Not Started" = "Terminál není spuštěný";
+"Start a new shell in the project folder." = "Spusťte nový shell ve složce projektu.";
+"In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder." = "V Omezeném režimu se terminál nespouští sám, protože výzva shellu může ve složce projektu spustit Git.";
+"Start Terminal" = "Spustit terminál";
+
 /* MinorIDE/SettingsWindow.swift */
 "General" = "Obecné";
 "Formatting" = "Formát";

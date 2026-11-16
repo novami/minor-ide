@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (1f: systémové textové funkce)
+**Poslední aktualizace:** 2026-11-16 (terminál ve spodním panelu)
 
 ## Kde jsme
 
@@ -141,7 +141,9 @@ Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split 
 
 **Automatické písmo** (2026-11-16, rozhodnutí uživatele: diakritika SF Mono 13 na 1080p pořád šedá): vyhlazování se v editoru uplatní (display list vrstvy má `dilation`), háčky SF Mono jsou ale tenčí než pixel. Bez `font_family` je výchozí Menlo 13, když je připojený aspoň jeden displej bez Retiny (`EditorView.hasNonRetinaDisplay`; podle připojených displejů, ne podle okna, takže přetažení okna písmo nemění), jinak SF Mono; přepočet při `didChangeScreenParametersNotification`. Nastavení › Písmo: „Automaticky“. `--snapshot` vždy SF Mono. Test `EditorFontTests.automaticFontIsMenloWithoutRetina`. Čitelnost na displeji 1080p potvrdil uživatel.
 
-**Další krok:** ruční kontrola 1f s uživatelem (seznam v `docs/editor-behaviors.md`: VoiceOver se zalamováním, Zvýšit kontrast, Omezit pohyb, přetažení, Vyhledat, emoji, ⌘E) — tím je 1f hotová; pak fáze 2 (vydávání a updater, potřebuje Apple Developer účet).
+**Terminál (z 2b.4, předsunuto na přání uživatele, 2026-11-16):** SwiftTerm 1.20.0 připnutý přesně (bez vlastních závislostí; `Package.resolved` uvádí i swift-argument-parser z jeho manifestu, do aplikace se nelinkuje). `MinorIDE/ProjectTerminal.swift`: jeden přihlašovací shell uživatele (`pw_shell`, jinak `$SHELL`) na projekt, startuje ve složce projektu, sdílený taby okna (přesouvá se do tabu v popředí, `PanelView.setContent`); prostředí aplikace + `TERM=xterm-256color`, `COLORTERM`, `LANG=en_US.UTF-8` když chybí; ⌥ píše znaky (ne Meta); barvy systému včetně tmavého režimu. Fokus do terminálu při otevření projektu bez souboru a při zobrazení spodního panelu. Omezený režim: shell se sám nespustí (výzva může spouštět Git), tlačítko „Spustit terminál“; po důvěře se spustí. Po `exit` výzva ke spuštění nového. Název sekce spodního panelu vlevo. Zbývá z 2b.4: víc tabů, Bezpečné zadávání z klávesnice, písmo z nastavení editoru, licence SwiftTerm (MIT) v okně Poděkování (okno zatím není); ruční kontrola.
+
+**Další krok:** ruční kontrola terminálu a 1f s uživatelem (seznam v `docs/editor-behaviors.md`: VoiceOver se zalamováním, Zvýšit kontrast, Omezit pohyb, přetažení, Vyhledat, emoji, ⌘E) — tím je 1f hotová; pak fáze 2 (vydávání a updater, potřebuje Apple Developer účet).
 
 **Fáze 1e:** z plánu zbývá ruční kontrola nových oken (uvítání, Nastavení, Místní historie, automatické ukládání, obnova, stavový řádek); `.minoride/local.json` až s prvním uživatelem (servery v 6b).
 

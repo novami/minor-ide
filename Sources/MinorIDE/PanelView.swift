@@ -15,8 +15,11 @@ final class PanelView: NSView {
 	private let picker: NSSegmentedControl
 	private let body = NSView()
 	private let defaultsKey: String
+	/// Views of sections that have content (the rest show their empty state).
+	private var contents: [Int: NSView] = [:]
 
-	init(sections: [Section], label: String, defaultsKey: String) {
+	/// `leading` puts the section picker at the leading edge instead of the middle.
+	init(sections: [Section], label: String, defaultsKey: String, leading: Bool = false) {
 		self.sections = sections
 		self.defaultsKey = defaultsKey
 		picker = NSSegmentedControl(labels: sections.map(\.title), trackingMode: .selectOne, target: nil, action: nil)
@@ -38,8 +41,8 @@ final class PanelView: NSView {
 		}
 		NSLayoutConstraint.activate([
 			picker.topAnchor.constraint(equalTo: topAnchor, constant: 6),
-			picker.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8),
-			picker.centerXAnchor.constraint(equalTo: centerXAnchor),
+			leading ? picker.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8)
+				: picker.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8),
 			separator.topAnchor.constraint(equalTo: picker.bottomAnchor, constant: 6),
 			separator.leadingAnchor.constraint(equalTo: leadingAnchor),
 			separator.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -48,6 +51,7 @@ final class PanelView: NSView {
 			body.trailingAnchor.constraint(equalTo: trailingAnchor),
 			body.bottomAnchor.constraint(equalTo: bottomAnchor),
 		])
+		if !leading { picker.centerXAnchor.constraint(equalTo: centerXAnchor).isActive = true }
 		setAccessibilityRole(.group)
 		setAccessibilityLabel(label)
 		let saved = UserDefaults.standard.integer(forKey: defaultsKey)
@@ -62,15 +66,33 @@ final class PanelView: NSView {
 	func select(_ index: Int) {
 		picker.selectedSegment = index
 		body.subviews.forEach { $0.removeFromSuperview() }
-		let empty = Self.emptyState(sections[index])
-		empty.translatesAutoresizingMaskIntoConstraints = false
-		body.addSubview(empty)
-		NSLayoutConstraint.activate([
-			empty.centerXAnchor.constraint(equalTo: body.centerXAnchor),
-			empty.centerYAnchor.constraint(equalTo: body.centerYAnchor),
-			empty.leadingAnchor.constraint(equalTo: body.leadingAnchor, constant: 16),
-		])
+		if let content = contents[index] {
+			content.translatesAutoresizingMaskIntoConstraints = false
+			body.addSubview(content)
+			NSLayoutConstraint.activate([
+				content.topAnchor.constraint(equalTo: body.topAnchor),
+				content.bottomAnchor.constraint(equalTo: body.bottomAnchor),
+				content.leadingAnchor.constraint(equalTo: body.leadingAnchor),
+				content.trailingAnchor.constraint(equalTo: body.trailingAnchor),
+			])
+		} else {
+			let empty = Self.emptyState(sections[index])
+			empty.translatesAutoresizingMaskIntoConstraints = false
+			body.addSubview(empty)
+			NSLayoutConstraint.activate([
+				empty.centerXAnchor.constraint(equalTo: body.centerXAnchor),
+				empty.centerYAnchor.constraint(equalTo: body.centerYAnchor),
+				empty.leadingAnchor.constraint(equalTo: body.leadingAnchor, constant: 16),
+			])
+		}
 		UserDefaults.standard.set(index, forKey: defaultsKey)
+	}
+
+	/// Shows `view` as the section's content. A view shared by several panels (the project's
+	/// terminal in each tab) moves into this one; call again when this panel comes to the front.
+	func setContent(_ view: NSView, at index: Int) {
+		contents[index] = view
+		if selected == index, view.superview !== body { select(index) }
 	}
 
 	@objc private func picked(_ sender: NSSegmentedControl) { select(sender.selectedSegment) }
@@ -103,12 +125,12 @@ extension PanelView {
 		], label: L("Right Panel"), defaultsKey: "InspectorSection")
 	}
 
-	/// Bottom panel: terminal (phase 2b).
+	/// Bottom panel: the project's terminal.
 	static func bottom() -> PanelView {
 		PanelView(sections: [
 			Section(title: L("Terminal"), symbol: "terminal",
 			        emptyTitle: L("No Terminal"),
 			        emptyText: L("A terminal in the project folder will appear here.")),
-		], label: L("Bottom Panel"), defaultsKey: "BottomPanelSection")
+		], label: L("Bottom Panel"), defaultsKey: "BottomPanelSection", leading: true)
 	}
 }

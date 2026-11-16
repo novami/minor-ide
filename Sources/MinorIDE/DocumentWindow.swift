@@ -23,6 +23,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	/// Split items of a project window: sidebar, right panel (an AppKit inspector item), bottom panel.
 	private var panels: (side: NSSplitViewItem, inspector: NSSplitViewItem, bottom: NSSplitViewItem)?
 	private var panelSplitViews: [NSSplitView] = []
+	private var bottomPanel: PanelView?
 
 	/// The first pane's editor; `splitEditor` is the second pane's.
 	var editor: EditorView { panes[0].editor }
@@ -89,7 +90,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			editorItem.minimumThickness = 120
 			center.addSplitViewItem(editorItem)
 			let bottom = NSViewController()
-			bottom.view = PanelView.bottom()
+			let bottomPanel = PanelView.bottom()
+			self.bottomPanel = bottomPanel
+			bottom.view = bottomPanel
 			let bottomItem = NSSplitViewItem(viewController: bottom)
 			bottomItem.canCollapse = true
 			bottomItem.minimumThickness = 100
@@ -133,6 +136,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		sidebar?.onMoved = { from, to in (NSApp.delegate as? AppDelegate)?.filesMoved(from: from, to: to) }
 		if let url = document.url { sidebar?.reveal(url) }
 		observePanels()
+		attachTerminal()
 		window.delegate = self
 		configure(first)
 		window.closesPane = { [weak self] in self?.closeFocusedPane() ?? false }
@@ -248,6 +252,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 		window.makeKeyAndOrderFront(nil)
 		window.makeFirstResponder(find.editor)
+		// A project opened without a file: ready to type in the terminal.
+		if url == nil { focusTerminal() }
 	}
 
 	/// Moves the focus to the pane showing `url`.
@@ -288,6 +294,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 	func windowDidBecomeKey(_ notification: Notification) {
 		applyPanels()
+		attachTerminal()
 		revealInSidebar()
 		documents.forEach { $0.checkDisk() }
 	}
@@ -349,7 +356,25 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 	@objc func toggleBottomPanel(_ sender: Any?) {
 		guard let item = panels?.bottom else { return }
+		let showing = item.isCollapsed
+		if !showing, let terminal = project?.terminal, let responder = window.firstResponder as? NSView,
+		   responder.isDescendant(of: terminal.view) {
+			window.makeFirstResponder(find.editor) // the focus doesn't stay in a hidden panel
+		}
 		togglePanel(item)
+		if showing { focusTerminal(evenIfCollapsed: true) } // still collapsed while it slides in
+	}
+
+	/// The project's terminal (shared by its tabs) moves into the tab in front.
+	private func attachTerminal() {
+		guard let project, let bottomPanel else { return }
+		bottomPanel.setContent(project.makeTerminal().view, at: 0)
+	}
+
+	private func focusTerminal(evenIfCollapsed: Bool = false) {
+		guard let project, let bottom = panels?.bottom, evenIfCollapsed || !bottom.isCollapsed else { return }
+		attachTerminal()
+		project.terminal.focus()
 	}
 
 	/// Panels slide in and out unless Reduce Motion is on.

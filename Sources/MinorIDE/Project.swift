@@ -65,7 +65,16 @@ final class Project {
 	}
 
 	/// Stops the watch; the project must not be used for events afterwards.
+	/// The shell in the bottom panel, started when the first tab shows it.
+	private(set) lazy var terminal = ProjectTerminal(project: self)
+	private var hasTerminal = false
+	func makeTerminal() -> ProjectTerminal {
+		hasTerminal = true
+		return terminal
+	}
+
 	func close() {
+		if hasTerminal { terminal.stop() }
 		watcher?.stop()
 		watcher = nil
 	}
