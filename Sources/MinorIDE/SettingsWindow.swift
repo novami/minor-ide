@@ -139,7 +139,7 @@ struct GeneralSettingsView: View {
 				Picker(L("Font"), selection: Binding(
 					get: { store.file.fontFamily ?? "" },
 					set: { store.set(nil, "font_family", $0.isEmpty ? nil : .string($0)); applyFont() })) {
-					Text(L("System Monospaced")).tag("")
+					Text(L("Automatic")).tag("")
 					Divider()
 					ForEach(families, id: \.self) { Text($0).tag($0) }
 				}
@@ -148,7 +148,7 @@ struct GeneralSettingsView: View {
 					set: { store.set(nil, "font_size", $0 == Int(EditorView.defaultFontSize) ? nil : .number(Double($0))); applyFont() })) {
 					ForEach(sizes, id: \.self) { Text("\($0)").tag($0) }
 				}
-				Text(L("On displays without Retina, Menlo keeps accents and other thin strokes sharper than the system font."))
+				Text(L("Automatic uses Menlo when a display without Retina is connected, because it keeps accents and other thin strokes sharp, and the system monospaced font otherwise."))
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)

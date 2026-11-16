@@ -268,9 +268,9 @@
 "Formatting" = "Formát";
 "Tools" = "Nástroje";
 "Font" = "Písmo";
-"System Monospaced" = "Systémové neproporcionální";
+"Automatic" = "Automaticky";
 "Size" = "Velikost";
-"On displays without Retina, Menlo keeps accents and other thin strokes sharper than the system font." = "Na displejích bez Retiny zobrazí Menlo diakritiku a jiné tenké tahy ostřeji než systémové písmo.";
+"Automatic uses Menlo when a display without Retina is connected, because it keeps accents and other thin strokes sharp, and the system monospaced font otherwise." = "Automaticky se použije Menlo, když je připojený displej bez Retiny (diakritiku a jiné tenké tahy kreslí ostře), jinak systémové neproporcionální písmo.";
 "Detect indentation from the file" = "Rozpoznat odsazení ze souboru";
 "An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise." = "Existující soubor si ponechá odsazení, které používá, pokud .editorconfig nebo nastavení projektu neříká jinak.";
 "Save files automatically" = "Ukládat soubory automaticky";

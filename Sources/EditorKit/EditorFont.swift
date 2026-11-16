@@ -13,12 +13,21 @@ extension EditorView {
 		didSet { if editorFont != oldValue { NotificationCenter.default.post(name: .editorFontDidChange, object: nil) } }
 	}
 
-	/// The family at `size`; the system monospaced font when `family` is nil or not installed.
-	public static func font(family: String?, size: CGFloat?) -> NSFont {
+	/// True when a connected display is not Retina. Decided by the displays, not by the
+	/// window's screen, so moving a window between displays does not change the font.
+	public static var hasNonRetinaDisplay: Bool {
+		NSScreen.screens.contains { $0.backingScaleFactor < 2 }
+	}
+
+	/// The family at `size`. Without a family (or one not installed): Menlo when a display
+	/// is not Retina — the system font's accents are thinner than a pixel there — else the
+	/// system monospaced font.
+	public static func font(family: String?, size: CGFloat?, nonRetina: Bool = hasNonRetinaDisplay) -> NSFont {
 		let size = size.map { min(max($0, 6), 72) } ?? defaultFontSize
 		if let family, let font = NSFontManager.shared.font(withFamily: family, traits: [], weight: 5, size: size) {
 			return font
 		}
+		if nonRetina, let menlo = NSFont(name: "Menlo-Regular", size: size) { return menlo }
 		return .monospacedSystemFont(ofSize: size, weight: .regular)
 	}
 

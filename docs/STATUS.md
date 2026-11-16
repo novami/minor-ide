@@ -139,6 +139,8 @@ Známé mezery po přístupnosti: vysoký kontrast nejde v testu nasimulovat (`N
 
 Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split téhož souboru) kopíruje, nemaže zdroj; přetahuje se jen hlavní výběr; soubory přetažené z Finderu editor nepřijímá; ⌃⌘D může systém zachytit dřív (pak funguje přes textový vstup); ruční kontrola celé 1f zbývá.
 
+**Automatické písmo** (2026-11-16, rozhodnutí uživatele: diakritika SF Mono 13 na 1080p pořád šedá): vyhlazování se v editoru uplatní (display list vrstvy má `dilation`), háčky SF Mono jsou ale tenčí než pixel. Bez `font_family` je výchozí Menlo 13, když je připojený aspoň jeden displej bez Retiny (`EditorView.hasNonRetinaDisplay`; podle připojených displejů, ne podle okna, takže přetažení okna písmo nemění), jinak SF Mono; přepočet při `didChangeScreenParametersNotification`. Nastavení › Písmo: „Automaticky“. `--snapshot` vždy SF Mono. Test `EditorFontTests.automaticFontIsMenloWithoutRetina`.
+
 **Další krok:** ruční kontrola 1f s uživatelem (seznam v `docs/editor-behaviors.md`: VoiceOver se zalamováním, Zvýšit kontrast, Omezit pohyb, přetažení, Vyhledat, emoji, ⌘E) — tím je 1f hotová; pak fáze 2 (vydávání a updater, potřebuje Apple Developer účet).
 
 **Fáze 1e:** z plánu zbývá ruční kontrola nových oken (uvítání, Nastavení, Místní historie, automatické ukládání, obnova, stavový řádek); `.minoride/local.json` až s prvním uživatelem (servery v 6b).

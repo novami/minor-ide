@@ -68,7 +68,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		if args.first == "--snapshot", args.count >= 2 {
 			EditorView.wrapsLines = ProcessInfo.processInfo.environment["MINORIDE_WRAP"] != nil
 			let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init)
-			EditorView.editorFont = EditorView.font(family: nil, size: size.map { CGFloat($0) }) // not the user's settings
+			// Not the user's settings, and the same on every display.
+			EditorView.editorFont = EditorView.font(family: nil, size: size.map { CGFloat($0) }, nonRetina: false)
 			if let file = args.dropFirst(2).first {
 				open(URL(fileURLWithPath: file))
 			} else {
@@ -80,6 +81,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return
 		}
 		Self.loadEditorSettings()
+		// The automatic font follows the displays being connected or removed.
+		NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { _ in
+			MainActor.assumeIsolated { Self.loadEditorSettings() }
+		}
 		watchUserSettings()
 		observeFocusForAutoSave()
 		ToolsModel.shared.loadEnvironment() // D22: PATH of the login shell, for tools started later
