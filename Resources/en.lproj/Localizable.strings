@@ -29,6 +29,28 @@
 "Copy Address" = "Copy Address";
 "Copied" = "Copied";
 
+/* MinorIDE/CloneSheet.swift */
+"Repository address" = "Repository address";
+"Folder name" = "Folder name";
+"Clone into" = "Clone into";
+"Clone" = "Clone";
+
+/* MinorIDE/CloneSheet.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Cancel";
+
+/* MinorIDE/CloneSheet.swift */
+"Clone Git Repository" = "Clone Git Repository";
+"Repository:" = "Repository:";
+"Clone into:" = "Clone into:";
+"Folder name:" = "Folder name:";
+"Cancelling…" = "Cancelling…";
+"“%@” already exists in this folder." = "“%@” already exists in this folder.";
+"Connecting…" = "Connecting…";
+"Git is not installed. Install the Command Line Tools with “xcode-select --install”." = "Git is not installed. Install the Command Line Tools with “xcode-select --install”.";
+"Git could not be started." = "Git could not be started.";
+"The clone was cancelled." = "The clone was cancelled.";
+"The clone failed." = "The clone failed.";
+
 /* MinorIDE/CompareWindow.swift, MinorIDE/LocalHistoryWindow.swift */
 "Comparison" = "Comparison";
 
@@ -71,9 +93,6 @@
 
 /* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Key File:" = "Key File:";
-
-/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Cancel";
 
 /* MinorIDE/DatabaseSheet.swift */
 "Add Database" = "Add Database";
@@ -234,6 +253,11 @@
 "New" = "New";
 "Open…" = "Open…";
 "Open Quickly…" = "Open Quickly…";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/WelcomeWindow.swift */
+"Clone Git Repository…" = "Clone Git Repository…";
+
+/* MinorIDE/MainMenu.swift */
 "Open Recent" = "Open Recent";
 "Close" = "Close";
 "Reopen Closed Tab" = "Reopen Closed Tab";

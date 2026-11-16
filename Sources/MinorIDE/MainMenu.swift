@@ -31,6 +31,7 @@ enum MainMenu {
 			m.item(L("New"), #selector(AppDelegate.newDocument(_:)), "n", target: target)
 			m.item(L("Open…"), #selector(AppDelegate.openDocument(_:)), "o", target: target)
 			m.item(L("Open Quickly…"), #selector(DocumentWindow.openQuickly(_:)), "o", [.command, .shift])
+			m.item(L("Clone Git Repository…"), #selector(AppDelegate.cloneRepository(_:)), target: target)
 			let recent = m.item(L("Open Recent"), nil)
 			recent.submenu = RecentMenu(target: target)
 			m.addItem(.separator())

@@ -108,3 +108,28 @@ public final class CancelToken: @unchecked Sendable {
 		if now { body() }
 	}
 }
+
+/// Addresses accepted by Clone Git Repository.
+public enum GitAddress {
+	/// https, ssh, git and scp-like `user@host:path` addresses; never an option ("-…") or a
+	/// transport that runs commands (`ext::`).
+	public static func isValid(_ text: String) -> Bool {
+		let s = text.trimmingCharacters(in: .whitespaces)
+		guard !s.isEmpty, !s.hasPrefix("-"), !s.contains(" "), !s.contains("::") else { return false }
+		if ["https://", "http://", "ssh://", "git://"].contains(where: { s.lowercased().hasPrefix($0) }) {
+			return URL(string: s)?.host?.isEmpty == false
+		}
+		// scp-like: [user@]host:path (other schemes, file:// included, are not offered)
+		guard !s.contains("://"), let colon = s.firstIndex(of: ":"), colon != s.startIndex, !s[..<colon].contains("/") else { return false }
+		return s.index(after: colon) < s.endIndex
+	}
+
+	/// "https://host/owner/repo.git" → "repo".
+	public static func folderName(for address: String) -> String {
+		var s = address.trimmingCharacters(in: .whitespaces)
+		while s.hasSuffix("/") { s.removeLast() }
+		var last = s.split(whereSeparator: { $0 == "/" || $0 == ":" }).last.map(String.init) ?? ""
+		if last.hasSuffix(".git") { last.removeLast(4) }
+		return last
+	}
+}

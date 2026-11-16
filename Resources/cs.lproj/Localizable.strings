@@ -30,6 +30,28 @@
 "Copy Address" = "Kopírovat adresu";
 "Copied" = "Zkopírováno";
 
+/* MinorIDE/CloneSheet.swift */
+"Repository address" = "Adresa repozitáře";
+"Folder name" = "Název složky";
+"Clone into" = "Klonovat do";
+"Clone" = "Klonovat";
+
+/* MinorIDE/CloneSheet.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Zrušit";
+
+/* MinorIDE/CloneSheet.swift */
+"Clone Git Repository" = "Klonovat repozitář Git";
+"Repository:" = "Repozitář:";
+"Clone into:" = "Klonovat do:";
+"Folder name:" = "Název složky:";
+"Cancelling…" = "Ruší se…";
+"“%@” already exists in this folder." = "„%@“ v této složce už existuje.";
+"Connecting…" = "Připojování…";
+"Git is not installed. Install the Command Line Tools with “xcode-select --install”." = "Git není nainstalovaný. Nainstalujte Command Line Tools příkazem „xcode-select --install“.";
+"Git could not be started." = "Git nešlo spustit.";
+"The clone was cancelled." = "Klonování bylo zrušeno.";
+"The clone failed." = "Klonování selhalo.";
+
 /* MinorIDE/CompareWindow.swift, MinorIDE/LocalHistoryWindow.swift */
 "Comparison" = "Porovnání";
 
@@ -72,9 +94,6 @@
 
 /* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Key File:" = "Soubor s klíčem:";
-
-/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Zrušit";
 
 /* MinorIDE/DatabaseSheet.swift */
 "Add Database" = "Přidat databázi";
@@ -237,6 +256,11 @@
 "New" = "Nový";
 "Open…" = "Otevřít…";
 "Open Quickly…" = "Rychle otevřít…";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/WelcomeWindow.swift */
+"Clone Git Repository…" = "Klonovat repozitář Git…";
+
+/* MinorIDE/MainMenu.swift */
 "Open Recent" = "Otevřít nedávné";
 "Close" = "Zavřít";
 "Reopen Closed Tab" = "Znovu otevřít zavřený tab";

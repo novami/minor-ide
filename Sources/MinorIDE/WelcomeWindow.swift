@@ -82,6 +82,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 		let buttons = NSStackView(views: [
 			actionButton(L("Open Folder or File…"), "folder", #selector(AppDelegate.openDocument(_:))),
 			actionButton(L("New File"), "doc.badge.plus", #selector(AppDelegate.newDocument(_:))),
+			actionButton(L("Clone Git Repository…"), "arrow.down.circle", #selector(AppDelegate.cloneRepository(_:))),
 		])
 		buttons.orientation = .vertical
 		buttons.alignment = .leading

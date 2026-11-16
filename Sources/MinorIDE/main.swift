@@ -567,6 +567,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	}
 
 	/// Window › Welcome to MinorIDE; also at launch with nothing to open.
+	private var cloneSheet: CloneSheet?
+
+	/// File › Clone Git Repository… and the welcome window's button.
+	@objc func cloneRepository(_ sender: Any?) {
+		if NSApp.keyWindow == nil { showWelcome(nil) }
+		guard cloneSheet == nil, let window = NSApp.keyWindow ?? NSApp.windows.first(where: \.isVisible) else { return }
+		let sheet = CloneSheet()
+		cloneSheet = sheet
+		sheet.begin(on: window) { [weak self] folder in
+			self?.open(folder)
+		}
+		cloneObserver = NotificationCenter.default.addObserver(forName: NSWindow.didEndSheetNotification, object: window, queue: .main) { [weak self] _ in
+			MainActor.assumeIsolated {
+				guard let self else { return }
+				self.cloneSheet = nil
+				if let observer = self.cloneObserver { NotificationCenter.default.removeObserver(observer) }
+				self.cloneObserver = nil
+			}
+		}
+	}
+
+	private var cloneObserver: NSObjectProtocol?
+
 	@objc func showWelcome(_ sender: Any?) {
 		WelcomeWindow.shared.target = self
 		WelcomeWindow.shared.show()

@@ -36,3 +36,32 @@ struct GitHeadTests {
 		#expect(GitHead.gitDirectory(for: folder) == nil)
 	}
 }
+
+struct GitAddressTests {
+	@Test func acceptsRemoteAddressesOnly() {
+		for ok in ["https://github.com/a/b.git", "ssh://git@host:22/a/b", "git@github.com:a/b.git", "host:repo"] { #expect(GitAddress.isValid(ok)) }
+		for bad in ["", "-uhttps://x", "ext::sh -c touch", "file:///tmp/x", "/tmp/repo", "https://", "a b:c"] { #expect(!GitAddress.isValid(bad)) }
+		#expect(GitAddress.folderName(for: "https://github.com/a/minor-ide.git/") == "minor-ide")
+		#expect(GitAddress.folderName(for: "git@github.com:a/b.git") == "b")
+	}
+}
+
+struct GitToolTests {
+	@Test func readsCommittedContentsAndNothingForUntrackedFiles() throws {
+		guard FileManager.default.isExecutableFile(atPath: "/usr/bin/git") else { return }
+		let git = GitTool(path: "/usr/bin/git", environment: ProcessInfo.processInfo.environment)
+		let root = FileManager.default.temporaryDirectory.appendingPathComponent("GitToolTests-\(UUID().uuidString)")
+		defer { try? FileManager.default.removeItem(at: root) }
+		try FileManager.default.createDirectory(at: root.appendingPathComponent("src"), withIntermediateDirectories: true)
+		let file = root.appendingPathComponent("src/a.txt")
+		try "committed\n".write(to: file, atomically: true, encoding: .utf8)
+		for args in [["init", "-q"], ["add", "."], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"]] {
+			#expect(git.run(args, in: root)?.status == 0)
+		}
+		try "changed\n".write(to: file, atomically: true, encoding: .utf8)
+		#expect(git.headContents(of: file) == Data("committed\n".utf8))
+		let untracked = root.appendingPathComponent("src/new.txt")
+		try "x".write(to: untracked, atomically: true, encoding: .utf8)
+		#expect(git.headContents(of: untracked) == nil)
+	}
+}
