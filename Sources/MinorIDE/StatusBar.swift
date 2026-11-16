@@ -16,6 +16,8 @@ final class StatusBar: NSView {
 	private let indentation = StatusBar.popUp(L("Indentation"))
 	private let encoding = StatusBar.popUp(L("Encoding"))
 	private let restricted = NSButton()
+	/// Shows or hides the bottom panel (project windows only); lit while it is shown.
+	private let bottomPanel = NSButton()
 	private var updatePending = false
 
 	init() {
@@ -39,10 +41,19 @@ final class StatusBar: NSView {
 		restricted.action = #selector(trustProject(_:))
 		restricted.toolTip = L("MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it.")
 
+		bottomPanel.image = NSImage(systemSymbolName: "rectangle.bottomthird.inset.filled", accessibilityDescription: L("Bottom Panel"))
+		bottomPanel.setButtonType(.toggle)
+		bottomPanel.isBordered = false
+		bottomPanel.controlSize = .small
+		bottomPanel.target = self
+		bottomPanel.action = #selector(toggleBottomPanel(_:))
+		bottomPanel.isHidden = true
+		setBottomPanelShown(false)
+
 		readOnly.toolTip = L("Files larger than 256 MB open read-only.")
 		let right = NSStackView(views: [restricted, readOnly, language, lineEnding, indentation, encoding])
 		right.spacing = 10
-		let row = NSStackView(views: [position, right])
+		let row = NSStackView(views: [bottomPanel, position, right])
 		row.distribution = .fill
 		row.spacing = 12
 		row.edgeInsets = NSEdgeInsets(top: 0, left: 10, bottom: 0, right: 6)
@@ -183,6 +194,16 @@ final class StatusBar: NSView {
 		guard let raw = sender.representedObject as? String, let charset = Charset(rawValue: raw) else { return }
 		owner?.document.setCharset(charset)
 	}
+
+	/// Called by the window whenever the bottom panel is shown or hidden.
+	func setBottomPanelShown(_ shown: Bool) {
+		bottomPanel.isHidden = owner?.project == nil
+		bottomPanel.state = shown ? .on : .off
+		bottomPanel.contentTintColor = shown ? .controlAccentColor : .secondaryLabelColor
+		bottomPanel.toolTip = shown ? L("Hide Bottom Panel") : L("Show Bottom Panel")
+	}
+
+	@objc private func toggleBottomPanel(_ sender: Any?) { owner?.toggleBottomPanel(sender) }
 
 	@objc private func trustProject(_ sender: Any?) { owner?.toggleProjectTrust(sender) }
 }

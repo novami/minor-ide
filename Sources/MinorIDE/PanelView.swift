@@ -18,8 +18,10 @@ final class PanelView: NSView {
 	/// Views of sections that have content (the rest show their empty state).
 	private var contents: [Int: NSView] = [:]
 
-	/// `leading` puts the section picker at the leading edge instead of the middle.
-	init(sections: [Section], label: String, defaultsKey: String, leading: Bool = false) {
+	/// `leading` puts the section picker at the leading edge instead of the middle. `hide` is
+	/// sent up the responder chain by the Hide button at the trailing edge of the header.
+	init(sections: [Section], label: String, defaultsKey: String, leading: Bool = false,
+	     hide: (action: Selector, symbol: String, title: String)) {
 		self.sections = sections
 		self.defaultsKey = defaultsKey
 		picker = NSSegmentedControl(labels: sections.map(\.title), trackingMode: .selectOne, target: nil, action: nil)
@@ -33,9 +35,15 @@ final class PanelView: NSView {
 		picker.target = self
 		picker.action = #selector(picked(_:))
 		picker.setAccessibilityLabel(label)
+		let hideButton = NSButton(image: NSImage(systemSymbolName: hide.symbol, accessibilityDescription: hide.title)!,
+		                          target: nil, action: hide.action)
+		hideButton.isBordered = false
+		hideButton.controlSize = .small
+		hideButton.contentTintColor = .secondaryLabelColor
+		hideButton.toolTip = hide.title
 		let separator = NSBox()
 		separator.boxType = .separator
-		for v in [picker, separator, body] as [NSView] {
+		for v in [picker, hideButton, separator, body] as [NSView] {
 			v.translatesAutoresizingMaskIntoConstraints = false
 			addSubview(v)
 		}
@@ -43,6 +51,9 @@ final class PanelView: NSView {
 			picker.topAnchor.constraint(equalTo: topAnchor, constant: 6),
 			leading ? picker.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8)
 				: picker.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8),
+			hideButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+			hideButton.centerYAnchor.constraint(equalTo: picker.centerYAnchor),
+			hideButton.leadingAnchor.constraint(greaterThanOrEqualTo: picker.trailingAnchor, constant: 8),
 			separator.topAnchor.constraint(equalTo: picker.bottomAnchor, constant: 6),
 			separator.leadingAnchor.constraint(equalTo: leadingAnchor),
 			separator.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -122,7 +133,8 @@ extension PanelView {
 			Section(title: L("Server"), symbol: "server.rack",
 			        emptyTitle: L("No Servers"),
 			        emptyText: L("Files on servers connected over SFTP or FTPS will appear here.")),
-		], label: L("Right Panel"), defaultsKey: "InspectorSection")
+		], label: L("Right Panel"), defaultsKey: "InspectorSection",
+		   hide: (#selector(DocumentWindow.toggleRightPanel(_:)), "chevron.right", L("Hide Right Panel")))
 	}
 
 	/// Bottom panel: the project's terminal.
@@ -131,6 +143,7 @@ extension PanelView {
 			Section(title: L("Terminal"), symbol: "terminal",
 			        emptyTitle: L("No Terminal"),
 			        emptyText: L("A terminal in the project folder will appear here.")),
-		], label: L("Bottom Panel"), defaultsKey: "BottomPanelSection", leading: true)
+		], label: L("Bottom Panel"), defaultsKey: "BottomPanelSection", leading: true,
+		   hide: (#selector(DocumentWindow.toggleBottomPanel(_:)), "chevron.down", L("Hide Bottom Panel")))
 	}
 }

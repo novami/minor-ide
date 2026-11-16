@@ -69,18 +69,20 @@
 "Keep Mine" = "Ponechat moje";
 "Compare" = "Porovnat";
 
-/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
-"Show Bottom Panel" = "Zobrazit spodní panel";
-
-/* MinorIDE/DocumentWindow.swift */
-"Hide Bottom Panel" = "Skrýt spodní panel";
-"Restrict Project" = "Omezit projekt";
+/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
+"Hide Right Panel" = "Skrýt pravý panel";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Show Right Panel" = "Zobrazit pravý panel";
 
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift, MinorIDE/StatusBar.swift */
+"Show Bottom Panel" = "Zobrazit spodní panel";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
+"Hide Bottom Panel" = "Skrýt spodní panel";
+
 /* MinorIDE/DocumentWindow.swift */
-"Hide Right Panel" = "Skrýt pravý panel";
+"Restrict Project" = "Omezit projekt";
 "%@ (on disk)" = "%@ (na disku)";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/LocalHistoryWindow.swift */
@@ -109,15 +111,6 @@
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
 "Right Panel" = "Pravý panel";
-
-/* MinorIDE/DocumentWindow.swift */
-"Show or hide the right panel" = "Zobrazit nebo skrýt pravý panel";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
-"Bottom Panel" = "Spodní panel";
-
-/* MinorIDE/DocumentWindow.swift */
-"Show or hide the bottom panel" = "Zobrazit nebo skrýt spodní panel";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
 "Find" = "Najít";
@@ -259,6 +252,9 @@
 "Terminal" = "Terminál";
 "No Terminal" = "Žádný terminál";
 "A terminal in the project folder will appear here." = "Tady se zobrazí terminál ve složce projektu.";
+
+/* MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
+"Bottom Panel" = "Spodní panel";
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Soubory projektu";

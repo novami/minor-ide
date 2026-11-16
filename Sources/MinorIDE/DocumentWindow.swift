@@ -24,6 +24,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	private var panels: (side: NSSplitViewItem, inspector: NSSplitViewItem, bottom: NSSplitViewItem)?
 	private var panelSplitViews: [NSSplitView] = []
 	private var bottomPanel: PanelView?
+	private var rightPanelButton: NSButton?
+	private var animatingPanels = 0
 
 	/// The first pane's editor; `splitEditor` is the second pane's.
 	var editor: EditorView { panes[0].editor }
@@ -332,7 +334,17 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 	}
 
+	/// The right panel's toolbar button and the bottom panel's status bar button follow the panels.
+	private func updatePanelButtons(rightShown: Bool? = nil, bottomShown: Bool? = nil) {
+		guard let panels else { return }
+		let right = rightShown ?? !panels.inspector.isCollapsed
+		rightPanelButton?.state = right ? .on : .off
+		rightPanelButton?.toolTip = right ? L("Hide Right Panel") : L("Show Right Panel")
+		statusBar.setBottomPanelShown(bottomShown ?? !panels.bottom.isCollapsed)
+	}
+
 	@objc private func panelsResized(_ notification: Notification) {
+		if animatingPanels == 0 { updatePanelButtons() }
 		guard let panels, window.isKeyWindow else { return }
 		let d = UserDefaults.standard
 		d.set(panels.side.isCollapsed, forKey: Self.panelKeys.side)
@@ -347,6 +359,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			let hidden = d.bool(forKey: key)
 			if item.isCollapsed != hidden { item.isCollapsed = hidden }
 		}
+		updatePanelButtons()
 	}
 
 	@objc func toggleRightPanel(_ sender: Any?) {
@@ -379,11 +392,24 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 	/// Panels slide in and out unless Reduce Motion is on.
 	private func togglePanel(_ item: NSSplitViewItem) {
+		let collapse = !item.isCollapsed
 		if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-			item.isCollapsed.toggle()
+			item.isCollapsed = collapse
 		} else {
-			item.animator().isCollapsed.toggle()
+			// Resizes during the slide still report the old state; the buttons ignore them.
+			animatingPanels += 1
+			NSAnimationContext.runAnimationGroup { _ in
+				item.animator().isCollapsed = collapse
+			} completionHandler: { [weak self] in
+				MainActor.assumeIsolated {
+					self?.animatingPanels -= 1
+					self?.updatePanelButtons()
+				}
+			}
 		}
+		// The buttons switch at once, not after the animation.
+		updatePanelButtons(rightShown: item === panels?.inspector ? !collapse : nil,
+		                   bottomShown: item === panels?.bottom ? !collapse : nil)
 	}
 
 	func validateMenuItem(_ item: NSMenuItem) -> Bool {
@@ -638,12 +664,11 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 extension DocumentWindow {
 	static let findItem = NSToolbarItem.Identifier("find")
-	static let bottomPanelItem = NSToolbarItem.Identifier("bottomPanel")
 	static let rightPanelItem = NSToolbarItem.Identifier("rightPanel")
 
 	func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
 		project == nil ? [.flexibleSpace, Self.findItem]
-			: [.toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, Self.findItem, Self.bottomPanelItem,
+			: [.toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, Self.findItem,
 			   .inspectorTrackingSeparator, .flexibleSpace, Self.rightPanelItem]
 	}
 
@@ -653,23 +678,16 @@ extension DocumentWindow {
 
 	func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
 		if id == Self.rightPanelItem {
+			// A push-on/push-off button, so the icon shows whether the panel is open.
+			let button = NSButton(image: NSImage(systemSymbolName: "sidebar.right", accessibilityDescription: L("Right Panel"))!,
+			                      target: self, action: #selector(toggleRightPanel(_:)))
+			button.bezelStyle = .toolbar
+			button.setButtonType(.pushOnPushOff)
+			rightPanelButton = button
 			let item = NSToolbarItem(itemIdentifier: id)
 			item.label = L("Right Panel")
-			item.toolTip = L("Show or hide the right panel")
-			item.image = NSImage(systemSymbolName: "sidebar.right", accessibilityDescription: L("Right Panel"))
-			item.action = #selector(toggleRightPanel(_:))
-			item.target = self
-			item.isBordered = true
-			return item
-		}
-		if id == Self.bottomPanelItem {
-			let item = NSToolbarItem(itemIdentifier: id)
-			item.label = L("Bottom Panel")
-			item.toolTip = L("Show or hide the bottom panel")
-			item.image = NSImage(systemSymbolName: "rectangle.bottomthird.inset.filled", accessibilityDescription: L("Bottom Panel"))
-			item.action = #selector(toggleBottomPanel(_:))
-			item.target = self
-			item.isBordered = true
+			item.view = button
+			updatePanelButtons()
 			return item
 		}
 		guard id == Self.findItem else { return nil }

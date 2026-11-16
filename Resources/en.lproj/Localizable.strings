@@ -68,18 +68,20 @@
 "Keep Mine" = "Keep Mine";
 "Compare" = "Compare";
 
-/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
-"Show Bottom Panel" = "Show Bottom Panel";
-
-/* MinorIDE/DocumentWindow.swift */
-"Hide Bottom Panel" = "Hide Bottom Panel";
-"Restrict Project" = "Restrict Project";
+/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
+"Hide Right Panel" = "Hide Right Panel";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Show Right Panel" = "Show Right Panel";
 
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift, MinorIDE/StatusBar.swift */
+"Show Bottom Panel" = "Show Bottom Panel";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
+"Hide Bottom Panel" = "Hide Bottom Panel";
+
 /* MinorIDE/DocumentWindow.swift */
-"Hide Right Panel" = "Hide Right Panel";
+"Restrict Project" = "Restrict Project";
 "%@ (on disk)" = "%@ (on disk)";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/LocalHistoryWindow.swift */
@@ -108,15 +110,6 @@
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
 "Right Panel" = "Right Panel";
-
-/* MinorIDE/DocumentWindow.swift */
-"Show or hide the right panel" = "Show or hide the right panel";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
-"Bottom Panel" = "Bottom Panel";
-
-/* MinorIDE/DocumentWindow.swift */
-"Show or hide the bottom panel" = "Show or hide the bottom panel";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
 "Find" = "Find";
@@ -257,6 +250,9 @@
 "Terminal" = "Terminal";
 "No Terminal" = "No Terminal";
 "A terminal in the project folder will appear here." = "A terminal in the project folder will appear here.";
+
+/* MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
+"Bottom Panel" = "Bottom Panel";
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Project Files";
