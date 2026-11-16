@@ -23,6 +23,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 	private func reload(_ urls: [URL] = NSDocumentController.shared.recentDocumentURLs) {
 		recent = urls.filter { FileManager.default.fileExists(atPath: $0.path) }
 		table?.reloadData()
+		table?.updateHover()
 		if !recent.isEmpty { table?.selectRowIndexes([0], byExtendingSelection: false) }
 		emptyLabel?.isHidden = !recent.isEmpty
 	}
@@ -98,7 +99,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 	}
 
 	private func actionButton(_ title: String, _ symbol: String, _ action: Selector) -> NSButton {
-		let button = NSButton(title: title, target: target, action: action)
+		let button = HoverButton(title: title, target: target, action: action)
 		// Symbols differ in width; a fixed box lines up the titles.
 		let glyph = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
 			.withSymbolConfiguration(.init(pointSize: 17, weight: .regular))
@@ -228,6 +229,12 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 
 	func numberOfRows(in tableView: NSTableView) -> Int { recent.count }
 
+	func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? { RecentRowView() }
+
+	func tableView(_ tableView: NSTableView, didAdd rowView: NSTableRowView, forRow row: Int) {
+		(rowView as? RecentRowView)?.isHovered = row == table?.hoveredRow
+	}
+
 	func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
 		let cell = tableView.makeView(withIdentifier: RecentCell.identifier, owner: nil) as? RecentCell ?? RecentCell()
 		cell.show(recent[row])
@@ -235,12 +242,85 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 	}
 }
 
-/// Return or Enter opens the selected row.
+/// A borderless button that looks like a link: pointing hand and a rounded highlight under the mouse.
+final class HoverButton: NSButton {
+	private var hovered = false { didSet { if hovered != oldValue { needsDisplay = true } } }
+
+	override func updateTrackingAreas() {
+		super.updateTrackingAreas()
+		trackingAreas.filter { $0.owner === self }.forEach(removeTrackingArea)
+		addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeInActiveApp, .inVisibleRect], owner: self))
+	}
+
+	override func mouseEntered(with event: NSEvent) { hovered = true }
+	override func mouseExited(with event: NSEvent) { hovered = false }
+	override func resetCursorRects() { addCursorRect(bounds, cursor: .pointingHand) }
+
+	override func draw(_ dirtyRect: NSRect) {
+		if hovered && isEnabled {
+			NSColor.quaternarySystemFill.setFill()
+			NSBezierPath(roundedRect: bounds, xRadius: 6, yRadius: 6).fill()
+		}
+		super.draw(dirtyRect)
+	}
+}
+
+/// Return or Enter opens the selected row; the row under the mouse is highlighted and shows
+/// the pointing hand.
 final class RecentTable: NSTableView {
 	var onReturn: (() -> Void)?
+	private(set) var hoveredRow = -1
 
 	override func keyDown(with event: NSEvent) {
 		if event.keyCode == 36 || event.keyCode == 76 { onReturn?() } else { super.keyDown(with: event) }
+	}
+
+	override func updateTrackingAreas() {
+		super.updateTrackingAreas()
+		trackingAreas.filter { $0.owner === self }.forEach(removeTrackingArea)
+		addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .mouseEnteredAndExited, .activeInActiveApp, .inVisibleRect], owner: self))
+	}
+
+	override func mouseMoved(with event: NSEvent) { updateHover(event) }
+	override func mouseEntered(with event: NSEvent) { updateHover(event) }
+	override func mouseExited(with event: NSEvent) { setHovered(-1) }
+
+	override func scrollWheel(with event: NSEvent) {
+		super.scrollWheel(with: event)
+		updateHover()
+	}
+
+	/// Recomputes the row under the mouse (after scrolling or reloading).
+	func updateHover(_ event: NSEvent? = nil) {
+		guard let window else { return setHovered(-1) }
+		let point = convert(event?.locationInWindow ?? window.mouseLocationOutsideOfEventStream, from: nil)
+		setHovered(visibleRect.contains(point) ? row(at: point) : -1)
+		window.invalidateCursorRects(for: self)
+	}
+
+	private func setHovered(_ row: Int) {
+		guard row != hoveredRow else { return }
+		for old in [hoveredRow, row] where old >= 0 && old < numberOfRows {
+			(rowView(atRow: old, makeIfNecessary: false) as? RecentRowView)?.isHovered = old == row
+		}
+		hoveredRow = row
+	}
+
+	override func resetCursorRects() {
+		guard numberOfRows > 0 else { return }
+		addCursorRect(rect(ofRow: 0).union(rect(ofRow: numberOfRows - 1)), cursor: .pointingHand)
+	}
+}
+
+/// Draws a light rounded background under the mouse; selection draws as usual.
+final class RecentRowView: NSTableRowView {
+	var isHovered = false { didSet { if isHovered != oldValue { needsDisplay = true } } }
+
+	override func drawBackground(in dirtyRect: NSRect) {
+		super.drawBackground(in: dirtyRect)
+		guard isHovered, !isSelected else { return }
+		NSColor.quaternarySystemFill.setFill()
+		NSBezierPath(roundedRect: bounds.insetBy(dx: 10, dy: 0), xRadius: 5, yRadius: 5).fill()
 	}
 }
 

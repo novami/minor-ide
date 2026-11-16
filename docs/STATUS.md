@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (U1 a U2 hotové)
+**Poslední aktualizace:** 2026-11-16 (U1–U3 hotové)
 
 ## Kde jsme
 
@@ -149,7 +149,7 @@ Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split 
 
 - [x] **U1 Klik mimo text** (2026-11-16): příčina potvrzena — editor u krátkého souboru nevyplnil výšku clip view. `updateSize` bere aspoň výšku scroll view; klik/tažení pod posledním řádkem = konec posledního viditelného řádku (sbalení a zalamování zůstanou), nad začátkem = začátek. Testy `MouseTests.clickOutsideTextGoesToNearestPosition`, `WindowRegressionTests.editorFillsScrollViewHeight`.
 - [x] **U2 Posuvníky jen v případě potřeby** (2026-11-16): `autohidesScrollers` u editoru a stromu projektu (uvítací okno a místní historie už měly); terminál SwiftTerm má vlastní `NSScroller`, který zůstával vidět i vypnutý — skryje se, dokud není co posouvat (`viewWillDraw`). Zalamování je podle sloupce, ne šířky, takže objevení posuvníku nic nepřepočítává. Ruční kontrola s „Vždy zobrazovat posuvníky“ zbývá.
-- [ ] **U3 Uvítací okno:** kurzor ruky (`NSCursor.pointingHand`, `addCursorRect`/tracking area) a zvýraznění pod myší u akcí (Otevřít složku …) a u nedávných projektů. Riziko: HIG dává ruku hlavně odkazům, proto ji použít jen u klikacích položek bez vzhledu tlačítka.
+- [x] **U3 Uvítací okno** (2026-11-16): akce jsou `HoverButton` (ruka, zaoblené pozadí `quaternarySystemFill` pod myší), nedávné projekty mají ruku nad řádky a zvýraznění řádku pod myší (`RecentRowView`, přepočet i po scrollu a znovunačtení); vybraný řádek kreslí výběr jako dřív. Bez automatického testu (kód je v cíli aplikace); ruční kontrola zbývá (světlý/tmavý režim, scroll).
 - [ ] **U4 Skrývání panelů ikonou** (rozhodnutí uživatele: lišta + stavový řádek): v záhlaví spodního (terminál) i pravého panelu ikonka „Skrýt“. Pravý panel se znovu otevře přepínačem vpravo v panelu nástrojů okna (jako tlačítko levého panelu), terminál přepínačem ve stavovém řádku. Stav ikonky odpovídá viditelnosti, menu a zkratky zůstávají. Respektovat Omezit pohyb.
 - [ ] **U5 Dialog Přidat databázi** (rozhodnutí: zatím jen uložit spojení): sheet z pravého panelu (tlačítko + v sekci Databáze a stav „žádné databáze“): typ (MySQL/MariaDB, PostgreSQL, SQLite se souborem), název, host, port podle typu, uživatel, heslo do Klíčenky, databáze, SSH tunel (host, uživatel, klíč), příznak produkce. Uložení mimo projekt (vedle `trusted.json`, bez hesel), seznam v panelu, upravit/smazat. „Otestovat“ a připojení až ve fázi 6.
 - [ ] **U6 Dialog Přidat server:** stejný vzor pro SFTP/FTPS (host, port, uživatel, klíč nebo heslo do Klíčenky, vzdálená složka, produkce). Ověření klíče serveru a připojení až ve fázi 6b. Využije model a úložiště z U5.
