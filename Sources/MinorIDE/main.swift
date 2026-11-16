@@ -377,6 +377,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			if let bar = documents.last?.statusBar {
 				print("status bar", NSStringFromRect(bar.convert(bar.bounds, to: nil)), bar.summary)
 			}
+			if ProcessInfo.processInfo.environment["MINORIDE_BOTTOM_CHECK"] != nil { documents.last?.checkBottomPanelButton() }
 			if let content = window.contentView, let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds) {
 				content.cacheDisplay(in: content.bounds, to: rep)
 				try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path.replacingOccurrences(of: ".png", with: "-window.png")))

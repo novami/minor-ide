@@ -203,6 +203,11 @@ final class StatusBar: NSView {
 		bottomPanel.toolTip = shown ? L("Hide Bottom Panel") : L("Show Bottom Panel")
 	}
 
+	/// The bottom panel button in window coordinates, nil when hidden (snapshot checks).
+	var bottomPanelButtonFrame: NSRect? {
+		bottomPanel.isHidden ? nil : bottomPanel.convert(bottomPanel.bounds, to: nil)
+	}
+
 	@objc private func toggleBottomPanel(_ sender: Any?) { owner?.toggleBottomPanel(sender) }
 
 	@objc private func trustProject(_ sender: Any?) { owner?.toggleProjectTrust(sender) }

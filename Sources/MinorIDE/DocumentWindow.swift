@@ -368,6 +368,24 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		updatePanelButtons()
 	}
 
+	/// Snapshot check: the status bar's bottom panel button stays visible inside the window with
+	/// the bottom panel collapsed, also in a small window. Prints one line per window size.
+	func checkBottomPanelButton() {
+		guard let bottom = panels?.bottom else { return }
+		let key = Self.panelKeys.bottom
+		let saved = UserDefaults.standard.object(forKey: key)
+		defer { UserDefaults.standard.set(saved, forKey: key) }
+		bottom.isCollapsed = true
+		for size in [NSSize(width: 1300, height: 800), NSSize(width: 400, height: 250)] {
+			window.setContentSize(size)
+			window.layoutIfNeeded()
+			let frame = statusBar.bottomPanelButtonFrame
+			let content = window.contentView?.bounds ?? .zero
+			let ok = frame.map { $0.width > 0 && $0.height > 0 && content.contains($0) } ?? false
+			print("bottom panel button", NSStringFromSize(content.size), frame.map(NSStringFromRect) ?? "hidden", ok ? "OK" : "FAIL")
+		}
+	}
+
 	@objc func toggleRightPanel(_ sender: Any?) {
 		guard let item = panels?.inspector else { return }
 		togglePanel(item)
