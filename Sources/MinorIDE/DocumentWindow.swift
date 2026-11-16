@@ -402,13 +402,27 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			window.makeFirstResponder(find.editor) // the focus doesn't stay in a hidden panel
 		}
 		togglePanel(item)
-		if showing { focusTerminal(evenIfCollapsed: true) } // still collapsed while it slides in
+		guard showing else { return } // still collapsed while it slides in
+		if bottomPanel?.selected == PanelView.searchSection { project?.findInFiles.focus(query: nil) } else { focusTerminal(evenIfCollapsed: true) }
+	}
+
+	/// Edit › Find › Find in Project… (⇧⌘F): the Search section of the bottom panel, with the
+	/// editor's selection as the query.
+	@objc func findInProject(_ sender: Any?) {
+		guard let project, let bottomPanel, let item = panels?.bottom else { return }
+		attachTerminal()
+		bottomPanel.select(PanelView.searchSection)
+		if item.isCollapsed { togglePanel(item) }
+		let s = find.editor.selections.primary
+		let selection = s.isEmpty ? nil : find.editor.rope.string(in: s.range)
+		project.findInFiles.focus(query: selection)
 	}
 
 	/// The project's terminal (shared by its tabs) moves into the tab in front.
 	private func attachTerminal() {
 		guard let project, let bottomPanel else { return }
-		bottomPanel.setContent(project.makeTerminal().view, at: 0)
+		bottomPanel.setContent(project.makeTerminal().view, at: PanelView.terminalSection)
+		bottomPanel.setContent(project.findInFiles.view, at: PanelView.searchSection)
 	}
 
 	private func focusTerminal(evenIfCollapsed: Bool = false) {
@@ -448,7 +462,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			return splitEditor != nil
 		case #selector(showLocalHistory(_:)):
 			return document.url != nil && FileDocument.history != nil
-		case #selector(openQuickly(_:)):
+		case #selector(openQuickly(_:)), #selector(findInProject(_:)):
 			return project != nil
 		case #selector(toggleProjectTrust(_:)):
 			guard let project else { return false }

@@ -65,7 +65,7 @@
 /* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Key File:" = "Soubor s klíčem:";
 
-/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Zrušit";
 
 /* MinorIDE/DatabaseSheet.swift */
@@ -134,7 +134,7 @@
 "“%@” is open with unsaved changes. Do you want to replace it?" = "Soubor „%@“ je otevřený s neuloženými změnami. Chcete ho nahradit?";
 "Its unsaved changes will be lost." = "Jeho neuložené změny se ztratí.";
 
-/* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift */
+/* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/FindInFiles.swift */
 "Replace" = "Nahradit";
 
 /* MinorIDE/DocumentWindow.swift */
@@ -154,10 +154,12 @@
 /* MinorIDE/EditorSplit.swift */
 "Editor" = "Editor";
 
-/* MinorIDE/FindBar.swift */
+/* MinorIDE/FindBar.swift, MinorIDE/FindInFiles.swift */
 "Match Case" = "Rozlišovat velikost písmen";
 "Whole Word" = "Celá slova";
 "Regular Expression" = "Regulární výraz";
+
+/* MinorIDE/FindBar.swift */
 "Preserve Case" = "Zachovat velikost písmen";
 
 /* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
@@ -175,9 +177,28 @@
 
 /* MinorIDE/FindBar.swift */
 "%d of %d" = "%d z %d";
+
+/* MinorIDE/FindBar.swift, MinorIDE/FindInFiles.swift */
 "%d matches|one" = "%d výskyt";
 "%d matches|few" = "%d výskyty";
 "%d matches|other" = "%d výskytů";
+
+/* MinorIDE/FindInFiles.swift */
+"Find in Project" = "Najít v projektu";
+"Replace All…" = "Nahradit vše…";
+"Search Results" = "Výsledky hledání";
+"Invalid regular expression" = "Neplatný regulární výraz";
+"The search helper is missing." = "Chybí pomocný program pro hledání.";
+"Type to search the project. Files ignored by Git are skipped." = "Pište pro hledání v projektu. Soubory ignorované Gitem se přeskočí.";
+"Searching…" = "Hledání…";
+"No results" = "Nic nenalezeno";
+"(stopped, too many matches)" = "(zastaveno, příliš mnoho výskytů)";
+"Replace %@ with “%@”?" = "Nahradit %@ textem „%@“?";
+"Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Otevřené soubory se změní v editoru a jde to tam vrátit. Ostatní soubory se hned uloží; jejich předchozí verze zůstanou v Místní historii.";
+"Some files could not be changed." = "Některé soubory nešlo změnit.";
+"in %d files|one" = "v %d souboru";
+"in %d files|few" = "v %d souborech";
+"in %d files|other" = "v %d souborech";
 
 /* MinorIDE/HexWindow.swift */
 "Showing the first 1 MB of %@." = "Zobrazen je první 1 MB z %@.";
@@ -223,6 +244,7 @@
 "Move Line Up" = "Přesunout řádek nahoru";
 "Move Line Down" = "Přesunout řádek dolů";
 "Find and Replace…" = "Najít a nahradit…";
+"Find in Project…" = "Najít v projektu…";
 "Use Selection for Find" = "Použít výběr pro hledání";
 "Use Selection for Replace" = "Použít výběr pro nahrazení";
 "Jump to Selection" = "Přejít na výběr";
@@ -297,6 +319,9 @@
 "Terminal" = "Terminál";
 "No Terminal" = "Žádný terminál";
 "A terminal in the project folder will appear here." = "Tady se zobrazí terminál ve složce projektu.";
+"Search" = "Hledat";
+"No Search" = "Žádné hledání";
+"Results of Find in Project will appear here." = "Zde se zobrazí výsledky hledání v projektu.";
 
 /* MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
 "Bottom Panel" = "Spodní panel";

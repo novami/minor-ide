@@ -64,6 +64,7 @@ enum MainMenu {
 			find.submenu = NSMenu(title: L("Find"))
 			find.submenu!.item(L("Find…"), #selector(DocumentWindow.showFind(_:)), "f")
 			find.submenu!.item(L("Find and Replace…"), #selector(DocumentWindow.showFindAndReplace(_:)), "f", [.command, .option])
+			find.submenu!.item(L("Find in Project…"), #selector(DocumentWindow.findInProject(_:)), "f", [.command, .shift])
 			find.submenu!.item(L("Find Next"), #selector(DocumentWindow.findNextMatch(_:)), "g")
 			find.submenu!.item(L("Find Previous"), #selector(DocumentWindow.findPreviousMatch(_:)), "g", [.command, .shift])
 			find.submenu!.item(L("Use Selection for Find"), #selector(DocumentWindow.useSelectionForFind(_:)), "e")

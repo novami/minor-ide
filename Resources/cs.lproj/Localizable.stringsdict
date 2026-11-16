@@ -21,6 +21,24 @@
 			<string>%d výskytů</string>
 		</dict>
 	</dict>
+	<key>in %d files</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>v %d souboru</string>
+			<key>few</key>
+			<string>v %d souborech</string>
+			<key>other</key>
+			<string>v %d souborech</string>
+		</dict>
+	</dict>
 	<key>%d spaces</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

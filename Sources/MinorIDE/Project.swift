@@ -104,6 +104,9 @@ final class Project {
 		return terminal
 	}
 
+	/// Find in Project, shared by the project's tabs like the terminal.
+	private(set) lazy var findInFiles = FindInFiles(project: self)
+
 	func close() {
 		if hasTerminal { terminal.stop() }
 		watcher?.stop()

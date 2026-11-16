@@ -1,6 +1,7 @@
 // Command minoride-server hosts the MinorIDE helper services.
 //
 //	minoride-server db              database helper over stdio (JSON-RPC)
+//	minoride-server search          find in files over stdio (JSON-RPC)
 //	minoride-server phpscan <dir>   PHP declaration scan benchmark (spike)
 //	minoride-server version
 package main
@@ -11,6 +12,7 @@ import (
 
 	"github.com/novami/minor-ide/server/internal/db"
 	"github.com/novami/minor-ide/server/internal/jsonrpc"
+	"github.com/novami/minor-ide/server/internal/search"
 )
 
 var version = "dev"
@@ -27,6 +29,10 @@ func main() {
 		svc.Register(srv)
 		err = srv.Serve(os.Stdin)
 		svc.CloseAll()
+	case "search":
+		srv := jsonrpc.NewServer(os.Stdout)
+		search.NewService().Register(srv)
+		err = srv.Serve(os.Stdin)
 	case "phpscan":
 		err = runPHPScan(os.Args[2:])
 	case "version":
@@ -41,6 +47,6 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: minoride-server db | phpscan <dir> | version")
+	fmt.Fprintln(os.Stderr, "usage: minoride-server db | search | phpscan <dir> | version")
 	os.Exit(2)
 }

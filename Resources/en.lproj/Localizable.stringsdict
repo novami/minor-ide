@@ -19,6 +19,22 @@
 			<string>%d matches</string>
 		</dict>
 	</dict>
+	<key>in %d files</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>in %d file</string>
+			<key>other</key>
+			<string>in %d files</string>
+		</dict>
+	</dict>
 	<key>%d spaces</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

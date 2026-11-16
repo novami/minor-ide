@@ -64,7 +64,7 @@
 /* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Key File:" = "Key File:";
 
-/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Cancel";
 
 /* MinorIDE/DatabaseSheet.swift */
@@ -133,7 +133,7 @@
 "“%@” is open with unsaved changes. Do you want to replace it?" = "“%@” is open with unsaved changes. Do you want to replace it?";
 "Its unsaved changes will be lost." = "Its unsaved changes will be lost.";
 
-/* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift */
+/* MinorIDE/DocumentWindow.swift, MinorIDE/FindBar.swift, MinorIDE/FindInFiles.swift */
 "Replace" = "Replace";
 
 /* MinorIDE/DocumentWindow.swift */
@@ -153,10 +153,12 @@
 /* MinorIDE/EditorSplit.swift */
 "Editor" = "Editor";
 
-/* MinorIDE/FindBar.swift */
+/* MinorIDE/FindBar.swift, MinorIDE/FindInFiles.swift */
 "Match Case" = "Match Case";
 "Whole Word" = "Whole Word";
 "Regular Expression" = "Regular Expression";
+
+/* MinorIDE/FindBar.swift */
 "Preserve Case" = "Preserve Case";
 
 /* MinorIDE/FindBar.swift, MinorIDE/MainMenu.swift */
@@ -174,8 +176,26 @@
 
 /* MinorIDE/FindBar.swift */
 "%d of %d" = "%d of %d";
+
+/* MinorIDE/FindBar.swift, MinorIDE/FindInFiles.swift */
 "%d matches|one" = "%d match";
 "%d matches|other" = "%d matches";
+
+/* MinorIDE/FindInFiles.swift */
+"Find in Project" = "Find in Project";
+"Replace All…" = "Replace All…";
+"Search Results" = "Search Results";
+"Invalid regular expression" = "Invalid regular expression";
+"The search helper is missing." = "The search helper is missing.";
+"Type to search the project. Files ignored by Git are skipped." = "Type to search the project. Files ignored by Git are skipped.";
+"Searching…" = "Searching…";
+"No results" = "No results";
+"(stopped, too many matches)" = "(stopped, too many matches)";
+"Replace %@ with “%@”?" = "Replace %@ with “%@”?";
+"Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History.";
+"Some files could not be changed." = "Some files could not be changed.";
+"in %d files|one" = "in %d file";
+"in %d files|other" = "in %d files";
 
 /* MinorIDE/HexWindow.swift */
 "Showing the first 1 MB of %@." = "Showing the first 1 MB of %@.";
@@ -221,6 +241,7 @@
 "Move Line Up" = "Move Line Up";
 "Move Line Down" = "Move Line Down";
 "Find and Replace…" = "Find and Replace…";
+"Find in Project…" = "Find in Project…";
 "Use Selection for Find" = "Use Selection for Find";
 "Use Selection for Replace" = "Use Selection for Replace";
 "Jump to Selection" = "Jump to Selection";
@@ -295,6 +316,9 @@
 "Terminal" = "Terminal";
 "No Terminal" = "No Terminal";
 "A terminal in the project folder will appear here." = "A terminal in the project folder will appear here.";
+"Search" = "Search";
+"No Search" = "No Search";
+"Results of Find in Project will appear here." = "Results of Find in Project will appear here.";
 
 /* MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
 "Bottom Panel" = "Bottom Panel";

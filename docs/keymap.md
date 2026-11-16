@@ -22,6 +22,7 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Přesunout řádek nahoru / dolů | ⌥⌘↑ / ⌥⌘↓ | Úpravy |
 | Zakomentovat výběr | ⌘/ | Úpravy |
 | Najít… / Najít a nahradit… | ⌘F / ⌥⌘F | Úpravy › Najít |
+| Najít v projektu… (spodní panel Hledat; Return otevře výsledek, Delete ho vyřadí) | ⇧⌘F | Úpravy › Najít |
 | Najít další / předchozí | ⌘G / ⇧⌘G | Úpravy › Najít |
 | Použít výběr pro hledání / nahrazení | ⌘E / ⇧⌘E | Úpravy › Najít |
 | Přejít na výběr | ⌘J | Úpravy › Najít |

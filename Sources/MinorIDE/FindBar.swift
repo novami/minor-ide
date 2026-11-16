@@ -113,7 +113,7 @@ final class FindBar: NSView, NSSearchFieldDelegate {
 	@available(*, unavailable)
 	required init?(coder: NSCoder) { fatalError("not supported") }
 
-	private static func toggle(_ title: String, _ name: String) -> NSButton {
+	static func toggle(_ title: String, _ name: String) -> NSButton {
 		let b = NSButton(title: title, target: nil, action: nil)
 		b.setButtonType(.pushOnPushOff)
 		b.bezelStyle = .recessed

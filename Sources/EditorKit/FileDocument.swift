@@ -90,6 +90,28 @@ public final class FileDocument {
 		return doc
 	}
 
+	/// Replaces text in a file (replace in files). `edits` gets the current text and returns
+	/// replacements. An open file changes in its editor as one undo step and stays unsaved;
+	/// any other file is written at once like a save (encoding, line endings and Local History
+	/// kept). Returns the number of replacements.
+	@discardableResult
+	public static func replace(in url: URL, _ edits: (Rope) throws -> [(Range<Int>, String)]) throws -> Int {
+		if let open = document(for: url), let editor = open.text.views.first {
+			let list = try edits(open.text.rope)
+			if !list.isEmpty { editor.replace(list) }
+			return list.count
+		}
+		let doc = try load(url)
+		guard !doc.text.isReadOnly else { throw CocoaError(.fileWriteNoPermission, userInfo: [NSURLErrorKey: url]) }
+		let list = try edits(doc.text.rope)
+		guard !list.isEmpty else { return 0 }
+		var rope = doc.text.rope
+		ChangeSet(list).apply(to: &rope)
+		doc.text.setText(rope)
+		try doc.write(to: url)
+		return list.count
+	}
+
 	private func register() {
 		guard let url else { return }
 		Self.registry = Self.registry.filter { $0.value.document != nil && $0.value.document !== self }

@@ -55,6 +55,12 @@ public final class TextDocument {
 		measureWidth()
 	}
 
+	/// Replaces the text of a document no editor shows (rewriting a file that is not open).
+	func setText(_ new: Rope) {
+		precondition(views.isEmpty, "use an editor to change a shown document")
+		rope = new
+	}
+
 	/// Columns of the widest line (horizontal scrolling). Edits widen it at once; narrowing
 	/// waits for a full measure off the main thread after a pause in editing.
 	public private(set) var maxColumns = 0

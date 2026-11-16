@@ -31,6 +31,22 @@ struct FileDocumentTests {
 		#expect(try String(contentsOf: url, encoding: .utf8) == "// package a\n")
 	}
 
+	@Test func replaceInFilesEditsOpenFilesAndWritesOthers() throws {
+		let url = try tempFile("a := 1\r\nb := a\r\n")
+		let query = FindQuery(text: "a", wholeWord: true)
+		// Not open: written at once, line endings kept.
+		#expect(try FileDocument.replace(in: url) { try $0.replacements(of: query, with: "x", preserveCase: false) } == 2)
+		#expect(try String(contentsOf: url, encoding: .utf8) == "x := 1\r\nb := x\r\n")
+		// Open: changed in the editor, one undo step, not saved.
+		let doc = try FileDocument.load(url)
+		let editor = EditorView(document: doc.text)
+		#expect(try FileDocument.replace(in: url) { try $0.replacements(of: FindQuery(text: "x"), with: "y", preserveCase: false) } == 2)
+		#expect(doc.isEdited && editor.rope.string.hasPrefix("y := 1"))
+		#expect(try String(contentsOf: url, encoding: .utf8).hasPrefix("x := 1"))
+		editor.undo(nil)
+		#expect(editor.rope.string.hasPrefix("x := 1"))
+	}
+
 	@Test func editorConfigChangeAppliesUnlessChosenInMenu() throws {
 		let url = try tempFile("{\n\n}\n") // no indented line: nothing to detect
 		let config = url.deletingLastPathComponent().appendingPathComponent(".editorconfig")

@@ -16,6 +16,7 @@ import MinorCore
 //        MINORIDE_WELCOME=1 with --snapshot saves the welcome window and prints its frames
 //        MINORIDE_SETTINGS=<tab> with --snapshot saves that Settings tab (0 General, 1 Formatting)
 //        MINORIDE_QUICKOPEN=<query> with --snapshot <png> <folder> prints Open Quickly's rows and frame
+//        MINORIDE_FIND_IN_PROJECT=<query> with --snapshot <png> <folder> prints Find in Project's results
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
@@ -388,6 +389,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 				print("status bar", NSStringFromRect(bar.convert(bar.bounds, to: nil)), bar.summary)
 			}
 			if ProcessInfo.processInfo.environment["MINORIDE_BOTTOM_CHECK"] != nil { documents.last?.checkBottomPanelButton() }
+			if let query = ProcessInfo.processInfo.environment["MINORIDE_FIND_IN_PROJECT"], let doc = documents.last, let project = doc.project {
+				doc.findInProject(nil)
+				project.findInFiles.focus(query: query)
+				let deadline = Date().addingTimeInterval(5)
+				while !project.findInFiles.isIdle && Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.01)) }
+				RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+				print("find in project:", project.findInFiles.statusText)
+				for row in project.findInFiles.rowsForSnapshot.prefix(12) { print("  ", row) }
+			}
 			if let query = ProcessInfo.processInfo.environment["MINORIDE_QUICKOPEN"], let doc = documents.last {
 				doc.openQuickly(nil)
 				let panel = window.childWindows?.compactMap { $0 as? QuickOpenPanel }.first
