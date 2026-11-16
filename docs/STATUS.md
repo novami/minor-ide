@@ -145,7 +145,14 @@ Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split 
 
 **Fáze 1f je hotová** (2026-11-16): ruční kontrola terminálu, hledání, sbalování, zalamování, přístupnosti (VoiceOver se zalamováním, Zvýšit kontrast, Omezit pohyb), přetažení, Vyhledat, emoji, ⌘E, připnutých řádků i oken 1e prošla u uživatele.
 
-**Další krok:** fáze 2 (vydávání a updater) potřebuje Apple Developer účet (zatím není) — rozhodnutí uživatele, zda dělat části bez účtu, nebo začít 2b.1 (otevření souboru podle jména).
+**Další krok: drobné úpravy UI na přání uživatele (2026-11-16)**, jeden krok = jedna session, v tomto pořadí. Po každém kroku odškrtnout, commit a vyčistit kontext. Fáze 2 (vydávání a updater) čeká na Apple Developer účet, potom 2b.1.
+
+- [ ] **U1 Klik mimo text:** klik pod posledním řádkem nebo za koncem řádku dá kurzor na nejbližší místo, kam jde psát (poslední řádek, poslední znak). Nejdřív ověřit příčinu: `position(atY:)` už ořezává na poslední řádek, takže problém bude spíš v tom, že editor u krátkého souboru nevyplní výšku clip view a klik dostane clip view. Test v `MouseTests`.
+- [ ] **U2 Posuvníky jen v případě potřeby:** `autohidesScrollers` u editoru (`EditorSplit.swift`), stromu projektu, terminálu a panelů. Překryvné posuvníky macOS se skrývají samy; při nastavení „Vždy zobrazovat“ (myš) má posuvník zmizet, když se obsah vejde. Pozor na šířku editoru, když se posuvník objeví nebo zmizí (přepočet zalamování). Lze spojit s U1, týká se to stejného scroll view.
+- [ ] **U3 Uvítací okno:** kurzor ruky (`NSCursor.pointingHand`, `addCursorRect`/tracking area) a zvýraznění pod myší u akcí (Otevřít složku …) a u nedávných projektů. Riziko: HIG dává ruku hlavně odkazům, proto ji použít jen u klikacích položek bez vzhledu tlačítka.
+- [ ] **U4 Skrývání panelů ikonou** (rozhodnutí uživatele: lišta + stavový řádek): v záhlaví spodního (terminál) i pravého panelu ikonka „Skrýt“. Pravý panel se znovu otevře přepínačem vpravo v panelu nástrojů okna (jako tlačítko levého panelu), terminál přepínačem ve stavovém řádku. Stav ikonky odpovídá viditelnosti, menu a zkratky zůstávají. Respektovat Omezit pohyb.
+- [ ] **U5 Dialog Přidat databázi** (rozhodnutí: zatím jen uložit spojení): sheet z pravého panelu (tlačítko + v sekci Databáze a stav „žádné databáze“): typ (MySQL/MariaDB, PostgreSQL, SQLite se souborem), název, host, port podle typu, uživatel, heslo do Klíčenky, databáze, SSH tunel (host, uživatel, klíč), příznak produkce. Uložení mimo projekt (vedle `trusted.json`, bez hesel), seznam v panelu, upravit/smazat. „Otestovat“ a připojení až ve fázi 6.
+- [ ] **U6 Dialog Přidat server:** stejný vzor pro SFTP/FTPS (host, port, uživatel, klíč nebo heslo do Klíčenky, vzdálená složka, produkce). Ověření klíče serveru a připojení až ve fázi 6b. Využije model a úložiště z U5.
 
 **Fáze 1e:** ruční kontrola oken prošla (2026-11-16); `.minoride/local.json` až s prvním uživatelem (servery v 6b).
 
