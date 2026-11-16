@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (1f: přístupnost)
+**Poslední aktualizace:** 2026-11-16 (1f: systémové textové funkce)
 
 ## Kde jsme
 
@@ -135,7 +135,11 @@ Známé mezery po připnutých řádcích: Markdown a prostý text se řídí ta
 
 Známé mezery po přístupnosti: vysoký kontrast nejde v testu nasimulovat (`NSAppearance` ho nevytvoří) — ruční kontrola; oznámení editace jen u jedné změny (víc kurzorů a Zpět se ohlásí bez textu); připnuté řádky, gutter a „…“ sbalení přístupnost nevidí; ⌥+tažení a ruční kontrola VoiceOveru se zalamováním zbývá.
 
-**Další krok (1f):** systémové textové funkce (Vyhledat ⌃⌘D a silný stisk, přetažení textu, výběr emoji; Služby, ⌘E a diktování už fungují — ověřit a zapsat do checklistu). Pak ruční kontrola 1f a fáze 2.
+**Fáze 1f, krok 4 hotový — systémové textové funkce** (2026-11-16): `EditorKit/TextDrag.swift` — přetažení výběru (prostý klik do výběru čeká na pohyb o 3 body, bez pohybu dá kurzor; obrázek s prvními 8 řádky), přesun jen v rámci téhož editoru jedním krokem Zpět, s ⌥, do jiných editorů a aplikací kopie; cíl pro text odkudkoli (kurzor dropu místo kurzorů, autoscroll u okraje), puštěný text se vybere. Vyhledat: silný stisk / klepnutí třemi prsty (`quickLook(with:)`), ⌃⌘D (`performKeyEquivalent`), kontextové menu „Vyhledat „slovo““ (výběr, jinak slovo u kurzoru). Emoji, diktování a Vyplnit přidává AppKit sám do menu Úpravy. Testy `TextDragTests`, checklist a nápověda doplněny. Bench BUDGET OK.
+
+Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split téhož souboru) kopíruje, nemaže zdroj; přetahuje se jen hlavní výběr; soubory přetažené z Finderu editor nepřijímá; ⌃⌘D může systém zachytit dřív (pak funguje přes textový vstup); ruční kontrola celé 1f zbývá.
+
+**Další krok:** ruční kontrola 1f s uživatelem (seznam v `docs/editor-behaviors.md`: VoiceOver se zalamováním, Zvýšit kontrast, Omezit pohyb, přetažení, Vyhledat, emoji, ⌘E) — tím je 1f hotová; pak fáze 2 (vydávání a updater, potřebuje Apple Developer účet).
 
 **Fáze 1e:** z plánu zbývá ruční kontrola nových oken (uvítání, Nastavení, Místní historie, automatické ukládání, obnova, stavový řádek); `.minoride/local.json` až s prvním uživatelem (servery v 6b).
 

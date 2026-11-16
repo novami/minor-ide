@@ -44,6 +44,9 @@
 /* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Zrušit";
 
+/* MinorIDE/DocumentWindow.swift */
+"Look Up “%@”" = "Vyhledat „%@“";
+
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Cut" = "Vyjmout";
 "Copy" = "Kopírovat";

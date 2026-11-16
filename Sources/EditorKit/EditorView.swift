@@ -122,6 +122,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// The caret move in progress, for the VoiceOver notification.
 	var accessibilityMove: AccessibilityMove?
 	var accessibilityEdit: AccessibilityEdit?
+	/// A click on selected text that may start a drag; the dragged range and text; where a drop would land.
+	var textDragStart: TextDragStart?
+	var textDragSource: Range<Int>?
+	var dropOffset: Int?
 	var tokenColors: [NSColor?] = []
 	/// Increase Contrast is on; set with the token colours.
 	var highContrast = false
@@ -157,6 +161,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		layerContentsRedrawPolicy = .onSetNeedsDisplay
 		clipsToBounds = true // drawing stays inside the view (default is false since macOS 14)
 		setUpCaretLayer()
+		registerForTextDrops()
 		updateTokenColors()
 		document.attach(self)
 		observeWrapSetting()
@@ -477,7 +482,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	private func line(at point: NSPoint) -> Int { line(atY: point.y) }
 
-	private func offset(at point: NSPoint) -> Int {
+	func offset(at point: NSPoint) -> Int {
 		let p = position(atY: point.y)
 		return offset(atX: point.x, line: p.line, segment: p.segment)
 	}
@@ -605,15 +610,22 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			inputContext?.discardMarkedText()
 			discardMarkedText()
 		}
-		mouseDown(at: convert(event.locationInWindow, from: nil), clicks: event.clickCount, modifiers: event.modifierFlags)
+		let point = convert(event.locationInWindow, from: nil)
+		textDragStart = textDragCandidate(at: point, clicks: event.clickCount, modifiers: event.modifierFlags)
+		guard textDragStart == nil else { return }
+		mouseDown(at: point, clicks: event.clickCount, modifiers: event.modifierFlags)
 	}
 
 	public override func mouseDragged(with event: NSEvent) {
+		if continueTextDrag(event) { return }
 		autoscroll(with: event)
 		mouseDragged(to: convert(event.locationInWindow, from: nil))
 	}
 
-	public override func mouseUp(with event: NSEvent) { drag = nil }
+	public override func mouseUp(with event: NSEvent) {
+		if finishTextDragClick() { return }
+		drag = nil
+	}
 
 	/// Text cursor (I-beam) over the text, as in every macOS text view.
 	public override func resetCursorRects() {

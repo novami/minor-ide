@@ -159,7 +159,7 @@ extension DocumentWindow {
 	func configure(_ pane: EditorPane) {
 		let editor = pane.editor
 		editor.setAccessibilityLabel(L("Editor"))
-		editor.contextMenuProvider = { _ in DocumentWindow.contextMenu() }
+		editor.contextMenuProvider = { DocumentWindow.contextMenu(for: $0) }
 		editor.onFocus = { [weak self] focused in
 			guard let self else { return }
 			find.editor = focused

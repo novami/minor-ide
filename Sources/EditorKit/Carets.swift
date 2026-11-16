@@ -57,7 +57,7 @@ extension EditorView {
 		effectiveAppearance.performAsCurrentDrawingAppearance { // dynamic colour for this view's appearance
 			caretLayer.fillColor = NSColor.controlAccentColor.cgColor
 		}
-		caretLayer.isHidden = !showsCarets
+		caretLayer.isHidden = !showsCarets && dropOffset == nil
 		restartBlink()
 	}
 
@@ -73,6 +73,10 @@ extension EditorView {
 	/// Caret rectangles of empty and non-empty selections whose head is on one of the lines.
 	func caretRects(lines: Range<Int>) -> [CGRect] {
 		var rects: [CGRect] = []
+		if let drop = dropOffset { // a drag over the editor shows only where the text would go
+			let p = point(of: drop, line: rope.line(containing: drop))
+			return [CGRect(x: p.x, y: p.y + 1, width: 2, height: lineHeight - 2)]
+		}
 		for s in selections.all {
 			let line = rope.line(containing: s.head)
 			guard lines.contains(line) else { continue }

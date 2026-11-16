@@ -74,3 +74,11 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Zvýšit kontrast: barvy syntaxe aspoň 7:1 proti pozadí, silnější zvýraznění řádku a shod — `AccessibilityTests.highContrastThemeReachesSevenToOne`
 - [ ] Omezit pohyb: panely bez animace — ruční kontrola
 - [ ] VoiceOver: čtení po znacích/slovech/řádcích a úprava souboru bez myši (i se zalamováním), Zvýšit kontrast na obrazovce — ruční kontrola
+
+## Systémové textové funkce (1f)
+- [x] Přetažení výběru přesune text jedním krokem Zpět, puštění do přetahovaného textu jen vybere, text odjinud se vloží a vybere — `TextDragTests`
+- [x] Klik do výběru bez pohybu myši dá kurzor, dvojklik a klik s modifikátorem se chovají jako dřív — `TextDragTests.onlyAPlainClickInsideTheSelectionCanDrag`
+- [x] Vyhledat bere výběr, jinak slovo u kurzoru — `TextDragTests.lookUpTakesTheSelectionOrTheWordAtTheCaret`
+- [x] Emotikony a symboly, Zahájit diktování a Vyplnit přidává AppKit do menu Úpravy (`--dump-menu`); vkládají přes `insertText` (`TextInputTests`)
+- [x] Služby s výběrem, Řeč — kontextové menu, ruční kontrola 2026-11-15
+- [ ] Ruční kontrola: přetažení (s ⌥, do jiné aplikace, z jiné aplikace, autoscroll), silný stisk a ⌃⌘D, výběr emoji, sdílená schránka hledání ⌘E

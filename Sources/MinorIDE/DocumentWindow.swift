@@ -263,8 +263,13 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	}
 
 	/// Right-click menu of the editor (AppKit adds Services for the selection).
-	static func contextMenu() -> NSMenu {
+	static func contextMenu(for editor: EditorView) -> NSMenu {
 		let menu = NSMenu()
+		let word = editor.rope.string(in: editor.lookUpRange).trimmingCharacters(in: .whitespacesAndNewlines)
+		if !word.isEmpty, word.count <= 40, !word.contains("\n") {
+			menu.item(L("Look Up “%@”", word), #selector(EditorView.lookUpSelection(_:)))
+			menu.addItem(.separator())
+		}
 		menu.item(L("Cut"), #selector(NSText.cut(_:)))
 		menu.item(L("Copy"), #selector(NSText.copy(_:)))
 		menu.item(L("Paste"), #selector(NSText.paste(_:)))

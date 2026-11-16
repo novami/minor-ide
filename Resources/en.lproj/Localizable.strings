@@ -43,6 +43,9 @@
 /* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Cancel";
 
+/* MinorIDE/DocumentWindow.swift */
+"Look Up “%@”" = "Look Up “%@”";
+
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Cut" = "Cut";
 "Copy" = "Copy";
