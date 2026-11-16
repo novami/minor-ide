@@ -258,6 +258,8 @@ Odhady jsou hrubé (jeden vývojář s AI). Součet fází je 59–74 týdnů; s
 
 ### Fáze 2: vydávání a vlastní updater (≈ 2 týdny)
 
+**Revize 2026-11-16 (rozhodnutí uživatele): nejdřív bez placeného Developer ID.** Podpis vlastním certifikátem pro podepisování kódu (vytvořený v Klíčence, zdarma) místo Developer ID: stabilní identita aplikace (Klíčenka a oprávnění přežijí aktualizaci), bez notarizace. Build i podpis celý **lokálně** (`make release`; certifikát ani Ed25519 klíč nejsou na GitHubu), workflow jen nahraje hotové assety do konceptu release. Updater místo „stejné Team ID“ požaduje podpis **stejným certifikátem** (designated requirement s otiskem certifikátu); požadavek je v jednom místě, aby šel později vyměnit za Team ID. První instalace: macOS ji napoprvé zablokuje, uživatel povolí v Nastavení systému › Soukromí a zabezpečení › „Přesto otevřít“ (návod v README a nápovědě). Aktualizace stažené updaterem karanténu nedostanou, Gatekeeper je neblokuje; důvěru nese Ed25519 podpis. Až bude Developer ID: přidat notarizaci a stapling, požadavek přepnout na Team ID (přechodná verze podepsaná novým certifikátem přijme obě identity). Body níže platí s touto úpravou.
+
 **Vydání (GitHub Action `.github/workflows/release.yml`, runner `macos-15`)**
 1. Spouští se tagem `vX.Y.Z`.
 2. Build Release, `minoride-server` pro `darwin/arm64`, podpis Developer ID s hardened runtime (nejdřív helpery, pak app), notarizace `xcrun notarytool submit --wait`, `xcrun stapler staple`.
