@@ -19,6 +19,8 @@ final class EditorPane {
 	let document: FileDocument
 	let editor: EditorView
 	let banner = DiskBanner()
+	/// Completion from the project's language server (nil outside a project).
+	var completion: CompletionController?
 	/// Notice the banner shows, so repeated state changes do not rebuild it.
 	var shownNotice: FileDocument.DiskNotice?
 	let view: NSStackView
@@ -164,19 +166,32 @@ extension DocumentWindow {
 		project?.languageServers.scheduleSync()
 		editor.setAccessibilityLabel(L("Editor"))
 		editor.contextMenuProvider = { DocumentWindow.contextMenu(for: $0) }
+		if let services = project?.languageServers {
+			let completion = CompletionController(editor: editor) { [weak services, weak doc = pane.document] in
+				guard let services, let doc else { return nil }
+				return services.endpoint(for: doc)
+			}
+			pane.completion = completion
+			editor.commandInterceptor = { [weak completion] in completion?.handle($0) ?? false }
+			editor.onTypedText = { [weak completion] in completion?.typed($0) }
+		}
+		let completion = pane.completion
 		editor.onFocus = { [weak self] focused in
 			guard let self else { return }
+			for other in panes where other.editor !== focused { other.completion?.close() }
 			find.editor = focused
 			updateTitle()
 			revealInSidebar()
 			if let url { project?.noteOpened(url) }
 		}
 		// Matches follow the text of the focused pane's file, whichever editor changed it.
-		editor.onTextChange = { [weak self, weak editor] in
+		editor.onTextChange = { [weak self, weak editor, weak completion] in
+			completion?.textChanged()
 			guard let self, editor === find.editor else { return }
 			if findBarView.isHidden { find.invalidate() } else { find.refresh(delay: .milliseconds(100)) }
 		}
-		editor.onCaretsChange = { [weak self, weak editor] in
+		editor.onCaretsChange = { [weak self, weak editor, weak completion] in
+			completion?.caretsChanged()
 			guard let self, editor === find.editor else { return }
 			statusBar.setNeedsUpdate()
 		}

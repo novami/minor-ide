@@ -59,6 +59,19 @@
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "The versions are identical.";
 
+/* MinorIDE/CompletionPopup.swift */
+"Completions" = "Completions";
+"Method" = "Method";
+"Function" = "Function";
+"Field" = "Field";
+"Variable" = "Variable";
+"Constant" = "Constant";
+"Type" = "Type";
+"Package" = "Package";
+"Keyword" = "Keyword";
+"Snippet" = "Snippet";
+"Text" = "Text";
+
 /* MinorIDE/DatabaseSheet.swift */
 "Connect through an SSH tunnel" = "Connect through an SSH tunnel";
 "Production database" = "Production database";
@@ -300,6 +313,7 @@
 "Duplicate Line" = "Duplicate Line";
 "Move Line Up" = "Move Line Up";
 "Move Line Down" = "Move Line Down";
+"Show Completions" = "Show Completions";
 "Find and Replace…" = "Find and Replace…";
 "Find in Project…" = "Find in Project…";
 "Use Selection for Find" = "Use Selection for Find";

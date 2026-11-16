@@ -37,6 +37,13 @@ public enum FileChangeType: Int, Sendable {
 	case created = 1, changed = 2, deleted = 3
 }
 
+public struct CompletionSupport: Sendable, Equatable {
+	/// Single-byte trigger characters (".", ">", …).
+	public var triggerCharacters: Set<UInt8>
+	public var resolves: Bool
+	public var encoding: PositionEncoding
+}
+
 public enum LSPError: Error, Sendable {
 	case notRunning
 }
@@ -102,6 +109,7 @@ public final class LanguageServer: @unchecked Sendable {
 	private var activeProgress: Set<String> = []
 	private var caps: JSONValue = .null
 	private var encoding: PositionEncoding = .utf16
+	private var completion: CompletionSupport?
 	private var syncKind = 2
 	private var saveIncludesText = false
 	private var stderrTail = Data()
@@ -175,6 +183,8 @@ public final class LanguageServer: @unchecked Sendable {
 	public var capabilities: JSONValue { queue.sync { caps } }
 	public var positionEncoding: PositionEncoding { queue.sync { encoding } }
 	public var isRunning: Bool { queue.sync { ready } }
+	/// What the running server offers for completion; nil when it is not running or has no completion.
+	public var completionSupport: CompletionSupport? { queue.sync { ready ? completion : nil } }
 	public var processIdentifier: Int32? { queue.sync { rpc?.processIdentifier } }
 
 	private func launch() {
@@ -243,6 +253,12 @@ public final class LanguageServer: @unchecked Sendable {
 			saveIncludesText = o["save"]?["includeText"] == .bool(true)
 		default:
 			syncKind = 0
+		}
+		completion = caps["completionProvider"].flatMap { p in
+			guard case .object = p else { return nil }
+			let triggers = p["triggerCharacters"]?.arrayValue?.compactMap(\.stringValue) ?? []
+			return CompletionSupport(triggerCharacters: Set(triggers.compactMap { $0.utf8.count == 1 ? $0.utf8.first : nil }),
+			                         resolves: p["resolveProvider"] == .bool(true), encoding: encoding)
 		}
 		ready = true
 		handlers.log("running (\(encoding.rawValue))")
@@ -476,6 +492,19 @@ public final class LanguageServer: @unchecked Sendable {
 		],
 		"textDocument": [
 			"synchronization": ["dynamicRegistration": false, "didSave": true],
+			"completion": [
+				"contextSupport": true,
+				"completionItem": [
+					"snippetSupport": true,
+					"documentationFormat": ["plaintext"],
+					"deprecatedSupport": true,
+					"tagSupport": ["valueSet": [1]],
+					"preselectSupport": true,
+					"labelDetailsSupport": true,
+					"resolveSupport": ["properties": ["documentation", "detail", "additionalTextEdits"]],
+				],
+				"completionList": ["itemDefaults": ["editRange", "insertTextFormat"]],
+			],
 		],
 		"window": ["workDoneProgress": true],
 	]

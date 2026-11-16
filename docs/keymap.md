@@ -21,6 +21,7 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Duplikovat řádek | ⇧⌘D | Úpravy |
 | Přesunout řádek nahoru / dolů | ⌥⌘↑ / ⌥⌘↓ | Úpravy |
 | Zakomentovat výběr | ⌘/ | Úpravy |
+| Zobrazit doplnění (v seznamu ↑ ↓, Return/Tab vloží, Esc zavře; ve snippetu Tab / ⇧Tab na další / předchozí místo) | ⌃Space, ⌥Esc | Úpravy |
 | Najít… / Najít a nahradit… | ⌘F / ⌥⌘F | Úpravy › Najít |
 | Najít v projektu… (spodní panel Hledat; Return otevře výsledek, Delete ho vyřadí) | ⇧⌘F | Úpravy › Najít |
 | Najít další / předchozí | ⌘G / ⇧⌘G | Úpravy › Najít |

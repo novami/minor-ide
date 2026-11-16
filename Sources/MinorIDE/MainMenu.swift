@@ -60,6 +60,7 @@ enum MainMenu {
 			m.item(L("Duplicate Line"), #selector(EditorView.duplicateLines(_:)), "d", [.command, .shift])
 			m.item(L("Move Line Up"), #selector(EditorView.moveLinesUp(_:)), up, [.command, .option])
 			m.item(L("Move Line Down"), #selector(EditorView.moveLinesDown(_:)), down, [.command, .option])
+			m.item(L("Show Completions"), #selector(EditorView.showCompletions(_:)), " ", .control)
 			KeyboardLayout.bind(m.item(L("Comment Selection"), #selector(EditorView.toggleComment(_:)), "/"), keyCode: UInt16(kVK_ANSI_Slash))
 			m.addItem(.separator())
 			let find = m.item(L("Find"), nil)

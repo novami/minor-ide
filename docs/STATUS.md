@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (fáze 3 krok 2: gopls napojený na aplikaci; fáze 2 odložena na Apple Developer účet)
+**Poslední aktualizace:** 2026-11-17 (fáze 3 krok 3: napovídání; fáze 2 odložena na Apple Developer účet)
 
 ## Kde jsme
 
@@ -177,7 +177,11 @@ Známé mezery 3/1: požadavek se pošle po už zařazených změnách dokumentu
 
 Známé mezery 3/2: gopls 0.24 vyjednal UTF-16 (klient nabízí UTF-8, převody otestované); soubor ve dvou vnořených otevřených projektech posílá změny jen tomu, kdo ho otevřel naposled; soubory mimo projekt (samostatná okna) server nemají; diagnostiky (`publishDiagnostics`), `applyEdit` a `showMessageRequest` se zatím zahazují (3.7); instalace gopls nejde zrušit; po ruční instalaci se gopls hledá znovu až tlačítkem Zkontrolovat znovu v panelu; ruční kontrola v GUI (stavový řádek, panel, instalace) zbývá.
 
-**Další krok: fáze 3, krok 3** — 3.4 Napovídání: vlastní popup (NSPanel), trigger znaky, ⌃Space a ⌥Esc, lokální fuzzy filtrování (nový dotaz jen při `isIncomplete`), `completionItem/resolve` pro dokumentaci, snippety s Tab skoky, `additionalTextEdits` (auto-import). Výsledek zahodit, pokud se mezitím změnila `TextDocument.version`.
+**Fáze 3, krok 3 hotový** (2026-11-17): 3.4 Napovídání. `TextEngine/Snippet.swift` (syntaxe snippetů: `$1`, `${1:x}` vnořené, `${1|a,b|}`, `$0`, proměnné → výchozí text, transformace ignorované, escapy; `indented` pro víceřádkové), `LSPKit/Completion.swift` (`CompletionItem`/`CompletionList` vč. `itemDefaults`, `labelDetails`, `tags`, `merge(resolved:)`; `filtered(by:)` = `FuzzyQuery` nad `filterText`, pak `sortText`; `completionOffset` přepočítá rozsahy výsledku na aktuální text, když se mezitím psalo u kurzoru), `LanguageServer.completionSupport` (trigger znaky, `resolveProvider`, kódování) a schopnosti klienta (snippety, plaintext dokumentace, resolve, itemDefaults). `EditorKit/Snippets.swift` (`insertSnippet` s `additionalEdits` jako jeden krok Zpět, odsazení podle řádku; Tab/⇧Tab po zastávkách, stejné číslo = víc kurzorů, `$0` / Esc / Zpět / Tab mimo snippet sezení ukončí), háčky `commandInterceptor` a `onTypedText`, `inStringOrComment` veřejné. `MinorIDE/Completion.swift` (na část editoru: sezení od slovního znaku nebo trigger znaku mimo řetězce a komentáře, ⌃Space / ⌥Esc / Úpravy › Zobrazit doplnění; žije, dokud je kurzor ve psaném slově na stejném řádku — jinak se zahodí i s rozpracovaným výsledkem; nový dotaz jen při `isIncomplete`, jeden najednou; resolve vybrané položky pro dokumentaci; zavře se při ztrátě klíčového okna, scrollu a přepnutí části), `CompletionPopup.swift` (NSPanel bez rámečku, nikdy klíčový, dítě okna; řádky: písmeno druhu v barvě, popisek editorovým písmem, detail vpravo, přeškrtnutí zastaralých; dokumentace pod seznamem; pod kurzorem, nahoře když se nevejde; dvojklik vloží). Testy `SnippetTests`, `CompletionTests`, `SnippetSessionTests`. Naostro proti gopls (`MINORIDE_LSP_CHECK=1`, `~/MinorDLNA/internal/store/store.go`): `strings.ToUpp` + Return → `strings.ToUpper()` a přidaný import, psaní slova i tečky otevře seznam. Bench BUDGET OK (psaní p99 0,23 ms, Go 0,49 ms — šum oproti 0,10/0,19, cesta přidala jen dvě kontroly nil).
+
+Známé mezery 3/3: napovídání jen s jedním kurzorem; commit characters se nepoužívají; položka nevyřešená přes resolve se vloží bez pozdních `additionalTextEdits` (gopls je posílá hned); zástupná místa snippetu nejsou orámovaná (jen vybraná); VoiceOver neoznamuje změnu výběru v seznamu (panel není klíčový); ⌃Space může zabrat systémová zkratka přepnutí vstupního zdroje — zbývá ⌥Esc; ruční kontrola v aplikaci zbývá (dluh níže).
+
+**Další krok: fáze 3, krok 4** — 3.5 Proklik: ⌘+klik a klik kolečkem → `definition`, podtržení symbolu při držení ⌘, víc cílů → popup, klik na deklaraci → použití; ⌘B, ⌥⌘B (implementace), ⇧⌘B (typ), ⌥F7 (použití do panelu).
 
 **Dluh — ruční kontrola (odložena uživatelem 2026-11-16 znovu, udělat až po dokončení fáze 3):** 2b s uživatelem (spustit z Finderu: ⇧⌘O, ⇧⌘F včetně Nahradit vše, gutter a Vrátit, klonování, víc terminálů, zabezpečené zadávání) a zbylé ruční kontroly U2–U8.
 

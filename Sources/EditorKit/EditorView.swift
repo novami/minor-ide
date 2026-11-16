@@ -93,6 +93,12 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public var latencyMonitor: LatencyMonitor?
 	/// Carets moved or the text changed (the status bar shows the position); keep it cheap.
 	public var onCaretsChange: (() -> Void)?
+	/// Gets every command (key binding) first and returns true when it handled it (completion popup).
+	public var commandInterceptor: ((Selector) -> Bool)?
+	/// Called after text was typed (not pasted or replaced), with that text.
+	public var onTypedText: ((String) -> Void)?
+	/// Tab stops of the inserted snippet while Tab visits them.
+	var snippetSession: SnippetSession?
 	/// Folded regions as byte ranges (`Rope.foldRange`), sorted by start; nested folds allowed.
 	public internal(set) var folds: [Range<Int>] = []
 	/// Rows on screen after folding and wrapping.
@@ -548,6 +554,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		}
 		let firstLine = edit.firstLine, lastLine = edit.lastLine, oldLines = edit.oldLines, sameLines = edit.sameLines
 		if !findMatches.isEmpty { findMatches = changes.mapUntouched(findMatches) }
+		snippetSession?.map(through: changes)
 		var foldsChanged = false
 		if !folds.isEmpty {
 			let mapped = changes.mapUntouched(folds, closedEnd: true)
@@ -716,6 +723,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	}
 
 	public override func doCommand(by selector: Selector) {
+		if commandInterceptor?(selector) == true { return }
+		if snippetCommand(selector) { return }
 		accessibilityMove = EditorView.accessibilityMove(for: selector)
 		defer { accessibilityMove = nil }
 		var page: Int { max(1, Int(min(visibleRect.height, 1e6) / lineHeight) - 1) }
@@ -873,12 +882,14 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	@objc public func undo(_ sender: Any?) {
 		discardMarkedText()
+		snippetSession = nil
 		guard let step = document.history.undo() else { return }
 		for t in step.transactions.reversed() { apply(t.inverse) { _ in t.selectionsBefore } }
 	}
 
 	@objc public func redo(_ sender: Any?) {
 		discardMarkedText()
+		snippetSession = nil
 		guard let step = document.history.redo() else { return }
 		for t in step.transactions { apply(t.changes) { _ in t.selectionsAfter } }
 	}
@@ -928,6 +939,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			apply(ChangeSet([(range, text)]), kind: .other) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
 			return
 		}
+		defer { onTypedText?(text) }
 		if text.utf8.count == 1, language != nil, typePairCharacter(text.utf8.first!) { return }
 		replaceSelections(text.contains("\n") ? .other : .typing) { _ in text }
 	}
@@ -1020,6 +1032,7 @@ extension EditorView: NSMenuItemValidation {
 		case #selector(paste(_:)): NSPasteboard.general.string(forType: .string) != nil
 		case #selector(unfold(_:)), #selector(unfoldAll(_:)): !folds.isEmpty
 		case #selector(toggleComment(_:)): language != nil
+		case #selector(showCompletions(_:)): commandInterceptor != nil
 		case #selector(stopSpeaking(_:)): speech.isSpeaking
 		case #selector(moveLinesUp(_:)): selectedLineBlocks().first.map { $0.lowerBound > 0 } ?? false
 		case #selector(moveLinesDown(_:)): selectedLineBlocks().last.map { $0.upperBound < rope.lineCount - 1 } ?? false

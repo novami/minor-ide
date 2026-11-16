@@ -13,7 +13,8 @@ extension EditorView {
 		return highlighter.tokens(line: line, in: rope).first { $0.start < column && column < $0.end }?.kind
 	}
 
-	private func inStringOrComment(_ offset: Int) -> Bool {
+	/// Whether the offset is inside a string or comment token.
+	public func inStringOrComment(_ offset: Int) -> Bool {
 		guard let kind = tokenKind(around: offset) else { return false }
 		return kind == .string || kind == .comment || kind == .escape
 	}

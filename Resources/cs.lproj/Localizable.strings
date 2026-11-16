@@ -60,6 +60,19 @@
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "Verze jsou stejné.";
 
+/* MinorIDE/CompletionPopup.swift */
+"Completions" = "Návrhy doplnění";
+"Method" = "Metoda";
+"Function" = "Funkce";
+"Field" = "Pole";
+"Variable" = "Proměnná";
+"Constant" = "Konstanta";
+"Type" = "Typ";
+"Package" = "Balíček";
+"Keyword" = "Klíčové slovo";
+"Snippet" = "Šablona";
+"Text" = "Text";
+
 /* MinorIDE/DatabaseSheet.swift */
 "Connect through an SSH tunnel" = "Připojit přes SSH tunel";
 "Production database" = "Produkční databáze";
@@ -303,6 +316,7 @@
 "Duplicate Line" = "Duplikovat řádek";
 "Move Line Up" = "Přesunout řádek nahoru";
 "Move Line Down" = "Přesunout řádek dolů";
+"Show Completions" = "Zobrazit doplnění";
 "Find and Replace…" = "Najít a nahradit…";
 "Find in Project…" = "Najít v projektu…";
 "Use Selection for Find" = "Použít výběr pro hledání";

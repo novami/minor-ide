@@ -112,6 +112,12 @@ final class LanguageServices {
 
 	static func uri(_ url: URL) -> String { url.standardizedFileURL.absoluteString }
 
+	/// The running server that has `doc` open, with its URI there.
+	func endpoint(for doc: FileDocument) -> (server: LanguageServer, uri: String)? {
+		guard let server, let entry = opened[ObjectIdentifier(doc)], entry.doc === doc else { return nil }
+		return (server, entry.uri)
+	}
+
 	/// A request to the server about an open file (features of 3.4–3.7 build on this).
 	func request(_ method: String, _ params: JSONValue) async throws -> JSONValue {
 		guard let server else { throw LSPError.notRunning }
@@ -120,7 +126,7 @@ final class LanguageServices {
 
 	/// Snapshot check: waits for gopls to settle, edits `editor` in memory and asks for its
 	/// symbols; prints the state, the symbols and the end of the log.
-	func checkForSnapshot(_ editor: EditorView, url: URL) {
+	func checkForSnapshot(_ editor: EditorView, url: URL, completion: CompletionController?) {
 		let deadline = Date().addingTimeInterval(30)
 		func wait(_ done: () -> Bool) {
 			while !done() && Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
@@ -137,6 +143,30 @@ final class LanguageServices {
 		}
 		print("symbols:", names.suffix(5))
 		editor.undo(nil)
+		// Completion through the popup: an unimported package, accepted with Return.
+		let end = editor.rope.byteCount
+		editor.replace([(end..<end, "\nfunc minorideComplete() {\n\t_ = strings.ToUpp\n}\n")])
+		editor.setSelections(SelectionSet(caret: editor.rope.byteCount - 3))
+		editor.showCompletions(nil)
+		wait { completion?.isShowing == true }
+		_ = editor.commandInterceptor?(#selector(NSResponder.insertNewline(_:)))
+		let text = editor.rope.string
+		print("completion:", completion?.isShowing == false, text.split(separator: "\n").suffix(3).joined(separator: " | "),
+		      "import added:", text.contains("\"strings\""))
+		editor.undo(nil)
+		editor.undo(nil)
+		// Typing starts it: a word, then a trigger character.
+		let e2 = editor.rope.byteCount
+		editor.replace([(e2..<e2, "\nfunc minorideTyped() {\n\t\n}\n")])
+		editor.setSelections(SelectionSet(caret: editor.rope.byteCount - 3))
+		for c in "strin" { editor.insertText(String(c), replacementRange: NSRange(location: NSNotFound, length: 0)) }
+		wait { completion?.isShowing == true }
+		let word = completion?.isShowing == true
+		for c in "gs." { editor.insertText(String(c), replacementRange: NSRange(location: NSNotFound, length: 0)) }
+		wait { completion?.isShowing == true }
+		print("typed: word", word, "dot", completion?.isShowing == true)
+		_ = editor.commandInterceptor?(#selector(NSResponder.cancelOperation(_:)))
+		for _ in 0..<4 { editor.undo(nil) }
 		for line in log.suffix(8) { print("  ", line) }
 	}
 
