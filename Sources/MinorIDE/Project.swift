@@ -17,6 +17,10 @@ final class Project {
 	var onFiles: (([String]) -> Void)?
 	/// Called after the project was trusted or restricted (its windows update the banner).
 	var onTrustChange: [() -> Void] = []
+	/// Called when the checked-out branch changed (the status bars show it).
+	var onGitHeadChange: [() -> Void] = []
+	/// The checked-out branch; nil in Restricted Mode or outside a repository.
+	private(set) var gitHead: GitHead?
 	private var watcher: FileWatcher?
 	private let trust: ProjectTrust
 
@@ -25,6 +29,7 @@ final class Project {
 		self.trust = trust
 		isTrusted = trust.isTrusted(url)
 		watch()
+		refreshGitHead()
 	}
 
 	/// False = Restricted Mode (D18): nothing from the project may be run. Every feature that
@@ -35,6 +40,16 @@ final class Project {
 		try trust.setTrusted(trusted, url)
 		isTrusted = trusted
 		for handler in onTrustChange { handler() }
+		refreshGitHead()
+	}
+
+	/// Re-reads `HEAD` (only the file, no Git process). Called on start, trust change, window
+	/// activation and when FSEvents reports a `HEAD` in the project.
+	func refreshGitHead() {
+		let head = isTrusted ? GitHead.read(for: url) : nil
+		guard head != gitHead else { return }
+		gitHead = head
+		for handler in onGitHeadChange { handler() }
 	}
 
 	var name: String { root.name }
@@ -48,6 +63,7 @@ final class Project {
 	/// Re-reads loaded folders that FSEvents reported (or the parents of reported files).
 	private func changed(_ paths: [String]) {
 		onFiles?(paths)
+		if paths.contains(where: { $0.hasSuffix("/HEAD") }) { refreshGitHead() }
 		var folders: [FileNode] = []
 		for path in paths {
 			let u = URL(fileURLWithPath: path)

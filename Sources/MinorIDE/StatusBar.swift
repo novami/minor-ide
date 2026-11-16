@@ -3,7 +3,7 @@ import EditorKit
 import MinorCore
 import TextEngine
 
-/// Bar under the editor (plan: UX › Stavový řádek): cursor position on the left; language,
+/// Bar under the editor (plan: UX › Stavový řádek): Git branch and cursor position on the left; language,
 /// line endings, indentation and encoding (each a menu that changes it) and Restricted
 /// Mode on the right. Shows the focused pane's file.
 @MainActor
@@ -18,13 +18,17 @@ final class StatusBar: NSView {
 	private let restricted = NSButton()
 	/// Shows or hides the bottom panel (project windows only); lit while it is shown.
 	private let bottomPanel = NSButton()
+	/// Checked-out Git branch (trusted project in a repository only).
+	private let branchIcon = NSImageView()
+	private let branch = NSTextField(labelWithString: "")
+	private lazy var branchView = NSStackView(views: [branchIcon, branch])
 	private var updatePending = false
 
 	init() {
 		super.init(frame: .zero)
 		let separator = NSBox()
 		separator.boxType = .separator
-		for label in [position, language, readOnly] {
+		for label in [position, language, readOnly, branch] {
 			label.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 			label.textColor = .secondaryLabelColor
 			label.lineBreakMode = .byTruncatingTail
@@ -50,10 +54,19 @@ final class StatusBar: NSView {
 		bottomPanel.isHidden = true
 		setBottomPanelShown(false)
 
+		branchIcon.image = NSImage(systemSymbolName: "arrow.triangle.branch", accessibilityDescription: nil)
+		branchIcon.symbolConfiguration = .init(pointSize: NSFont.smallSystemFontSize, weight: .regular)
+		branchIcon.contentTintColor = .secondaryLabelColor
+		branchView.spacing = 3
+		branchView.isHidden = true
+		branchView.setAccessibilityElement(true)
+		branchView.setAccessibilityRole(.staticText)
+		branch.setContentCompressionResistancePriority(.defaultLow + 1, for: .horizontal)
+
 		readOnly.toolTip = L("Files larger than 256 MB open read-only.")
 		let right = NSStackView(views: [restricted, readOnly, language, lineEnding, indentation, encoding])
 		right.spacing = 10
-		let row = NSStackView(views: [bottomPanel, position, right])
+		let row = NSStackView(views: [bottomPanel, branchView, position, right])
 		row.distribution = .fill
 		row.spacing = 12
 		row.edgeInsets = NSEdgeInsets(top: 0, left: 10, bottom: 0, right: 6)
@@ -82,7 +95,7 @@ final class StatusBar: NSView {
 
 	/// What the bar shows, for snapshot runs.
 	var summary: String {
-		[position.stringValue, restricted.isHidden ? "" : restricted.title, readOnly.isHidden ? "" : readOnly.stringValue, language.stringValue,
+		[branchView.isHidden ? "" : branch.stringValue, position.stringValue, restricted.isHidden ? "" : restricted.title, readOnly.isHidden ? "" : readOnly.stringValue, language.stringValue,
 		 lineEnding.titleOfSelectedItem ?? lineEnding.itemTitle(at: 0), indentation.itemTitle(at: 0), encoding.itemTitle(at: 0)]
 			.filter { !$0.isEmpty }.joined(separator: " | ")
 	}
@@ -122,6 +135,7 @@ final class StatusBar: NSView {
 		updatePosition()
 		language.stringValue = doc.text.language?.name ?? L("Plain Text")
 		restricted.isHidden = owner.project.map { $0.isTrusted } ?? true
+		updateGitHead()
 		readOnly.isHidden = !doc.text.isReadOnly
 		lineEnding.isEnabled = !doc.text.isReadOnly
 		encoding.isEnabled = !doc.text.isReadOnly
@@ -193,6 +207,24 @@ final class StatusBar: NSView {
 	@objc private func setCharset(_ sender: NSMenuItem) {
 		guard let raw = sender.representedObject as? String, let charset = Charset(rawValue: raw) else { return }
 		owner?.document.setCharset(charset)
+	}
+
+	/// Shows the project's checked-out branch (hidden without one).
+	func updateGitHead() {
+		guard let head = owner?.project?.gitHead else {
+			branchView.isHidden = true
+			return
+		}
+		branch.stringValue = head.label
+		branchView.isHidden = false
+		switch head {
+		case .branch(let name):
+			branchView.toolTip = L("Git branch: %@", name)
+			branchView.setAccessibilityLabel(L("Git branch: %@", name))
+		case .detached(let hash):
+			branchView.toolTip = L("Detached HEAD at %@", hash)
+			branchView.setAccessibilityLabel(L("Detached HEAD at %@", head.label))
+		}
 	}
 
 	/// Called by the window whenever the bottom panel is shown or hidden.

@@ -422,6 +422,8 @@
 "Tabs (%d)" = "Tabs (%d)";
 "Encoding used when saving" = "Encoding used when saving";
 "Line %d, Column %d" = "Line %d, Column %d";
+"Git branch: %@" = "Git branch: %@";
+"Detached HEAD at %@" = "Detached HEAD at %@";
 
 /* MinorIDE/StatusBar.swift, MinorIDE/main.swift */
 "%d spaces|one" = "%d space";

@@ -424,6 +424,8 @@
 "Tabs (%d)" = "tabulátory: %d";
 "Encoding used when saving" = "Kódování použité při uložení";
 "Line %d, Column %d" = "Řádek %d, sloupec %d";
+"Git branch: %@" = "Větev Git: %@";
+"Detached HEAD at %@" = "Odpojená HEAD na %@";
 
 /* MinorIDE/StatusBar.swift, MinorIDE/main.swift */
 "%d spaces|one" = "%d mezera";

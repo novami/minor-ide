@@ -166,6 +166,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			self?.updateTrustBanner()
 			self?.statusBar.update()
 		}
+		project?.onGitHeadChange.append { [weak self] in self?.statusBar.updateGitHead() }
 		updateTrustBanner()
 	}
 
@@ -305,6 +306,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		attachTerminal()
 		revealInSidebar()
 		documents.forEach { $0.checkDisk() }
+		project?.refreshGitHead()
 	}
 
 	/// Shows the pane's bar when its file changed or vanished on disk while it has unsaved changes.
