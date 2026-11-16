@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (1f: připnuté nadřazené řádky)
+**Poslední aktualizace:** 2026-11-16 (1f: přístupnost)
 
 ## Kde jsme
 
@@ -131,7 +131,11 @@ Známé mezery po zalamování: ⌥+tažení (sloupec) a přístupnost počítaj
 
 Známé mezery po připnutých řádcích: Markdown a prostý text se řídí také odsazením (vnořené seznamy); zalomená hlavička ukáže jen první zobrazený řádek; vložený `<script>`/`<style>` bez odsazení se nepřipne; řádky se objeví skokem (bez „odsunutí“ další hlavičkou); přístupnost je nevidí; ruční kontrola (tmavý režim, klik, split, trackpad) zbývá.
 
-**Další krok (1f):** plná přístupnost (čtení po znacích/slovech/řádcích, Zvýšit kontrast, Omezit pohyb) a systémové textové funkce (Vyhledat ⌃⌘D, přetažení textu, výběr emoji).
+**Fáze 1f, krok 3 hotový — přístupnost** (2026-11-16): `EditorKit/Accessibility.swift` — při zalamování jsou řádky pro VoiceOver zobrazené řádky (`accessibilityRowRange`, bez zalomení řádky textu), `accessibilityStyleRange` (řádek), `setAccessibilitySelectedText`/`setAccessibilityValue` (Ovládání hlasem, jeden krok Zpět), oznámení editací s textem (`AXTextChangeValues`: smazáno/napsáno/vloženo, jen jedna změna, nejvýš 4096 bajtů). Zvýšit kontrast (`NSWorkspace…ShouldIncreaseContrast` nebo vysokokontrastní vzhled, sleduje se notifikace): barvy tokenů posunuté k černé/bílé na kontrast 7:1 proti pozadí (`Theme.rgba(_:contrast:against:)`), zvýraznění řádku 0,35 a shod 0,75. Omezit pohyb: pravý a dolní panel bez animace (kurzor bliká dál jako v systémových polích). Testy `AccessibilityTests`, checklist v `docs/editor-behaviors.md`. Bench BUDGET OK.
+
+Známé mezery po přístupnosti: vysoký kontrast nejde v testu nasimulovat (`NSAppearance` ho nevytvoří) — ruční kontrola; oznámení editace jen u jedné změny (víc kurzorů a Zpět se ohlásí bez textu); připnuté řádky, gutter a „…“ sbalení přístupnost nevidí; ⌥+tažení a ruční kontrola VoiceOveru se zalamováním zbývá.
+
+**Další krok (1f):** systémové textové funkce (Vyhledat ⌃⌘D a silný stisk, přetažení textu, výběr emoji; Služby, ⌘E a diktování už fungují — ověřit a zapsat do checklistu). Pak ruční kontrola 1f a fáze 2.
 
 **Fáze 1e:** z plánu zbývá ruční kontrola nových oken (uvítání, Nastavení, Místní historie, automatické ukládání, obnova, stavový řádek); `.minoride/local.json` až s prvním uživatelem (servery v 6b).
 

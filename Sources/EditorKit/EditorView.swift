@@ -101,6 +101,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public internal(set) var wraps: WrapMap?
 	var wrapObserver: (any NSObjectProtocol)?
 	var fontObserver: (any NSObjectProtocol)?
+	var contrastObserver: (any NSObjectProtocol)?
 	/// Header lines of folds, drawn with a placeholder after the text.
 	var foldedHeaders: Set<Int> = []
 
@@ -120,7 +121,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	let speech = AVSpeechSynthesizer()
 	/// The caret move in progress, for the VoiceOver notification.
 	var accessibilityMove: AccessibilityMove?
+	var accessibilityEdit: AccessibilityEdit?
 	var tokenColors: [NSColor?] = []
+	/// Increase Contrast is on; set with the token colours.
+	var highContrast = false
 	var colorGlyphs: [[CGGlyph]] = []
 	var colorPositions: [[CGPoint]] = []
 
@@ -157,6 +161,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		document.attach(self)
 		observeWrapSetting()
 		observeFontSetting()
+		observeContrastSetting()
 	}
 
 	@available(*, unavailable)
@@ -289,7 +294,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			let mid = (lo + hi) / 2
 			if findMatches[mid].upperBound < start { lo = mid + 1 } else { hi = mid }
 		}
-		ctx.setFillColor(NSColor.findHighlightColor.withAlphaComponent(0.45).cgColor)
+		ctx.setFillColor(NSColor.findHighlightColor.withAlphaComponent(highContrast ? 0.75 : 0.45).cgColor)
 		for m in findMatches[lo...] {
 			guard m.lowerBound <= end else { break }
 			for rect in rangeRects(m, lines: lines) { ctx.fill(rect) }
@@ -298,7 +303,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	/// Current-line highlight under carets, then selected ranges.
 	private func drawSelectionBackground(_ ctx: CGContext, _ visible: [Selection], lines: ClosedRange<Int>) {
-		ctx.setFillColor(NSColor.selectedTextBackgroundColor.withAlphaComponent(0.15).cgColor)
+		ctx.setFillColor(NSColor.selectedTextBackgroundColor.withAlphaComponent(highContrast ? 0.35 : 0.15).cgColor)
 		var lastHighlighted: CGFloat = -1
 		for s in visible where s.isEmpty {
 			let line = rope.line(containing: s.head)
@@ -506,6 +511,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		guard !changes.isEmpty else { return }
 		guard !isReadOnly else { NSSound.beep(); return }
 		let before = rope, selectionsBefore = selections
+		if accessibilityClientSeen { accessibilityEdit = AccessibilityEdit(changes, in: rope, kind: kind) }
 		apply(changes) { selectionsAfter($0) }
 		document.history.record(Transaction(changes, on: before, before: selectionsBefore, after: selections,
 		                           kind: kind, time: ProcessInfo.processInfo.systemUptime))

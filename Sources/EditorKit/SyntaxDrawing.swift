@@ -9,8 +9,38 @@ extension EditorView {
 	func updateTokenColors() {
 		let dark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 		let theme = dark ? Theme.dark : Theme.light
+		highContrast = increasedContrast
+		var background: (Double, Double, Double)?
+		if highContrast {
+			effectiveAppearance.performAsCurrentDrawingAppearance {
+				if let bg = NSColor.textBackgroundColor.usingColorSpace(.sRGB) {
+					background = (Double(bg.redComponent), Double(bg.greenComponent), Double(bg.blueComponent))
+				}
+			}
+		}
 		tokenColors = TokenKind.allCases.map { kind in
-			theme.rgba(kind).map { NSColor(srgbRed: $0.0, green: $0.1, blue: $0.2, alpha: $0.3) }
+			let rgba = background.map { theme.rgba(kind, contrast: 7, against: $0) } ?? theme.rgba(kind)
+			return rgba.map { NSColor(srgbRed: $0.0, green: $0.1, blue: $0.2, alpha: $0.3) }
+		}
+	}
+
+	/// Increase Contrast (System Settings › Accessibility › Display): token colours reach 7:1
+	/// against the background and highlights get stronger.
+	var increasedContrast: Bool {
+		if NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast { return true }
+		let match = effectiveAppearance.bestMatch(from: [.aqua, .darkAqua, .accessibilityHighContrastAqua, .accessibilityHighContrastDarkAqua])
+		return match == .accessibilityHighContrastAqua || match == .accessibilityHighContrastDarkAqua
+	}
+
+	func observeContrastSetting() {
+		contrastObserver = NSWorkspace.shared.notificationCenter.addObserver(
+			forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+			MainActor.assumeIsolated {
+				guard let self else { return }
+				self.updateTokenColors()
+				self.needsDisplay = true
+				self.sticky?.needsDisplay = true
+			}
 		}
 	}
 

@@ -339,12 +339,21 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 	@objc func toggleRightPanel(_ sender: Any?) {
 		guard let item = panels?.inspector else { return }
-		item.animator().isCollapsed.toggle()
+		togglePanel(item)
 	}
 
 	@objc func toggleBottomPanel(_ sender: Any?) {
 		guard let item = panels?.bottom else { return }
-		item.animator().isCollapsed.toggle()
+		togglePanel(item)
+	}
+
+	/// Panels slide in and out unless Reduce Motion is on.
+	private func togglePanel(_ item: NSSplitViewItem) {
+		if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+			item.isCollapsed.toggle()
+		} else {
+			item.animator().isCollapsed.toggle()
+		}
 	}
 
 	func validateMenuItem(_ item: NSMenuItem) -> Bool {

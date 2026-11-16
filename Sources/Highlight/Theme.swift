@@ -19,6 +19,30 @@ public struct Theme: Sendable, Codable, Equatable {
 		return (Double(v >> 24 & 0xFF) / 255, Double(v >> 16 & 0xFF) / 255, Double(v >> 8 & 0xFF) / 255, Double(v & 0xFF) / 255)
 	}
 
+	/// The kind's colour moved towards black or white (away from the background) until it
+	/// has at least `ratio` WCAG contrast against `background`; for Increase Contrast.
+	public func rgba(_ kind: TokenKind, contrast ratio: Double, against background: (Double, Double, Double)) -> (Double, Double, Double, Double)? {
+		guard let c = rgba(kind) else { return nil }
+		let bg = Self.luminance(background)
+		let target = bg > 0.18 ? 0.0 : 1.0
+		var t = 0.0, color = c
+		while Self.contrast(Self.luminance((color.0, color.1, color.2)), bg) < ratio, t < 1 {
+			t = min(1, t + 0.05)
+			color = (c.0 + (target - c.0) * t, c.1 + (target - c.1) * t, c.2 + (target - c.2) * t, c.3)
+		}
+		return color
+	}
+
+	/// WCAG relative luminance of an sRGB colour.
+	public static func luminance(_ c: (Double, Double, Double)) -> Double {
+		func linear(_ v: Double) -> Double { v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
+		return 0.2126 * linear(c.0) + 0.7152 * linear(c.1) + 0.0722 * linear(c.2)
+	}
+
+	public static func contrast(_ a: Double, _ b: Double) -> Double {
+		(max(a, b) + 0.05) / (min(a, b) + 0.05)
+	}
+
 	public static let light = try! Theme(json: """
 		{"name": "Light", "colors": {
 			"keyword": "#9C27B0", "type": "#00796B", "function": "#3949AB", "string": "#C62828",

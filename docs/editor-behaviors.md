@@ -64,3 +64,13 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Backspace v prázdném páru smaže oba znaky — `LanguageCommandTests.backspaceDeletesEmptyPair`
 - [x] Enter za `{ [ (` (v NEON i za `:`) přidá úroveň, mezi párem přesune zavírací závorku na vlastní řádek — `LanguageCommandTests.enterIndentsAfterBracketAndSplitsPair`
 - [x] Zavírací závorka na prázdném řádku ubere úroveň — `LanguageCommandTests.closingBracketOutdentsEmptyLine`
+
+## Přístupnost (1f)
+- [x] Role textové oblasti, aktuální řádek, výběr, počet znaků — `LayerTests.accessibilityReadsTheCurrentLine`
+- [x] Při zalamování jsou řádky pro VoiceOver zobrazené řádky (jako v systémových textových polích) — `AccessibilityTests.wrappedLinesAreRows`
+- [x] Ovládání hlasem a VoiceOver nahradí výběr jedním krokem Zpět — `AccessibilityTests.assistiveAppsReplaceTheSelection`
+- [x] Editace se oznamují s textem (VoiceOver přečte smazaný znak) — `AccessibilityTests.editsCarryTheirText`
+- [x] Pohyb kurzoru se oznamuje se směrem a krokem (znak, slovo, řádek) — ruční kontrola 2026-11-15
+- [x] Zvýšit kontrast: barvy syntaxe aspoň 7:1 proti pozadí, silnější zvýraznění řádku a shod — `AccessibilityTests.highContrastThemeReachesSevenToOne`
+- [ ] Omezit pohyb: panely bez animace — ruční kontrola
+- [ ] VoiceOver: čtení po znacích/slovech/řádcích a úprava souboru bez myši (i se zalamováním), Zvýšit kontrast na obrazovce — ruční kontrola

@@ -1,8 +1,9 @@
 import AppKit
 import TextEngine
 
-/// Basic text-area accessibility: VoiceOver reads the current line, the selection and
-/// characters under the caret. Ranges are UTF-16, as in NSTextView. Full support is in 1f.
+/// Text-area accessibility as in NSTextView: ranges are UTF-16, lines are display rows
+/// (a wrapped line is several), edits and caret moves are announced, and assistive apps
+/// (Voice Control, VoiceOver) can change the selection and replace text.
 extension EditorView {
 	public override func isAccessibilityElement() -> Bool { true }
 	public override func accessibilityRole() -> NSAccessibility.Role? { .textArea }
@@ -38,18 +39,62 @@ extension EditorView {
 
 	public override func accessibilityInsertionPointLineNumber() -> Int {
 		accessibilityClientSeen = true
-		return rope.line(containing: caret)
+		return accessibilityRow(of: caret)
 	}
 
 	public override func accessibilityLine(for index: Int) -> Int {
-		rope.line(containing: rope.byteOffset(ofUTF16: min(max(0, index), rope.utf16Count)))
+		accessibilityRow(of: rope.byteOffset(ofUTF16: min(max(0, index), rope.utf16Count)))
 	}
 
-	/// The line with its line break, so moving through lines covers the whole text.
-	public override func accessibilityRange(forLine line: Int) -> NSRange {
-		guard line >= 0, line < rope.lineCount else { return NSRange(location: NSNotFound, length: 0) }
+	/// The row with the line break of its line, so moving through rows covers the text.
+	public override func accessibilityRange(forLine row: Int) -> NSRange {
+		accessibilityRowRange(row).map(utf16Range) ?? NSRange(location: NSNotFound, length: 0)
+	}
+
+	/// The editor draws one font and colours only syntax, so a line is one style run.
+	public override func accessibilityStyleRange(for index: Int) -> NSRange {
+		let line = rope.line(containing: rope.byteOffset(ofUTF16: min(max(0, index), rope.utf16Count)))
 		let end = line + 1 < rope.lineCount ? rope.offset(ofLine: line + 1) : rope.byteCount
 		return utf16Range(rope.offset(ofLine: line)..<end)
+	}
+
+	/// Voice Control and VoiceOver replace the primary selection; one undo step.
+	public override func setAccessibilitySelectedText(_ string: String?) {
+		let range = selections.primary.range
+		apply(ChangeSet([(range, string ?? "")]), kind: .other) { cs in
+			SelectionSet(caret: cs.map(range.upperBound, bias: .after))
+		}
+	}
+
+	public override func setAccessibilityValue(_ value: Any?) {
+		guard let string = value as? String else { return }
+		apply(ChangeSet([(0..<rope.byteCount, string)]), kind: .other) { cs in
+			SelectionSet(caret: min(cs.map(caret, bias: .before), rope.byteCount))
+		}
+	}
+
+	/// Accessibility lines are display rows only while wrapping, else text lines.
+	private var accessibilityUsesRows: Bool { !(wraps?.isEmpty ?? true) }
+
+	func accessibilityRow(of offset: Int) -> Int {
+		accessibilityUsesRows ? row(ofOffset: offset) : rope.line(containing: offset)
+	}
+
+	func accessibilityRowRange(_ row: Int) -> Range<Int>? {
+		guard row >= 0 else { return nil }
+		if !accessibilityUsesRows {
+			guard row < rope.lineCount else { return nil }
+			let end = row + 1 < rope.lineCount ? rope.offset(ofLine: row + 1) : rope.byteCount
+			return rope.offset(ofLine: row)..<end
+		}
+		guard row < display.rowCount(lineCount: rope.lineCount) else { return nil }
+		let (line, segment) = display.position(atRow: row)
+		let b = breaks(ofLine: line)
+		let start = segment == 0 ? rope.offset(ofLine: line) : offset(ofUnit: b[segment - 1], line: line)
+		let end: Int
+		if segment < b.count { end = offset(ofUnit: b[segment], line: line) }
+		else { end = line + 1 < rope.lineCount ? rope.offset(ofLine: line + 1) : rope.byteCount }
+		return start..<max(start, end)
 	}
 
 	public override func accessibilityString(for range: NSRange) -> String? {
@@ -81,9 +126,19 @@ extension EditorView {
 	/// VoiceOver decides what to speak (the character, word or line reached) from the text
 	/// state keys NSTextView sends too; without them it stays silent on caret moves.
 	func postAccessibilityChange(edited: Bool) {
-		defer { accessibilityMove = nil }
+		defer { accessibilityMove = nil; accessibilityEdit = nil }
 		guard accessibilityClientSeen else { return }
-		if edited { NSAccessibility.post(element: self, notification: .valueChanged) }
+		if edited {
+			// The edit's text lets VoiceOver speak what was typed or deleted.
+			var editInfo: [NSAccessibility.NotificationUserInfoKey: Any]?
+			if let edit = accessibilityEdit {
+				var values: [[String: Any]] = []
+				if !edit.deleted.isEmpty { values.append(["AXTextEditType": 1, "AXTextChangeValue": edit.deleted]) }
+				if !edit.inserted.isEmpty { values.append(["AXTextEditType": edit.typed ? 3 : 2, "AXTextChangeValue": edit.inserted]) }
+				editInfo = [.init(rawValue: "AXTextStateChangeType"): 1, .init(rawValue: "AXTextChangeValues"): values]
+			}
+			NSAccessibility.post(element: self, notification: .valueChanged, userInfo: editInfo)
+		}
 		var info: [NSAccessibility.NotificationUserInfoKey: Any] = [:]
 		if let move = accessibilityMove, !edited {
 			info[.init(rawValue: "AXTextStateChangeType")] = move.extend ? 3 : 2 // selection extend / move
@@ -110,6 +165,23 @@ extension EditorView {
 		let boundary = name.contains("Beginning") || name.contains("EndOf") || name.contains("ToLeftEnd") || name.contains("ToRightEnd")
 		let direction: AccessibilityMove.Direction = boundary ? (back ? .beginning : .end) : (back ? .previous : .next)
 		return AccessibilityMove(extend: extend, direction: direction, granularity: granularity)
+	}
+}
+
+/// Text of a single-range edit for its announcement (long text is cut, as speech would be).
+struct AccessibilityEdit {
+	var deleted: String
+	var inserted: String
+	var typed: Bool
+
+	static let limit = 4096
+
+	init?(_ changes: ChangeSet, in rope: Rope, kind: EditKind) {
+		guard changes.changes.count == 1, let change = changes.changes.first else { return nil }
+		let range = change.range.lowerBound..<min(change.range.upperBound, change.range.lowerBound + Self.limit)
+		deleted = rope.string(in: rope.scalarBoundary(atOrBefore: range.lowerBound)..<rope.scalarBoundary(atOrBefore: range.upperBound))
+		inserted = String(decoding: change.text.prefix(Self.limit), as: UTF8.self)
+		typed = kind == .typing
 	}
 }
 
