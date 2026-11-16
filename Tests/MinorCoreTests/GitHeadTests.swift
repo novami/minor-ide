@@ -29,4 +29,10 @@ struct GitHeadTests {
 		try "gitdir: ../repo/.git/worktrees/wt\n".write(to: worktree.appendingPathComponent(".git"), atomically: true, encoding: .utf8)
 		#expect(GitHead.read(for: worktree) == .branch("topic"))
 	}
+
+	@Test func stopsAtTheRootOutsideRepositories() {
+		// The temporary folder is not in a repository; its URL's parents end in "/..".
+		let folder = FileManager.default.temporaryDirectory.appendingPathComponent("no-repo-\(UUID().uuidString)")
+		#expect(GitHead.gitDirectory(for: folder) == nil)
+	}
 }

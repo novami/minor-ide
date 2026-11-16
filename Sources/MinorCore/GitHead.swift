@@ -41,8 +41,9 @@ public enum GitHead: Equatable, Sendable {
 				let path = line.dropFirst(7).trimmingCharacters(in: .whitespaces)
 				return URL(fileURLWithPath: path, relativeTo: dir).standardizedFileURL
 			}
-			let parent = dir.deletingLastPathComponent()
-			if parent.path == dir.path { return nil }
+			// At the root a URL's parent can be "/.." instead of "/" itself.
+			let parent = dir.deletingLastPathComponent().standardizedFileURL
+			if dir.path == "/" || parent.path == dir.path { return nil }
 			dir = parent
 		}
 	}
