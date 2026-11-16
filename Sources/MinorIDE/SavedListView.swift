@@ -1,18 +1,45 @@
 import AppKit
 import DBKit
+import RemoteKit
 
-/// Saved database connections in the right panel: add, edit and delete them.
-/// Connections are shared by all windows (stored outside projects).
+/// One row of a `SavedListView`.
+struct SavedRow {
+	let id: UUID
+	let name: String
+	let detail: String
+	let symbol: String
+	let production: Bool
+}
+
+/// What a `SavedListView` lists and how it adds, edits and deletes items.
+struct SavedList {
+	let load: @MainActor () -> [SavedRow]
+	let didChange: Notification.Name
+	let add: @MainActor (NSWindow) -> Void
+	let edit: @MainActor (UUID, NSWindow) -> Void
+	let delete: @MainActor (UUID) async throws -> Void
+	let label: String
+	let addTitle: String
+	let deleteTitle: String
+	let deleteText: String
+	let emptyTitle: String
+	let emptyText: String
+}
+
+/// Saved items (databases, servers) in the right panel: add, edit and delete them.
+/// Items are shared by all windows (stored outside projects).
 @MainActor
-final class DatabaseListView: NSView, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
-	private var connections: [DatabaseConnection] = []
+final class SavedListView: NSView, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
+	private let list: SavedList
+	private var rows: [SavedRow] = []
 	private let table = NSTableView()
 	private let scroll = NSScrollView()
 	private let bar = NSStackView()
 	private let removeButton: NSButton
 	private var empty: NSView?
 
-	init() {
+	init(_ list: SavedList) {
+		self.list = list
 		removeButton = NSButton(image: NSImage(named: NSImage.removeTemplateName)!, target: nil, action: nil)
 		super.init(frame: .zero)
 		let column = NSTableColumn(identifier: .init("db"))
@@ -24,7 +51,7 @@ final class DatabaseListView: NSView, NSTableViewDataSource, NSTableViewDelegate
 		table.delegate = self
 		table.target = self
 		table.doubleAction = #selector(edit(_:))
-		table.setAccessibilityLabel(L("Databases"))
+		table.setAccessibilityLabel(list.label)
 		let menu = NSMenu()
 		menu.delegate = self
 		table.menu = menu
@@ -34,10 +61,10 @@ final class DatabaseListView: NSView, NSTableViewDataSource, NSTableViewDelegate
 		scroll.drawsBackground = false
 
 		let add = NSButton(image: NSImage(named: NSImage.addTemplateName)!, target: self, action: #selector(add(_:)))
-		add.toolTip = L("Add Database…")
+		add.toolTip = list.addTitle
 		removeButton.target = self
 		removeButton.action = #selector(delete(_:))
-		removeButton.toolTip = L("Delete Database…")
+		removeButton.toolTip = list.deleteTitle
 		for b in [add, removeButton] {
 			b.bezelStyle = .smallSquare
 			b.isBordered = false
@@ -60,7 +87,7 @@ final class DatabaseListView: NSView, NSTableViewDataSource, NSTableViewDelegate
 			bar.trailingAnchor.constraint(equalTo: trailingAnchor),
 			bar.bottomAnchor.constraint(equalTo: bottomAnchor),
 		])
-		NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .databasesDidChange, object: nil)
+		NotificationCenter.default.addObserver(self, selector: #selector(reload), name: list.didChange, object: nil)
 		reload()
 	}
 
@@ -69,21 +96,19 @@ final class DatabaseListView: NSView, NSTableViewDataSource, NSTableViewDelegate
 
 	@objc private func reload() {
 		let selected = clicked?.id
-		connections = Databases.store.load()
+		rows = list.load()
 		table.reloadData()
-		if let selected, let row = connections.firstIndex(where: { $0.id == selected }) {
+		if let selected, let row = rows.firstIndex(where: { $0.id == selected }) {
 			table.selectRowIndexes([row], byExtendingSelection: false)
 		}
 		removeButton.isEnabled = table.selectedRow >= 0
-		scroll.isHidden = connections.isEmpty
-		bar.isHidden = connections.isEmpty
+		scroll.isHidden = rows.isEmpty
+		bar.isHidden = rows.isEmpty
 		empty?.removeFromSuperview()
 		empty = nil
-		guard connections.isEmpty else { return }
-		let button = NSButton(title: L("Add Database…"), target: self, action: #selector(add(_:)))
-		let state = PanelView.emptyState(title: L("No Databases"),
-		                                 text: L("Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here."),
-		                                 button: button)
+		guard rows.isEmpty else { return }
+		let button = NSButton(title: list.addTitle, target: self, action: #selector(add(_:)))
+		let state = PanelView.emptyState(title: list.emptyTitle, text: list.emptyText, button: button)
 		state.translatesAutoresizingMaskIntoConstraints = false
 		addSubview(state)
 		NSLayoutConstraint.activate([
@@ -95,33 +120,34 @@ final class DatabaseListView: NSView, NSTableViewDataSource, NSTableViewDelegate
 	}
 
 	/// The right-clicked row, else the selected one.
-	private var clicked: DatabaseConnection? {
+	private var clicked: SavedRow? {
 		let row = table.clickedRow >= 0 ? table.clickedRow : table.selectedRow
-		return connections.indices.contains(row) ? connections[row] : nil
+		return rows.indices.contains(row) ? rows[row] : nil
 	}
 
 	@objc private func add(_ sender: Any?) {
 		guard let window else { return }
-		DatabaseSheet.present(on: window)
+		list.add(window)
 	}
 
 	@objc private func edit(_ sender: Any?) {
 		guard let window, let c = clicked else { return }
-		DatabaseSheet.present(on: window, editing: c)
+		list.edit(c.id, window)
 	}
 
 	@objc private func delete(_ sender: Any?) {
 		guard let window, let c = clicked else { return }
 		let alert = NSAlert()
 		alert.messageText = L("Delete “%@”?", c.name)
-		alert.informativeText = L("The connection and its password in the Keychain will be deleted. The database itself is not changed.")
+		alert.informativeText = list.deleteText
 		alert.addButton(withTitle: L("Delete")).hasDestructiveAction = true
 		alert.addButton(withTitle: L("Cancel"))
+		let list = list
 		alert.beginSheetModal(for: window) { response in
 			guard response == .alertFirstButtonReturn else { return }
 			Task { @MainActor in
 				do {
-					try await Databases.delete(c)
+					try await list.delete(c.id)
 				} catch {
 					NSAlert(error: error).beginSheetModal(for: window, completionHandler: nil)
 				}
@@ -138,25 +164,24 @@ final class DatabaseListView: NSView, NSTableViewDataSource, NSTableViewDelegate
 			menu.addItem(withTitle: L("Delete…"), action: #selector(delete(_:)), keyEquivalent: "").target = self
 			menu.addItem(.separator())
 		}
-		menu.addItem(withTitle: L("Add Database…"), action: #selector(add(_:)), keyEquivalent: "").target = self
+		menu.addItem(withTitle: list.addTitle, action: #selector(add(_:)), keyEquivalent: "").target = self
 	}
 
 	// MARK: Table
 
-	func numberOfRows(in tableView: NSTableView) -> Int { connections.count }
+	func numberOfRows(in tableView: NSTableView) -> Int { rows.count }
 
 	func tableViewSelectionDidChange(_ notification: Notification) {
 		removeButton.isEnabled = table.selectedRow >= 0
 	}
 
 	func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-		let c = connections[row]
-		let icon = NSImageView(image: NSImage(systemSymbolName: c.kind.isNetwork ? "cylinder.split.1x2" : "doc",
-		                                      accessibilityDescription: nil)!)
+		let c = rows[row]
+		let icon = NSImageView(image: NSImage(systemSymbolName: c.symbol, accessibilityDescription: nil)!)
 		icon.contentTintColor = c.production ? .systemRed : .secondaryLabelColor
 		let name = NSTextField(labelWithString: c.name)
 		name.lineBreakMode = .byTruncatingTail
-		var detail = c.summary
+		var detail = c.detail
 		if c.production { detail = L("Production") + " · " + detail }
 		let summary = NSTextField(labelWithString: detail)
 		summary.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
@@ -183,4 +208,49 @@ final class DatabaseListView: NSView, NSTableViewDataSource, NSTableViewDelegate
 		cell.setAccessibilityLabel(c.name + ", " + detail)
 		return cell
 	}
+}
+
+extension SavedList {
+	@MainActor static let databases = SavedList(
+		load: {
+			Databases.store.load().map {
+				SavedRow(id: $0.id, name: $0.name, detail: $0.summary,
+				         symbol: $0.kind.isNetwork ? "cylinder.split.1x2" : "doc", production: $0.production)
+			}
+		},
+		didChange: .databasesDidChange,
+		add: { DatabaseSheet.present(on: $0) },
+		edit: { id, window in
+			if let c = Databases.store.load().first(where: { $0.id == id }) { DatabaseSheet.present(on: window, editing: c) }
+		},
+		delete: { id in
+			if let c = Databases.store.load().first(where: { $0.id == id }) { try await Databases.delete(c) }
+		},
+		label: L("Databases"),
+		addTitle: L("Add Database…"),
+		deleteTitle: L("Delete Database…"),
+		deleteText: L("The connection and its password in the Keychain will be deleted. The database itself is not changed."),
+		emptyTitle: L("No Databases"),
+		emptyText: L("Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here."))
+
+	@MainActor static let servers = SavedList(
+		load: {
+			Servers.store.load().map {
+				SavedRow(id: $0.id, name: $0.name, detail: $0.summary, symbol: "server.rack", production: $0.production)
+			}
+		},
+		didChange: .serversDidChange,
+		add: { ServerSheet.present(on: $0) },
+		edit: { id, window in
+			if let s = Servers.store.load().first(where: { $0.id == id }) { ServerSheet.present(on: window, editing: s) }
+		},
+		delete: { id in
+			if let s = Servers.store.load().first(where: { $0.id == id }) { try await Servers.delete(s) }
+		},
+		label: L("Servers"),
+		addTitle: L("Add Server…"),
+		deleteTitle: L("Delete Server…"),
+		deleteText: L("The server and its password in the Keychain will be deleted. Files on the server are not changed."),
+		emptyTitle: L("No Servers"),
+		emptyText: L("Files on servers connected over SFTP or FTPS will appear here."))
 }

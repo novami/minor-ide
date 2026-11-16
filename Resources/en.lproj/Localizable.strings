@@ -27,55 +27,46 @@
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "The versions are identical.";
 
-/* MinorIDE/DatabaseListView.swift */
-"Databases" = "Databases";
-"Add Database…" = "Add Database…";
-"Delete Database…" = "Delete Database…";
-
-/* MinorIDE/DatabaseListView.swift, MinorIDE/PanelView.swift */
-"No Databases" = "No Databases";
-"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here.";
-
-/* MinorIDE/DatabaseListView.swift */
-"Delete “%@”?" = "Delete “%@”?";
-"The connection and its password in the Keychain will be deleted. The database itself is not changed." = "The connection and its password in the Keychain will be deleted. The database itself is not changed.";
-"Delete" = "Delete";
-
-/* MinorIDE/DatabaseListView.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Cancel";
-
-/* MinorIDE/DatabaseListView.swift */
-"Edit…" = "Edit…";
-"Delete…" = "Delete…";
-"Production" = "Production";
-
 /* MinorIDE/DatabaseSheet.swift */
 "Connect through an SSH tunnel" = "Connect through an SSH tunnel";
 "Production database" = "Production database";
 
-/* MinorIDE/DatabaseSheet.swift, MinorIDE/SettingsWindow.swift */
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift, MinorIDE/SettingsWindow.swift */
 "Add" = "Add";
 
-/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift, MinorIDE/ServerSheet.swift */
 "Save" = "Save";
 
-/* MinorIDE/DatabaseSheet.swift */
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Required" = "Required";
 "From SSH configuration" = "From SSH configuration";
 "Stored in the Keychain" = "Stored in the Keychain";
 "Choose…" = "Choose…";
 "Port:" = "Port:";
+
+/* MinorIDE/DatabaseSheet.swift */
 "Shown in red and opened read-only by default." = "Shown in red and opened read-only by default.";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Type:" = "Type:";
 "Name:" = "Name:";
 "Host:" = "Host:";
 "User:" = "User:";
 "Password:" = "Password:";
+
+/* MinorIDE/DatabaseSheet.swift */
 "Database:" = "Database:";
 "File:" = "File:";
 "SSH Host:" = "SSH Host:";
 "SSH User:" = "SSH User:";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Key File:" = "Key File:";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Cancel";
+
+/* MinorIDE/DatabaseSheet.swift */
 "Add Database" = "Add Database";
 "Edit Database" = "Edit Database";
 "Choose the SQLite database file." = "Choose the SQLite database file.";
@@ -286,9 +277,19 @@
 
 /* MinorIDE/PanelView.swift */
 "Database" = "Database";
+
+/* MinorIDE/PanelView.swift, MinorIDE/SavedListView.swift */
+"No Databases" = "No Databases";
+"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here.";
+
+/* MinorIDE/PanelView.swift */
 "Server" = "Server";
+
+/* MinorIDE/PanelView.swift, MinorIDE/SavedListView.swift */
 "No Servers" = "No Servers";
 "Files on servers connected over SFTP or FTPS will appear here." = "Files on servers connected over SFTP or FTPS will appear here.";
+
+/* MinorIDE/PanelView.swift */
 "Terminal" = "Terminal";
 "No Terminal" = "No Terminal";
 "A terminal in the project folder will appear here." = "A terminal in the project folder will appear here.";
@@ -305,6 +306,34 @@
 "Start a new shell in the project folder." = "Start a new shell in the project folder.";
 "In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder." = "In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder.";
 "Start Terminal" = "Start Terminal";
+
+/* MinorIDE/SavedListView.swift */
+"Delete “%@”?" = "Delete “%@”?";
+"Delete" = "Delete";
+"Edit…" = "Edit…";
+"Delete…" = "Delete…";
+"Production" = "Production";
+"Databases" = "Databases";
+"Add Database…" = "Add Database…";
+"Delete Database…" = "Delete Database…";
+"The connection and its password in the Keychain will be deleted. The database itself is not changed." = "The connection and its password in the Keychain will be deleted. The database itself is not changed.";
+"Servers" = "Servers";
+"Add Server…" = "Add Server…";
+"Delete Server…" = "Delete Server…";
+"The server and its password in the Keychain will be deleted. Files on the server are not changed." = "The server and its password in the Keychain will be deleted. Files on the server are not changed.";
+
+/* MinorIDE/ServerSheet.swift */
+"FTPS (FTP over TLS)" = "FTPS (FTP over TLS)";
+"Production server" = "Production server";
+"SSH Key" = "SSH Key";
+"Password" = "Password";
+"Login folder" = "Login folder";
+"Shown in red; uploads ask for confirmation." = "Shown in red; uploads ask for confirmation.";
+"Log In With:" = "Log In With:";
+"Remote Folder:" = "Remote Folder:";
+"Add Server" = "Add Server";
+"Edit Server" = "Edit Server";
+"Choose the private key for the server." = "Choose the private key for the server.";
 
 /* MinorIDE/SettingsWindow.swift */
 "General" = "General";

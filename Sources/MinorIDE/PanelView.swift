@@ -140,7 +140,8 @@ extension PanelView {
 			        emptyText: L("Files on servers connected over SFTP or FTPS will appear here.")),
 		], label: L("Right Panel"), defaultsKey: "InspectorSection",
 		   hide: (#selector(DocumentWindow.toggleRightPanel(_:)), "chevron.right", L("Hide Right Panel")))
-		panel.setContent(DatabaseListView(), at: 0)
+		panel.setContent(SavedListView(.databases), at: 0)
+		panel.setContent(SavedListView(.servers), at: 1)
 		return panel
 	}
 

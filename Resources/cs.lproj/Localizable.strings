@@ -28,55 +28,46 @@
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "Verze jsou stejné.";
 
-/* MinorIDE/DatabaseListView.swift */
-"Databases" = "Databáze";
-"Add Database…" = "Přidat databázi…";
-"Delete Database…" = "Smazat databázi…";
-
-/* MinorIDE/DatabaseListView.swift, MinorIDE/PanelView.swift */
-"No Databases" = "Žádné databáze";
-"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Tady se zobrazí připojení k databázím MySQL, MariaDB, PostgreSQL a SQLite.";
-
-/* MinorIDE/DatabaseListView.swift */
-"Delete “%@”?" = "Smazat „%@“?";
-"The connection and its password in the Keychain will be deleted. The database itself is not changed." = "Smaže se spojení a jeho heslo v Klíčence. Samotná databáze se nezmění.";
-"Delete" = "Smazat";
-
-/* MinorIDE/DatabaseListView.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Zrušit";
-
-/* MinorIDE/DatabaseListView.swift */
-"Edit…" = "Upravit…";
-"Delete…" = "Smazat…";
-"Production" = "Produkce";
-
 /* MinorIDE/DatabaseSheet.swift */
 "Connect through an SSH tunnel" = "Připojit přes SSH tunel";
 "Production database" = "Produkční databáze";
 
-/* MinorIDE/DatabaseSheet.swift, MinorIDE/SettingsWindow.swift */
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift, MinorIDE/SettingsWindow.swift */
 "Add" = "Přidat";
 
-/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift, MinorIDE/ServerSheet.swift */
 "Save" = "Uložit";
 
-/* MinorIDE/DatabaseSheet.swift */
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Required" = "Povinné";
 "From SSH configuration" = "Podle konfigurace SSH";
 "Stored in the Keychain" = "Uloží se do Klíčenky";
 "Choose…" = "Vybrat…";
 "Port:" = "Port:";
+
+/* MinorIDE/DatabaseSheet.swift */
 "Shown in red and opened read-only by default." = "Zobrazí se červeně a ve výchozím stavu se otevře jen pro čtení.";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Type:" = "Typ:";
 "Name:" = "Název:";
 "Host:" = "Hostitel:";
 "User:" = "Uživatel:";
 "Password:" = "Heslo:";
+
+/* MinorIDE/DatabaseSheet.swift */
 "Database:" = "Databáze:";
 "File:" = "Soubor:";
 "SSH Host:" = "SSH hostitel:";
 "SSH User:" = "SSH uživatel:";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/ServerSheet.swift */
 "Key File:" = "Soubor s klíčem:";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Zrušit";
+
+/* MinorIDE/DatabaseSheet.swift */
 "Add Database" = "Přidat databázi";
 "Edit Database" = "Upravit databázi";
 "Choose the SQLite database file." = "Vyberte soubor databáze SQLite.";
@@ -288,9 +279,19 @@
 
 /* MinorIDE/PanelView.swift */
 "Database" = "Databáze";
+
+/* MinorIDE/PanelView.swift, MinorIDE/SavedListView.swift */
+"No Databases" = "Žádné databáze";
+"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Tady se zobrazí připojení k databázím MySQL, MariaDB, PostgreSQL a SQLite.";
+
+/* MinorIDE/PanelView.swift */
 "Server" = "Server";
+
+/* MinorIDE/PanelView.swift, MinorIDE/SavedListView.swift */
 "No Servers" = "Žádné servery";
 "Files on servers connected over SFTP or FTPS will appear here." = "Tady se zobrazí soubory na serverech připojených přes SFTP nebo FTPS.";
+
+/* MinorIDE/PanelView.swift */
 "Terminal" = "Terminál";
 "No Terminal" = "Žádný terminál";
 "A terminal in the project folder will appear here." = "Tady se zobrazí terminál ve složce projektu.";
@@ -307,6 +308,34 @@
 "Start a new shell in the project folder." = "Spusťte nový shell ve složce projektu.";
 "In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder." = "V Omezeném režimu se terminál nespouští sám, protože výzva shellu může ve složce projektu spustit Git.";
 "Start Terminal" = "Spustit terminál";
+
+/* MinorIDE/SavedListView.swift */
+"Delete “%@”?" = "Smazat „%@“?";
+"Delete" = "Smazat";
+"Edit…" = "Upravit…";
+"Delete…" = "Smazat…";
+"Production" = "Produkce";
+"Databases" = "Databáze";
+"Add Database…" = "Přidat databázi…";
+"Delete Database…" = "Smazat databázi…";
+"The connection and its password in the Keychain will be deleted. The database itself is not changed." = "Smaže se spojení a jeho heslo v Klíčence. Samotná databáze se nezmění.";
+"Servers" = "Servery";
+"Add Server…" = "Přidat server…";
+"Delete Server…" = "Smazat server…";
+"The server and its password in the Keychain will be deleted. Files on the server are not changed." = "Server a jeho heslo v Klíčence budou smazány. Soubory na serveru se nezmění.";
+
+/* MinorIDE/ServerSheet.swift */
+"FTPS (FTP over TLS)" = "FTPS (FTP přes TLS)";
+"Production server" = "Produkční server";
+"SSH Key" = "Klíč SSH";
+"Password" = "Heslo";
+"Login folder" = "Domovská složka";
+"Shown in red; uploads ask for confirmation." = "Zobrazí se červeně, nahrávání vyžaduje potvrzení.";
+"Log In With:" = "Přihlášení:";
+"Remote Folder:" = "Vzdálená složka:";
+"Add Server" = "Přidat server";
+"Edit Server" = "Upravit server";
+"Choose the private key for the server." = "Vyberte soukromý klíč pro server.";
 
 /* MinorIDE/SettingsWindow.swift */
 "General" = "Obecné";

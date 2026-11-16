@@ -1,8 +1,9 @@
 import Foundation
+import MinorCore
 
 /// A saved database connection. Passwords are never part of it: they live in the Keychain
 /// under `passwordID`.
-public struct DatabaseConnection: Codable, Sendable, Equatable, Identifiable {
+public struct DatabaseConnection: SavedItem, Equatable {
 	public enum Kind: String, Codable, Sendable, CaseIterable {
 		case mysql, postgresql, sqlite
 
@@ -82,51 +83,11 @@ public struct DatabaseConnection: Codable, Sendable, Equatable, Identifiable {
 	}
 }
 
-/// Saved connections, stored outside every project (like `trusted.json`) and without
-/// passwords. The file is read on every query, so all windows agree.
-public struct ConnectionStore: Sendable {
-	public let storeURL: URL
+/// Saved connections in `databases.json` (see `SavedItemStore`).
+public typealias ConnectionStore = SavedItemStore<DatabaseConnection>
 
-	public init(storeURL: URL = ConnectionStore.defaultURL) {
-		self.storeURL = storeURL
-	}
-
-	public static var defaultURL: URL {
-		FileManager.default.homeDirectoryForCurrentUser
-			.appendingPathComponent("Library/Application Support/MinorIDE/databases.json")
-	}
-
-	private struct Store: Codable {
-		var databases: [DatabaseConnection]
-	}
-
-	/// Connections sorted by name; an unreadable file has none.
-	public func load() -> [DatabaseConnection] {
-		guard let data = try? Data(contentsOf: storeURL),
-		      let store = try? JSONDecoder().decode(Store.self, from: data) else { return [] }
-		return store.databases
-	}
-
-	/// Adds the connection or replaces the one with the same id.
-	public func save(_ connection: DatabaseConnection) throws {
-		var all = load()
-		if let i = all.firstIndex(where: { $0.id == connection.id }) {
-			all[i] = connection
-		} else {
-			all.append(connection)
-		}
-		try write(all)
-	}
-
-	public func remove(id: UUID) throws {
-		try write(load().filter { $0.id != id })
-	}
-
-	private func write(_ all: [DatabaseConnection]) throws {
-		try FileManager.default.createDirectory(at: storeURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-		let encoder = JSONEncoder()
-		encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-		let sorted = all.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-		try encoder.encode(Store(databases: sorted)).write(to: storeURL, options: .atomic)
+extension SavedItemStore where Item == DatabaseConnection {
+	public init(storeURL: URL = ConnectionStore.defaultURL("databases.json")) {
+		self.init(storeURL: storeURL, key: "databases")
 	}
 }
