@@ -19,6 +19,7 @@ let package = Package(
 		.target(name: "DBKit", dependencies: ["MinorCore"]),
 		.target(name: "SecretsKit"),
 		.target(name: "RemoteKit", dependencies: ["MinorCore"]),
+		.target(name: "LSPKit", dependencies: ["MinorCore", "TextEngine"]),
 		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit", "Highlight", "SecretsKit", "DBKit", "RemoteKit",
 		                                                .product(name: "SwiftTerm", package: "SwiftTerm")]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
@@ -26,6 +27,7 @@ let package = Package(
 		.testTarget(name: "DBKitTests", dependencies: ["DBKit"]),
 		.testTarget(name: "SecretsKitTests", dependencies: ["SecretsKit"]),
 		.testTarget(name: "RemoteKitTests", dependencies: ["RemoteKit"]),
+		.testTarget(name: "LSPKitTests", dependencies: ["LSPKit", "MinorCore", "TextEngine"]),
 		.testTarget(name: "EditorKitTests", dependencies: ["EditorKit", "MinorCore"]),
 		.testTarget(name: "HighlightTests", dependencies: ["Highlight", "TextEngine"], exclude: ["Golden"]),
 	]
