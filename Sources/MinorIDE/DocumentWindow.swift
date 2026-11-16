@@ -26,6 +26,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	private var bottomPanel: PanelView?
 	private var rightPanelButton: NSButton?
 	private var animatingPanels = 0
+	/// Position and size: one per project (its tabs share the frame), one for loose files.
+	private var frameKeeper: WindowFrameKeeper!
 
 	/// The first pane's editor; `splitEditor` is the second pane's.
 	var editor: EditorView { panes[0].editor }
@@ -140,6 +142,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		observePanels()
 		attachTerminal()
 		window.delegate = self
+		frameKeeper = WindowFrameKeeper(window, name: project.map { "project:" + $0.url.path } ?? "file")
 		configure(first)
 		window.closesPane = { [weak self] in self?.closeFocusedPane() ?? false }
 		NotificationCenter.default.addObserver(self, selector: #selector(documentStateChanged(_:)),
@@ -241,11 +244,13 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 	private var placed = false
 
-	/// Brings the window to front; the first time it is centred, or cascaded from `after`
-	/// like new document windows in standard Mac apps.
-	func show(after previous: NSWindow? = nil) {
+	/// Brings the window to front; the first time where it was last (`restoring`), otherwise
+	/// centred or cascaded from `after` like new document windows in standard Mac apps.
+	func show(after previous: NSWindow? = nil, restoring: Bool = false) {
 		if !placed {
-			if let previous {
+			if restoring, frameKeeper.restore() {
+				// where it was last
+			} else if let previous {
 				window.setFrameTopLeftPoint(previous.cascadeTopLeft(from: NSPoint(x: previous.frame.minX, y: previous.frame.maxY)))
 			} else {
 				window.center()
@@ -253,6 +258,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			placed = true
 		}
 		window.makeKeyAndOrderFront(nil)
+		frameKeeper.finishRestore()
 		window.makeFirstResponder(find.editor)
 		// A project opened without a file: ready to type in the terminal.
 		if url == nil { focusTerminal() }

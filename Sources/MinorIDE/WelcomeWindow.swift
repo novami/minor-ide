@@ -10,9 +10,16 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 	private var table: RecentTable?
 	private var emptyLabel: NSTextField?
 	private var recent: [URL] = []
+	private var frameKeeper: WindowFrameKeeper?
 
 	func show() {
-		if window == nil { window = makeWindow() }
+		if window == nil {
+			let window = makeWindow()
+			let keeper = WindowFrameKeeper(window, name: "welcome")
+			if !keeper.restore() { window.center() }
+			self.window = window
+			frameKeeper = keeper
+		}
 		reload()
 		window?.makeKeyAndOrderFront(nil)
 		if let table { window?.makeFirstResponder(table) }
@@ -56,7 +63,6 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 			list.widthAnchor.constraint(equalToConstant: 300),
 		])
 		window.contentView = content
-		window.center()
 		return window
 	}
 

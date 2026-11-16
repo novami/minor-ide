@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	func applicationDidFinishLaunching(_ notification: Notification) {
 		NSApp.mainMenu = MainMenu.build(target: self)
 		let args = CommandLine.arguments.dropFirst()
+		WindowFrameKeeper.enabled = !utilityMode
 		if utilityMode { setvbuf(stdout, nil, _IOLBF, 0) } // results survive even if the run is killed
 		if args.first == "--l10n-sample" { // prints plural forms (checks .stringsdict in the bundle)
 			print([0, 1, 2, 3, 4, 5, 11, 21, 22, 25, 101].map { LP("%d spaces", one: "%d space", $0) }.joined(separator: ", "))
@@ -333,8 +334,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	private func add(_ doc: DocumentWindow) {
 		let previous = documents.last?.window
+		// A loose file takes the saved place only when no other loose file window is open.
+		let restoring = doc.project != nil || !documents.contains { $0.project == nil && $0.window.isVisible }
 		documents.append(doc)
-		doc.show(after: previous)
+		doc.show(after: previous, restoring: restoring)
 		observeClose(doc)
 		if doc.project == nil && doc.url != nil { watchLooseFiles() }
 		WelcomeWindow.shared.close() // after the new window shows, so the app does not quit
