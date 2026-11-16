@@ -19,6 +19,7 @@ cp .build/release/MinorIDE "$APP/Contents/MacOS/MinorIDE"
 cp server/bin/minoride-server "$APP/Contents/Helpers/minoride-server"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/" # drawn by tools/make-icon.swift
+cp -R Resources/Licenses "$APP/Contents/Resources/" # licenses of bundled third-party code
 
 # Help Book (Help › MinorIDE Help): pages from Resources/Help, indexed for Help Viewer and menu search.
 HELP="$APP/Contents/Resources/MinorIDE.help/Contents"

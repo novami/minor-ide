@@ -91,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		watchUserSettings()
 		observeFocusForAutoSave()
 		ToolsModel.shared.loadEnvironment() // D22: PATH of the login shell, for tools started later
+		SecureKeyboardEntry.observe()
 		if !utilityMode {
 			let history = LocalHistory()
 			FileDocument.history = history
@@ -640,8 +641,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		open(url)
 	}
 
+	@objc func toggleSecureKeyboardEntry(_ sender: Any?) { SecureKeyboardEntry.isEnabled.toggle() }
+
 	func validateMenuItem(_ item: NSMenuItem) -> Bool {
 		if item.action == #selector(reopenClosedTab(_:)) { return !closedFiles.isEmpty }
+		if item.action == #selector(toggleSecureKeyboardEntry(_:)) {
+			item.state = SecureKeyboardEntry.isEnabled ? .on : .off
+			return true
+		}
 		if item.action == #selector(toggleWrapLines(_:)) {
 			item.state = EditorView.wrapsLines ? .on : .off
 			return true

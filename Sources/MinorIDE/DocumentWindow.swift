@@ -406,6 +406,15 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		if bottomPanel?.selected == PanelView.searchSection { project?.findInFiles.focus(query: nil) } else { focusTerminal(evenIfCollapsed: true) }
 	}
 
+	/// View › New Terminal Tab (⌃⇧`): another shell in the bottom panel.
+	@objc func newTerminalTab(_ sender: Any?) {
+		guard let project, let bottomPanel, let item = panels?.bottom else { return }
+		attachTerminal()
+		bottomPanel.select(PanelView.terminalSection)
+		if item.isCollapsed { togglePanel(item) }
+		project.terminal.newTab()
+	}
+
 	/// Edit › Find › Find in Project… (⇧⌘F): the Search section of the bottom panel, with the
 	/// editor's selection as the query.
 	@objc func findInProject(_ sender: Any?) {
@@ -462,7 +471,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			return splitEditor != nil
 		case #selector(showLocalHistory(_:)):
 			return document.url != nil && FileDocument.history != nil
-		case #selector(openQuickly(_:)), #selector(findInProject(_:)):
+		case #selector(openQuickly(_:)), #selector(findInProject(_:)), #selector(newTerminalTab(_:)):
 			return project != nil
 		case #selector(toggleProjectTrust(_:)):
 			guard let project else { return false }

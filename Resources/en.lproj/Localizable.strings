@@ -18,6 +18,8 @@
 "issues on GitHub" = "issues on GitHub";
 "To developers: pull requests from your fork are welcome." = "To developers: pull requests from your fork are welcome.";
 "To the open source projects MinorIDE is built with: Swift, Go and SQLite." = "To the open source projects MinorIDE is built with: Swift, Go and SQLite.";
+"Terminal: " = "Terminal: ";
+"MIT License" = "MIT License";
 "Support MinorIDE" = "Support MinorIDE";
 "GitHub Sponsors" = "GitHub Sponsors";
 "Bitcoin:" = "Bitcoin:";
@@ -239,6 +241,7 @@
 /* MinorIDE/MainMenu.swift */
 "About MinorIDE" = "About MinorIDE";
 "Settings…" = "Settings…";
+"Secure Keyboard Entry" = "Secure Keyboard Entry";
 "Services" = "Services";
 "Hide MinorIDE" = "Hide MinorIDE";
 "Hide Others" = "Hide Others";
@@ -304,6 +307,11 @@
 "Tab Width" = "Tab Width";
 "View" = "View";
 "Show Sidebar" = "Show Sidebar";
+
+/* MinorIDE/MainMenu.swift, MinorIDE/ProjectTerminal.swift */
+"New Terminal Tab" = "New Terminal Tab";
+
+/* MinorIDE/MainMenu.swift */
 "Split Editor Side by Side" = "Split Editor Side by Side";
 "Split Editor Top and Bottom" = "Split Editor Top and Bottom";
 "Close Editor Split" = "Close Editor Split";
@@ -359,6 +367,9 @@
 "Project Files" = "Project Files";
 
 /* MinorIDE/ProjectTerminal.swift */
+"Terminal Tabs" = "Terminal Tabs";
+"Close Terminal Tab" = "Close Terminal Tab";
+"Shell %d" = "Shell %d";
 "The Shell Exited" = "The Shell Exited";
 "Terminal Not Started" = "Terminal Not Started";
 "Start a new shell in the project folder." = "Start a new shell in the project folder.";

@@ -28,6 +28,7 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Přejít na výběr | ⌘J | Úpravy › Najít |
 | Sbalit / Rozbalit | ⌥⌘← / ⌥⌘→ | Zobrazení › Sbalování kódu |
 | Sbalit vše / Rozbalit vše | ⌥⇧⌘← / ⌥⇧⌘→ | Zobrazení › Sbalování kódu |
+| Nový panel terminálu (víc shellů ve spodním panelu) | ⌃⇧` | Zobrazení |
 | Rozdělit editor vedle sebe / pod sebe | — | Zobrazení |
 | Otevřít soubor ze stromu ve druhé části | ⌥+klik, ⌥Return | kontextové menu stromu |
 | Zavřít část rozděleného editoru | ⌘W (zavírací tlačítko zavře okno) | Soubor › Zavřít |

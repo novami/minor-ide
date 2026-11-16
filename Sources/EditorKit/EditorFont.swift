@@ -2,7 +2,7 @@ import AppKit
 import CoreText
 
 extension Notification.Name {
-	static let editorFontDidChange = Notification.Name("MinorIDE.editorFontDidChange")
+	public static let editorFontDidChange = Notification.Name("MinorIDE.editorFontDidChange")
 }
 
 /// One font for all editors (settings.json "font_family", "font_size"), changed live.

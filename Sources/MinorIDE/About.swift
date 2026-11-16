@@ -40,7 +40,15 @@ extension AppDelegate {
 		add(L("Thanks") + "\n", bold)
 		add(L("To everyone who tests MinorIDE: please report bugs and ideas as ")); link(L("issues on GitHub"), Links.newIssue); add(".\n")
 		add(L("To developers: pull requests from your fork are welcome.") + "\n")
-		add(L("To the open source projects MinorIDE is built with: Swift, Go and SQLite.") + "\n\n")
+		add(L("To the open source projects MinorIDE is built with: Swift, Go and SQLite.") + "\n")
+		add(L("Terminal: ")); link("SwiftTerm", URL(string: "https://github.com/migueldeicaza/SwiftTerm")!)
+		add(" © Miguel de Icaza · ")
+		if let license = Bundle.main.url(forResource: "SwiftTerm", withExtension: "txt", subdirectory: "Licenses") {
+			link(L("MIT License"), license)
+		} else {
+			add(L("MIT License"))
+		}
+		add("\n\n")
 
 		add(L("Support MinorIDE") + "\n", bold)
 		link(L("GitHub Sponsors"), Links.sponsors); add(" · " + L("Bitcoin:") + " ")

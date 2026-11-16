@@ -1,9 +1,12 @@
 import AppKit
+import Carbon
+import EditorKit
 import SwiftTerm
 
-/// The project's shell in the bottom panel (2b.4): one per project, shared by its tabs (the tab
-/// in front shows it). A login shell of the user starts in the project folder, so PATH and the
-/// rest of the environment come from the user's own profile.
+/// The project's shells in the bottom panel (2b.4), shared by the project's tabs (the tab in
+/// front shows them). Each is a login shell of the user started in the project folder, so
+/// PATH and the rest of the environment come from the user's own profile. Several shells
+/// are tabs in a strip above the terminal; `exit` closes one.
 ///
 /// Restricted Mode: the shell does not start by itself, because a prompt theme may run Git
 /// in the folder (and Git can run code from an untrusted repository's config).
@@ -11,60 +14,148 @@ import SwiftTerm
 final class ProjectTerminal: NSObject {
 	let view = NSView()
 	private let project: Project
-	private var terminal: TerminalView?
+	private let strip = NSSegmentedControl()
+	private let content = NSView()
+	private var sessions: [(view: TerminalView, title: String?)] = []
+	private var current = 0
 	private var placeholder: NSView?
+	private var stripHeight: NSLayoutConstraint!
+	private var opened = 0
 
 	init(project: Project) {
 		self.project = project
 		super.init()
 		view.setAccessibilityElement(false)
+		buildStrip()
 		if project.isTrusted { start() } else { showPlaceholder(exited: false) }
 		project.onTrustChange.append { [weak self] in
-			guard let self, self.project.isTrusted, self.terminal == nil, self.placeholder != nil else { return }
+			guard let self, self.project.isTrusted, self.sessions.isEmpty, self.placeholder != nil else { return }
 			self.start()
 		}
+		NotificationCenter.default.addObserver(self, selector: #selector(fontChanged(_:)), name: .editorFontDidChange, object: nil)
 	}
 
-	var isRunning: Bool { terminal != nil }
+	private func buildStrip() {
+		strip.segmentStyle = .automatic
+		strip.controlSize = .small
+		strip.trackingMode = .selectOne
+		strip.target = self
+		strip.action = #selector(tabPicked(_:))
+		strip.setAccessibilityLabel(L("Terminal Tabs"))
+		let add = NSButton(image: NSImage(systemSymbolName: "plus", accessibilityDescription: L("New Terminal Tab"))!, target: self, action: #selector(addClicked(_:)))
+		add.isBordered = false
+		add.controlSize = .small
+		add.toolTip = L("New Terminal Tab")
+		let close = NSButton(image: NSImage(systemSymbolName: "xmark", accessibilityDescription: L("Close Terminal Tab"))!, target: self, action: #selector(closeClicked(_:)))
+		close.isBordered = false
+		close.controlSize = .small
+		close.toolTip = L("Close Terminal Tab")
+		let bar = NSStackView(views: [strip, add, close, NSView()])
+		bar.spacing = 6
+		bar.edgeInsets = NSEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
+		for v in [bar, content] as [NSView] {
+			v.translatesAutoresizingMaskIntoConstraints = false
+			view.addSubview(v)
+		}
+		stripHeight = bar.heightAnchor.constraint(equalToConstant: 0)
+		bar.clipsToBounds = true
+		NSLayoutConstraint.activate([
+			bar.topAnchor.constraint(equalTo: view.topAnchor),
+			bar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+			bar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			stripHeight,
+			content.topAnchor.constraint(equalTo: bar.bottomAnchor),
+			content.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+			content.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			content.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+		])
+	}
+
+	var isRunning: Bool { !sessions.isEmpty }
 
 	/// Puts the keyboard focus into the terminal (blinking cursor, ready to type).
 	func focus() {
-		guard let terminal, let window = view.window else { return }
-		window.makeFirstResponder(terminal)
+		guard sessions.indices.contains(current), let window = view.window else { return }
+		window.makeFirstResponder(sessions[current].view)
 	}
 
+	/// Starts another shell as a new tab (also the first one).
 	func start() {
 		placeholder?.removeFromSuperview()
 		placeholder = nil
-		let term = TerminalView(frame: view.bounds)
+		let term = TerminalView(frame: content.bounds)
 		term.processDelegate = self
 		term.optionAsMetaKey = false // ⌥ types characters (@, [, ] … on Czech and other layouts)
-		term.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+		term.font = EditorView.editorFont
 		term.applyColors()
-		fill(with: term)
-		terminal = term
+		opened += 1
+		sessions.append((term, nil))
+		select(sessions.count - 1)
 		let shell = Self.loginShell
 		term.startProcess(executable: shell, args: [], environment: Self.environment,
 		                  execName: "-" + (shell as NSString).lastPathComponent, // login shell
 		                  currentDirectory: project.url.path)
 	}
 
+	private func select(_ index: Int) {
+		current = index
+		fill(with: sessions[index].view)
+		updateStrip()
+	}
+
+	private func updateStrip() {
+		strip.segmentCount = sessions.count
+		for (i, s) in sessions.enumerated() {
+			strip.setLabel(s.title ?? L("Shell %d", i + 1), forSegment: i)
+			strip.setWidth(0, forSegment: i)
+		}
+		if sessions.indices.contains(current) { strip.selectedSegment = current }
+		// The strip shows only with more than one shell.
+		stripHeight.constant = sessions.count > 1 ? 28 : 0
+	}
+
+	@objc private func tabPicked(_ sender: NSSegmentedControl) {
+		guard sessions.indices.contains(sender.selectedSegment) else { return }
+		select(sender.selectedSegment)
+		focus()
+	}
+
+	@objc private func addClicked(_ sender: Any?) { newTab() }
+
+	/// View › New Terminal Tab and the strip's + button.
+	func newTab() {
+		start()
+		focus()
+	}
+
+	@objc private func closeClicked(_ sender: Any?) {
+		guard sessions.indices.contains(current) else { return }
+		sessions[current].view.terminate()
+		// processTerminated removes the tab.
+	}
+
+	@objc private func fontChanged(_ note: Notification) {
+		for s in sessions { s.view.font = EditorView.editorFont }
+	}
+
 	/// Ends the shell (the project closed).
 	func stop() {
-		terminal?.processDelegate = nil
-		terminal?.terminate()
-		terminal = nil
+		for s in sessions {
+			s.view.processDelegate = nil
+			s.view.terminate()
+		}
+		sessions = []
 	}
 
 	private func fill(with child: NSView) {
-		view.subviews.forEach { $0.removeFromSuperview() }
+		content.subviews.forEach { $0.removeFromSuperview() }
 		child.translatesAutoresizingMaskIntoConstraints = false
-		view.addSubview(child)
+		content.addSubview(child)
 		NSLayoutConstraint.activate([
-			child.topAnchor.constraint(equalTo: view.topAnchor),
-			child.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-			child.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-			child.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			child.topAnchor.constraint(equalTo: content.topAnchor),
+			child.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+			child.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+			child.trailingAnchor.constraint(equalTo: content.trailingAnchor),
 		])
 	}
 
@@ -93,12 +184,10 @@ final class ProjectTerminal: NSObject {
 		])
 		fill(with: box)
 		placeholder = box
+		updateStrip()
 	}
 
-	@objc private func startClicked(_ sender: Any?) {
-		start()
-		focus()
-	}
+	@objc private func startClicked(_ sender: Any?) { newTab() }
 
 	/// The user's login shell from the account database (what Terminal.app uses), else $SHELL.
 	static var loginShell: String {
@@ -123,21 +212,34 @@ final class ProjectTerminal: NSObject {
 
 extension ProjectTerminal: LocalProcessTerminalViewDelegate {
 	nonisolated func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
-	nonisolated func setTerminalTitle(source: LocalProcessTerminalView, title: String) {}
+	nonisolated func setTerminalTitle(source: LocalProcessTerminalView, title: String) {
+		MainActor.assumeIsolated {
+			guard let i = sessions.firstIndex(where: { $0.view === source }) else { return }
+			sessions[i].title = title.isEmpty ? nil : String(title.prefix(40))
+			updateStrip()
+		}
+	}
 	nonisolated func hostCurrentDirectoryUpdate(source: SwiftTerm.TerminalView, directory: String?) {}
 
 	nonisolated func processTerminated(source: SwiftTerm.TerminalView, exitCode: Int32?) {
 		MainActor.assumeIsolated {
-			let hadFocus = terminal.map { view.window?.firstResponder === $0 } ?? false
-			terminal = nil
-			showPlaceholder(exited: true)
-			if hadFocus { view.window?.makeFirstResponder(nil) }
+			guard let i = sessions.firstIndex(where: { $0.view === source }) else { return }
+			let hadFocus = view.window?.firstResponder === sessions[i].view
+			sessions.remove(at: i)
+			if sessions.isEmpty {
+				showPlaceholder(exited: true)
+				if hadFocus { view.window?.makeFirstResponder(nil) }
+				return
+			}
+			select(min(i, sessions.count - 1))
+			if hadFocus { focus() }
 		}
 	}
 }
 
 /// Terminal view in the system's text colors, following light and dark mode.
-private final class TerminalView: LocalProcessTerminalView {
+final class TerminalView: LocalProcessTerminalView {
+
 	func applyColors() {
 		effectiveAppearance.performAsCurrentDrawingAppearance {
 			nativeBackgroundColor = .textBackgroundColor
@@ -156,5 +258,38 @@ private final class TerminalView: LocalProcessTerminalView {
 		super.viewWillDraw()
 		let hidden = !canScroll
 		for case let scroller as NSScroller in subviews where scroller.isHidden != hidden { scroller.isHidden = hidden }
+	}
+}
+
+/// MinorIDE › Secure Keyboard Entry: while a terminal has the keyboard focus in the active
+/// app, other apps cannot read the keys typed (passwords at a shell prompt), as in Terminal.
+@MainActor
+enum SecureKeyboardEntry {
+	private static let key = "SecureKeyboardEntry"
+	private static var active = false
+
+	static var isEnabled: Bool {
+		get { UserDefaults.standard.bool(forKey: key) }
+		set {
+			UserDefaults.standard.set(newValue, forKey: key)
+			update()
+		}
+	}
+
+	/// Turns the system's secure input on or off to match (calls are counted, so balanced).
+	static func update() {
+		let wanted = isEnabled && NSApp.isActive && NSApp.keyWindow?.firstResponder is TerminalView
+		guard wanted != active else { return }
+		active = wanted
+		if wanted { EnableSecureEventInput() } else { DisableSecureEventInput() }
+	}
+
+	/// Follows activation, key window and focus: checked after every event the app handles
+	/// (a few comparisons).
+	static func observe() {
+		let center = NotificationCenter.default
+		for name in [NSApplication.didUpdateNotification, NSApplication.didResignActiveNotification] {
+			center.addObserver(forName: name, object: nil, queue: .main) { _ in MainActor.assumeIsolated { update() } }
+		}
 	}
 }
