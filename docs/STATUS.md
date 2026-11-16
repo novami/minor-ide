@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (fáze 1f hotová)
+**Poslední aktualizace:** 2026-11-16 (U1 a U2 hotové)
 
 ## Kde jsme
 
@@ -147,8 +147,8 @@ Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split 
 
 **Další krok: drobné úpravy UI na přání uživatele (2026-11-16)**, jeden krok = jedna session, v tomto pořadí. Po každém kroku odškrtnout, commit a vyčistit kontext. Fáze 2 (vydávání a updater) čeká na Apple Developer účet, potom 2b.1.
 
-- [ ] **U1 Klik mimo text:** klik pod posledním řádkem nebo za koncem řádku dá kurzor na nejbližší místo, kam jde psát (poslední řádek, poslední znak). Nejdřív ověřit příčinu: `position(atY:)` už ořezává na poslední řádek, takže problém bude spíš v tom, že editor u krátkého souboru nevyplní výšku clip view a klik dostane clip view. Test v `MouseTests`.
-- [ ] **U2 Posuvníky jen v případě potřeby:** `autohidesScrollers` u editoru (`EditorSplit.swift`), stromu projektu, terminálu a panelů. Překryvné posuvníky macOS se skrývají samy; při nastavení „Vždy zobrazovat“ (myš) má posuvník zmizet, když se obsah vejde. Pozor na šířku editoru, když se posuvník objeví nebo zmizí (přepočet zalamování). Lze spojit s U1, týká se to stejného scroll view.
+- [x] **U1 Klik mimo text** (2026-11-16): příčina potvrzena — editor u krátkého souboru nevyplnil výšku clip view. `updateSize` bere aspoň výšku scroll view; klik/tažení pod posledním řádkem = konec posledního viditelného řádku (sbalení a zalamování zůstanou), nad začátkem = začátek. Testy `MouseTests.clickOutsideTextGoesToNearestPosition`, `WindowRegressionTests.editorFillsScrollViewHeight`.
+- [x] **U2 Posuvníky jen v případě potřeby** (2026-11-16): `autohidesScrollers` u editoru a stromu projektu (uvítací okno a místní historie už měly); terminál SwiftTerm má vlastní `NSScroller`, který zůstával vidět i vypnutý — skryje se, dokud není co posouvat (`viewWillDraw`). Zalamování je podle sloupce, ne šířky, takže objevení posuvníku nic nepřepočítává. Ruční kontrola s „Vždy zobrazovat posuvníky“ zbývá.
 - [ ] **U3 Uvítací okno:** kurzor ruky (`NSCursor.pointingHand`, `addCursorRect`/tracking area) a zvýraznění pod myší u akcí (Otevřít složku …) a u nedávných projektů. Riziko: HIG dává ruku hlavně odkazům, proto ji použít jen u klikacích položek bez vzhledu tlačítka.
 - [ ] **U4 Skrývání panelů ikonou** (rozhodnutí uživatele: lišta + stavový řádek): v záhlaví spodního (terminál) i pravého panelu ikonka „Skrýt“. Pravý panel se znovu otevře přepínačem vpravo v panelu nástrojů okna (jako tlačítko levého panelu), terminál přepínačem ve stavovém řádku. Stav ikonky odpovídá viditelnosti, menu a zkratky zůstávají. Respektovat Omezit pohyb.
 - [ ] **U5 Dialog Přidat databázi** (rozhodnutí: zatím jen uložit spojení): sheet z pravého panelu (tlačítko + v sekci Databáze a stav „žádné databáze“): typ (MySQL/MariaDB, PostgreSQL, SQLite se souborem), název, host, port podle typu, uživatel, heslo do Klíčenky, databáze, SSH tunel (host, uživatel, klíč), příznak produkce. Uložení mimo projekt (vedle `trusted.json`, bez hesel), seznam v panelu, upravit/smazat. „Otestovat“ a připojení až ve fázi 6.

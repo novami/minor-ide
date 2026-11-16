@@ -150,4 +150,11 @@ private final class TerminalView: LocalProcessTerminalView {
 		super.viewDidChangeEffectiveAppearance()
 		applyColors()
 	}
+
+	/// The terminal's own scroller stays visible while disabled; shown only with scrollback.
+	override func viewWillDraw() {
+		super.viewWillDraw()
+		let hidden = !canScroll
+		for case let scroller as NSScroller in subviews where scroller.isHidden != hidden { scroller.isHidden = hidden }
+	}
 }

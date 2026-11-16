@@ -32,6 +32,7 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 		outline.setAccessibilityLabel(L("Project Files"))
 		documentView = outline
 		hasVerticalScroller = true
+		autohidesScrollers = true
 		drawsBackground = false
 		project.onChange.append { [weak self] folder in self?.reload(folder) }
 		installMenu()

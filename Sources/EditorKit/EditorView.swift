@@ -191,11 +191,13 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public func updateSize() {
 		// The gutter (vertical ruler) floats over the clip view and insets it.
 		let visible = enclosingScrollView.map { $0.contentSize.width - $0.contentView.contentInsets.left - $0.contentView.contentInsets.right } ?? frame.width
+		// At least the scroll view's height, so a click below a short text reaches the editor.
+		let visibleHeight = enclosingScrollView.map { $0.contentSize.height - $0.contentView.contentInsets.top - $0.contentView.contentInsets.bottom } ?? 0
 		// Unwrapped: rounded up to 64 columns, so typing at the end of the widest line does
 		// not widen the view (and expose a strip to redraw) with every key.
 		let columns = wraps.map { $0.column + 2 } ?? (document.maxColumns / 64 + 1) * 64
 		let content = textInset + CGFloat(columns) * ascii.advances[0x20] + newlineWidth
-		let size = NSSize(width: max(0, visible, content), height: CGFloat(rowCount) * lineHeight + lineHeight)
+		let size = NSSize(width: max(0, visible, content), height: max(visibleHeight, CGFloat(rowCount) * lineHeight + lineHeight))
 		guard size != frame.size else { return }
 		let oldWidth = frame.width
 		setFrameSize(size)
@@ -483,7 +485,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	private func line(at point: NSPoint) -> Int { line(atY: point.y) }
 
 	func offset(at point: NSPoint) -> Int {
+		if point.y < 0 { return 0 }
 		let p = position(atY: point.y)
+		// Below the last row: its end, as in other macOS text views (a fold or wrap keeps it visible).
+		if point.y >= CGFloat(rowCount) * lineHeight { return offset(atX: .greatestFiniteMagnitude, line: p.line, segment: p.segment) }
 		return offset(atX: point.x, line: p.line, segment: p.segment)
 	}
 

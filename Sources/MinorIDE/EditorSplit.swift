@@ -44,6 +44,7 @@ extension DocumentWindow {
 		let scroll = NSScrollView()
 		scroll.hasVerticalScroller = true
 		scroll.hasHorizontalScroller = true // lines that do not wrap
+		scroll.autohidesScrollers = true // also with "always show scroll bars"
 		scroll.backgroundColor = .textBackgroundColor // below the last line
 		scroll.wantsLayer = true // clip view, gutter and editor draw into layers
 		editor.autoresizingMask = [.width]

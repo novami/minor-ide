@@ -38,6 +38,17 @@ struct MouseTests {
 		#expect(e.selections.primary.range == 20..<23)
 	}
 
+	/// Past the line end: that line's end; below the last row: the end of the text.
+	@Test func clickOutsideTextGoesToNearestPosition() {
+		e.mouseDown(at: at(40, line: 1), clicks: 1, modifiers: [])
+		#expect(e.selections.primary.range == 18..<18) // after "  baz"
+		e.mouseDown(at: NSPoint(x: e.textInset, y: 20 * e.lineHeight), clicks: 1, modifiers: [])
+		#expect(e.selections.primary.range == 28..<28)
+		let f = EditorView(text: "ab\ncd")
+		f.mouseDown(at: NSPoint(x: f.textInset, y: 9 * f.lineHeight), clicks: 1, modifiers: [])
+		#expect(f.selections.primary.range == 5..<5) // end of "cd", not its first column
+	}
+
 	@Test func wordRanges() {
 		let r = Rope("a  b->c\n\nd")
 		#expect(r.wordRange(at: 0) == 0..<1)

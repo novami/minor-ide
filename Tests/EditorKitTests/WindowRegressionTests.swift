@@ -27,6 +27,12 @@ struct WindowRegressionTests {
 		#expect(e.frame.width > 700)
 	}
 
+	/// A short text left the clip view's lower part outside the editor, so clicks there missed it.
+	@Test func editorFillsScrollViewHeight() {
+		let (e, scroll) = editorInScrollView(width: 600)
+		#expect(e.frame.height >= scroll.contentSize.height)
+	}
+
 	/// Unclipped (macOS 14 default) the gutter's layer grew over the text and hid it.
 	@Test func gutterAndEditorClipToBounds() {
 		let (e, _) = editorInScrollView(width: 600)
