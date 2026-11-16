@@ -169,7 +169,9 @@ Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split 
 
 Známé mezery 2b: výsledek hledání v jiném souboru otevře nový nativní tab (procházení výsledků přidává taby); nahrazení počítá shody znovu přes `NSRegularExpression`, náhled je z RE2 (u běžných výrazů stejné); zvýraznění shod v Rychle otevřít jen ASCII; gutter Git se neobnoví po Uložit jako/přejmenování a 200 ms po editaci ukazuje staré pozice; klonování neumí zadat heslo (GUI askpass až 7.5) ani přijmout neznámý klíč SSH serveru (nutno přes terminál); nápověda (Help Book) zatím nepopisuje funkce 2b.
 
-**Další krok:** ruční kontrola 2b s uživatelem (spustit z Finderu: ⇧⌘O, ⇧⌘F včetně Nahradit vše, gutter a Vrátit, klonování, víc terminálů, zabezpečené zadávání) a zbylé ruční kontroly U2–U8. Pak fáze 3 (LSP klient a Go), protože fáze 2 čeká na účet.
+**Další krok:** fáze 3 (LSP klient a Go), protože fáze 2 čeká na účet.
+
+**Dluh — ruční kontrola (odložena uživatelem 2026-11-16, udělat na začátku příští session, než se pokračuje dál):** 2b s uživatelem (spustit z Finderu: ⇧⌘O, ⇧⌘F včetně Nahradit vše, gutter a Vrátit, klonování, víc terminálů, zabezpečené zadávání) a zbylé ruční kontroly U2–U8.
 
 **Fáze 1e:** ruční kontrola oken prošla (2026-11-16); `.minoride/local.json` až s prvním uživatelem (servery v 6b).
 
