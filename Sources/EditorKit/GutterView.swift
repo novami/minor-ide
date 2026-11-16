@@ -44,10 +44,15 @@ public final class GutterView: NSRulerView {
 		setNeedsDisplay(NSRect(x: 0, y: top, width: bounds.width, height: max(0, bounds.maxY - top)))
 	}
 
-	/// A click in the marker column right of the numbers folds or unfolds that line.
+	/// A click in the marker column right of the numbers folds or unfolds that line; a click
+	/// on a Git change bar at the leading edge shows the change.
 	public override func mouseDown(with event: NSEvent) {
 		guard let editor else { return }
 		let point = convert(event.locationInWindow, from: nil)
+		if point.x <= EditorView.gitBarWidth + 4 {
+			let y = convert(point, to: editor).y
+			if let change = editor.gitChange(atY: y) { return editor.showGitChange(change, from: self, at: point.y) }
+		}
 		guard point.x >= bounds.width - 14 else { return super.mouseDown(with: event) }
 		editor.toggleFold(atLine: editor.line(atY: convert(point, to: editor).y))
 	}
@@ -67,6 +72,7 @@ public final class GutterView: NSRulerView {
 		ctx.saveGState()
 		ctx.translateBy(x: 0, y: dirtyRect.minY - inEditor.minY)
 		editor.drawLineNumbers(ctx, in: inEditor, rightEdge: bounds.width - 15)
+		editor.drawGitChanges(ctx, in: inEditor)
 		ctx.restoreGState()
 	}
 }

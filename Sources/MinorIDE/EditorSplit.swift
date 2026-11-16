@@ -159,6 +159,7 @@ extension DocumentWindow {
 	/// Settings shared by all panes.
 	func configure(_ pane: EditorPane) {
 		let editor = pane.editor
+		project?.loadGitBase(pane.document)
 		editor.setAccessibilityLabel(L("Editor"))
 		editor.contextMenuProvider = { DocumentWindow.contextMenu(for: $0) }
 		editor.onFocus = { [weak self] focused in

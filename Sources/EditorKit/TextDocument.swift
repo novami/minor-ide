@@ -140,6 +140,7 @@ public final class TextDocument {
 		}
 		source.didEdit(changes, edit, selections: selectionsAfter(changes), isSource: true)
 		onChange?()
+		if gitBase != nil { scheduleGitDiff(delay: .milliseconds(200)) }
 		if let highlighter, highlighter.validUpTo < rope.lineCount - 1 { scheduleBackgroundHighlight(delay: .milliseconds(300)) }
 	}
 
@@ -157,6 +158,38 @@ public final class TextDocument {
 			backgroundHighlightRunning = false
 			guard self.highlighter === highlighter else { return }
 			if !highlighter.finishBackgroundJob(job, states: states) { scheduleBackgroundHighlight(delay: .milliseconds(300)) }
+		}
+	}
+
+	// MARK: Git changes
+
+	/// Lines of the file at Git HEAD; nil hides the change gutter (no repository, untracked
+	/// file, Restricted Mode).
+	public var gitBase: [Substring]? {
+		didSet {
+			if gitBase == nil { gitChanges = [] }
+			scheduleGitDiff(delay: .zero)
+		}
+	}
+
+	/// Changed lines against `gitBase`, recomputed off the main thread shortly after edits.
+	public private(set) var gitChanges: [LineChange] = []
+	private var gitGeneration = 0
+
+	private func scheduleGitDiff(delay: Duration) {
+		gitGeneration += 1
+		let generation = gitGeneration
+		guard let base = gitBase else { return views.forEach { $0.gutter?.needsDisplay = true } }
+		Task { [weak self] in
+			if delay > .zero { try? await Task.sleep(for: delay) }
+			guard let self, generation == gitGeneration else { return }
+			let rope = rope
+			let changes = await Task.detached(priority: .utility) {
+				LineChanges.compute(base: base, current: LineChanges.lines(rope.string))
+			}.value
+			guard generation == gitGeneration else { return }
+			gitChanges = changes
+			for view in views { view.gutter?.needsDisplay = true }
 		}
 	}
 }

@@ -1,6 +1,8 @@
 import AppKit
+import EditorKit
 import MinorCore
 import SecretsKit
+import TextEngine
 
 /// An open folder: the file tree shared by the project's tabs, which folders are expanded,
 /// and an FSEvents watch that refreshes loaded folders when files change on disk.
@@ -55,6 +57,7 @@ final class Project {
 		isTrusted = trusted
 		for handler in onTrustChange { handler() }
 		refreshGitHead()
+		refreshGitBases()
 	}
 
 	/// Re-reads `HEAD` (only the file, no Git process). Called on start, trust change, window
@@ -79,6 +82,10 @@ final class Project {
 		onFiles?(paths)
 		self.paths.update(changed: paths)
 		if paths.contains(where: { $0.hasSuffix("/HEAD") }) { refreshGitHead() }
+		// A commit, checkout or reset moved HEAD or a branch: the change gutters compare anew.
+		if paths.contains(where: { $0.contains("/.git/") && ($0.hasSuffix("/HEAD") || $0.contains("/.git/refs/") || $0.hasSuffix("/packed-refs")) }) {
+			refreshGitBases()
+		}
 		var folders: [FileNode] = []
 		for path in paths {
 			let u = URL(fileURLWithPath: path)
@@ -102,6 +109,37 @@ final class Project {
 	func makeTerminal() -> ProjectTerminal {
 		hasTerminal = true
 		return terminal
+	}
+
+	// MARK: Change gutter
+
+	/// Loads the committed version (HEAD) of an open project file for its change gutter.
+	/// Nothing runs in Restricted Mode or outside a repository.
+	func loadGitBase(_ doc: FileDocument) {
+		guard let url = doc.url, contains(url), isTrusted, gitHead != nil else {
+			if doc.text.gitBase != nil { doc.text.gitBase = nil }
+			return
+		}
+		Task {
+			guard let git = await ToolsModel.shared.gitTool() else { return }
+			let data = await Task.detached(priority: .utility) { git.headContents(of: url) }.value
+			guard doc.url == url, self.isTrusted else { return }
+			let charset = doc.format.charset
+			doc.text.gitBase = data.map { LineChanges.lines(TextFile.load($0, fallback: charset).text) }
+		}
+	}
+
+	private var gitBasesPending = false
+
+	/// All open files of the project compare against HEAD again (once per burst of events).
+	func refreshGitBases() {
+		guard !gitBasesPending else { return }
+		gitBasesPending = true
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+			guard let self else { return }
+			gitBasesPending = false
+			for doc in FileDocument.all { loadGitBase(doc) }
+		}
 	}
 
 	/// Find in Project, shared by the project's tabs like the terminal.

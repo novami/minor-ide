@@ -48,6 +48,15 @@ final class ToolsModel {
 		Task { environment = await task.value }
 	}
 
+	/// Git with the login shell's PATH and environment; nil when git is not installed.
+	func gitTool() async -> GitTool? {
+		loadEnvironment()
+		guard let env = await loading?.value, let path = env.which("git") else { return nil }
+		var environment = ProcessInfo.processInfo.environment
+		environment.merge(env.values) { $1 }
+		return GitTool(path: path, environment: environment)
+	}
+
 	/// Checks every tool again, off the main thread.
 	func refresh() {
 		guard !checking else { return }
