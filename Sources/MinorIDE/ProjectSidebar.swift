@@ -127,11 +127,11 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 			c.imageView = image
 			c.textField = text
 			NSLayoutConstraint.activate([
-				image.leadingAnchor.constraint(equalTo: c.leadingAnchor),
+				image.leadingAnchor.constraint(equalTo: c.leadingAnchor, constant: 4),
 				image.centerYAnchor.constraint(equalTo: c.centerYAnchor),
 				image.widthAnchor.constraint(equalToConstant: 16),
 				image.heightAnchor.constraint(equalToConstant: 16),
-				text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 8),
+				text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 5),
 				text.trailingAnchor.constraint(equalTo: c.trailingAnchor),
 				text.centerYAnchor.constraint(equalTo: c.centerYAnchor),
 			])
