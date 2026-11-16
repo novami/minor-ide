@@ -28,6 +28,60 @@
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "Verze jsou stejné.";
 
+/* MinorIDE/DatabaseListView.swift */
+"Databases" = "Databáze";
+"Add Database…" = "Přidat databázi…";
+"Delete Database…" = "Smazat databázi…";
+
+/* MinorIDE/DatabaseListView.swift, MinorIDE/PanelView.swift */
+"No Databases" = "Žádné databáze";
+"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Tady se zobrazí připojení k databázím MySQL, MariaDB, PostgreSQL a SQLite.";
+
+/* MinorIDE/DatabaseListView.swift */
+"Delete “%@”?" = "Smazat „%@“?";
+"The connection and its password in the Keychain will be deleted. The database itself is not changed." = "Smaže se spojení a jeho heslo v Klíčence. Samotná databáze se nezmění.";
+"Delete" = "Smazat";
+
+/* MinorIDE/DatabaseListView.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Zrušit";
+
+/* MinorIDE/DatabaseListView.swift */
+"Edit…" = "Upravit…";
+"Delete…" = "Smazat…";
+"Production" = "Produkce";
+
+/* MinorIDE/DatabaseSheet.swift */
+"Connect through an SSH tunnel" = "Připojit přes SSH tunel";
+"Production database" = "Produkční databáze";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/SettingsWindow.swift */
+"Add" = "Přidat";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Save" = "Uložit";
+
+/* MinorIDE/DatabaseSheet.swift */
+"Required" = "Povinné";
+"From SSH configuration" = "Podle konfigurace SSH";
+"Stored in the Keychain" = "Uloží se do Klíčenky";
+"Choose…" = "Vybrat…";
+"Port:" = "Port:";
+"Shown in red and opened read-only by default." = "Zobrazí se červeně a ve výchozím stavu se otevře jen pro čtení.";
+"Type:" = "Typ:";
+"Name:" = "Název:";
+"Host:" = "Hostitel:";
+"User:" = "Uživatel:";
+"Password:" = "Heslo:";
+"Database:" = "Databáze:";
+"File:" = "Soubor:";
+"SSH Host:" = "SSH hostitel:";
+"SSH User:" = "SSH uživatel:";
+"Key File:" = "Soubor s klíčem:";
+"Add Database" = "Přidat databázi";
+"Edit Database" = "Upravit databázi";
+"Choose the SQLite database file." = "Vyberte soubor databáze SQLite.";
+"Choose the private key for the SSH tunnel." = "Vyberte soukromý klíč pro SSH tunel.";
+
 /* MinorIDE/DocumentWindow.swift */
 "Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project." = "Omezený režim: MinorIDE nespouští Git, nástroje ani příkazy z tohoto projektu.";
 
@@ -40,11 +94,6 @@
 "Trust the project “%@”?" = "Důvěřovat projektu „%@“?";
 "A trusted project can run code when MinorIDE uses Git, language servers, tools, run configurations or the debugger on it. Trust only projects from authors you trust." = "Důvěryhodný projekt může spustit kód, když na něm MinorIDE použije Git, jazykové servery, nástroje, konfigurace spuštění nebo debugger. Důvěřujte jen projektům od autorů, kterým věříte.";
 "Trust" = "Důvěřovat";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Zrušit";
-
-/* MinorIDE/DocumentWindow.swift */
 "Look Up “%@”" = "Vyhledat „%@“";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
@@ -102,11 +151,6 @@
 "Save as UTF-8" = "Uložit v UTF-8";
 "Do you want to save the changes made to the document “%@”?" = "Chcete uložit změny provedené v dokumentu „%@“?";
 "Your changes will be lost if you don’t save them." = "Pokud změny neuložíte, budou ztraceny.";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
-"Save" = "Uložit";
-
-/* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Neukládat";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
@@ -244,8 +288,6 @@
 
 /* MinorIDE/PanelView.swift */
 "Database" = "Databáze";
-"No Databases" = "Žádné databáze";
-"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Tady se zobrazí připojení k databázím MySQL, MariaDB, PostgreSQL a SQLite.";
 "Server" = "Server";
 "No Servers" = "Žádné servery";
 "Files on servers connected over SFTP or FTPS will appear here." = "Tady se zobrazí soubory na serverech připojených přes SFTP nebo FTPS.";
@@ -308,7 +350,6 @@
 
 /* MinorIDE/SettingsWindow.swift */
 "Newline at end of file" = "Nový řádek na konci souboru";
-"Add" = "Přidat";
 "Don’t add" = "Nepřidávat";
 "Trailing spaces" = "Mezery na konci řádků";
 "Remove from edited lines" = "Odstranit z upravených řádků";

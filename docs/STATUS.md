@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (U1–U4 hotové)
+**Poslední aktualizace:** 2026-11-16 (U1–U5 hotové)
 
 ## Kde jsme
 
@@ -151,7 +151,7 @@ Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split 
 - [x] **U2 Posuvníky jen v případě potřeby** (2026-11-16): `autohidesScrollers` u editoru a stromu projektu (uvítací okno a místní historie už měly); terminál SwiftTerm má vlastní `NSScroller`, který zůstával vidět i vypnutý — skryje se, dokud není co posouvat (`viewWillDraw`). Zalamování je podle sloupce, ne šířky, takže objevení posuvníku nic nepřepočítává. Ruční kontrola s „Vždy zobrazovat posuvníky“ zbývá.
 - [x] **U3 Uvítací okno** (2026-11-16): akce jsou `HoverButton` (ruka, zaoblené pozadí `quaternarySystemFill` pod myší), nedávné projekty mají ruku nad řádky a zvýraznění řádku pod myší (`RecentRowView`, přepočet i po scrollu a znovunačtení); vybraný řádek kreslí výběr jako dřív. Bez automatického testu (kód je v cíli aplikace); ruční kontrola zbývá (světlý/tmavý režim, scroll).
 - [x] **U4 Skrývání panelů ikonou** (2026-11-16): v záhlaví `PanelView` ikonka Skrýt (šipka ‹›/⌄ na konci řádku, akce přes responder chain). Pravý panel: tlačítko vpravo v panelu nástrojů je push-on/push-off (svítí, když je panel otevřený). Spodní panel: přepínač z panelu nástrojů přesunut na začátek stavového řádku (barva zvýraznění, když je otevřený; jen v okně projektu). Stav tlačítek jde s `isCollapsed` (i tažení přepážkou a přepnutí tabu), při animaci se přepne hned a výsledky během animace se ignorují; Omezit pohyb = bez animace. Bez automatického testu (cíl aplikace, snímky nekreslí ovládací prvky); ruční kontrola zbývá.
-- [ ] **U5 Dialog Přidat databázi** (rozhodnutí: zatím jen uložit spojení): sheet z pravého panelu (tlačítko + v sekci Databáze a stav „žádné databáze“): typ (MySQL/MariaDB, PostgreSQL, SQLite se souborem), název, host, port podle typu, uživatel, heslo do Klíčenky, databáze, SSH tunel (host, uživatel, klíč), příznak produkce. Uložení mimo projekt (vedle `trusted.json`, bez hesel), seznam v panelu, upravit/smazat. „Otestovat“ a připojení až ve fázi 6.
+- [x] **U5 Dialog Přidat databázi** (2026-11-16): model a úložiště `Sources/DBKit/Connections.swift` (`DatabaseConnection`, `ConnectionStore` → `~/Library/Application Support/MinorIDE/databases.json`, bez hesel), Klíčenka `Sources/SecretsKit/Keychain.swift` (obecné heslo, služba `MinorIDE`, účet `database.<id>`, volání mimo hlavní vlákno). Sheet `DatabaseSheet.swift` (typ, název, hostitel+port s výchozím podle typu, uživatel, heslo, databáze / soubor SQLite, SSH tunel s klíčem, produkce; Přidat jen s vyplněnými povinnými poli), seznam `DatabaseListView.swift` v pravém panelu (prázdný stav s tlačítkem, +/−, dvojklik a kontextové menu Upravit/Smazat, produkce červeně; všechna okna se obnoví notifikací). Testy `ConnectionStoreTests`; Klíčenka bez automatického testu (vývojové buildy mění podpis, R13). Ruční kontrola zbývá (vzhled sheetu, změna výšky při přepnutí typu, světlý/tmavý režim).
 - [ ] **U6 Dialog Přidat server:** stejný vzor pro SFTP/FTPS (host, port, uživatel, klíč nebo heslo do Klíčenky, vzdálená složka, produkce). Ověření klíče serveru a připojení až ve fázi 6b. Využije model a úložiště z U5.
 
 **Fáze 1e:** ruční kontrola oken prošla (2026-11-16); `.minoride/local.json` až s prvním uživatelem (servery v 6b).

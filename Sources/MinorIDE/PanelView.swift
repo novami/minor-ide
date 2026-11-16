@@ -87,7 +87,7 @@ final class PanelView: NSView {
 				content.trailingAnchor.constraint(equalTo: body.trailingAnchor),
 			])
 		} else {
-			let empty = Self.emptyState(sections[index])
+			let empty = Self.emptyState(title: sections[index].emptyTitle, text: sections[index].emptyText)
 			empty.translatesAutoresizingMaskIntoConstraints = false
 			body.addSubview(empty)
 			NSLayoutConstraint.activate([
@@ -108,25 +108,30 @@ final class PanelView: NSView {
 
 	@objc private func picked(_ sender: NSSegmentedControl) { select(sender.selectedSegment) }
 
-	private static func emptyState(_ s: Section) -> NSView {
-		let title = NSTextField(labelWithString: s.emptyTitle)
+	/// An empty state: what belongs here and, optionally, a button that adds it.
+	static func emptyState(title titleText: String, text emptyText: String, button: NSButton? = nil) -> NSView {
+		let title = NSTextField(labelWithString: titleText)
 		title.font = .systemFont(ofSize: NSFont.systemFontSize + 2, weight: .semibold)
 		title.textColor = .secondaryLabelColor
-		let text = NSTextField(wrappingLabelWithString: s.emptyText)
+		let text = NSTextField(wrappingLabelWithString: emptyText)
 		text.textColor = .secondaryLabelColor
 		text.alignment = .center
 		let stack = NSStackView(views: [title, text])
 		stack.orientation = .vertical
 		stack.alignment = .centerX
 		stack.spacing = 4
+		if let button {
+			stack.addArrangedSubview(button)
+			stack.setCustomSpacing(12, after: text)
+		}
 		return stack
 	}
 }
 
 extension PanelView {
-	/// Right panel (an AppKit inspector item): database and server browsers (phases 6 and 6b fill them).
+	/// Right panel (an AppKit inspector item): saved databases and server browsers (phases 6 and 6b fill them).
 	static func inspector() -> PanelView {
-		PanelView(sections: [
+		let panel = PanelView(sections: [
 			Section(title: L("Database"), symbol: "cylinder.split.1x2",
 			        emptyTitle: L("No Databases"),
 			        emptyText: L("Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here.")),
@@ -135,6 +140,8 @@ extension PanelView {
 			        emptyText: L("Files on servers connected over SFTP or FTPS will appear here.")),
 		], label: L("Right Panel"), defaultsKey: "InspectorSection",
 		   hide: (#selector(DocumentWindow.toggleRightPanel(_:)), "chevron.right", L("Hide Right Panel")))
+		panel.setContent(DatabaseListView(), at: 0)
+		return panel
 	}
 
 	/// Bottom panel: the project's terminal.

@@ -27,6 +27,60 @@
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "The versions are identical.";
 
+/* MinorIDE/DatabaseListView.swift */
+"Databases" = "Databases";
+"Add Database…" = "Add Database…";
+"Delete Database…" = "Delete Database…";
+
+/* MinorIDE/DatabaseListView.swift, MinorIDE/PanelView.swift */
+"No Databases" = "No Databases";
+"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here.";
+
+/* MinorIDE/DatabaseListView.swift */
+"Delete “%@”?" = "Delete “%@”?";
+"The connection and its password in the Keychain will be deleted. The database itself is not changed." = "The connection and its password in the Keychain will be deleted. The database itself is not changed.";
+"Delete" = "Delete";
+
+/* MinorIDE/DatabaseListView.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+"Cancel" = "Cancel";
+
+/* MinorIDE/DatabaseListView.swift */
+"Edit…" = "Edit…";
+"Delete…" = "Delete…";
+"Production" = "Production";
+
+/* MinorIDE/DatabaseSheet.swift */
+"Connect through an SSH tunnel" = "Connect through an SSH tunnel";
+"Production database" = "Production database";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/SettingsWindow.swift */
+"Add" = "Add";
+
+/* MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Save" = "Save";
+
+/* MinorIDE/DatabaseSheet.swift */
+"Required" = "Required";
+"From SSH configuration" = "From SSH configuration";
+"Stored in the Keychain" = "Stored in the Keychain";
+"Choose…" = "Choose…";
+"Port:" = "Port:";
+"Shown in red and opened read-only by default." = "Shown in red and opened read-only by default.";
+"Type:" = "Type:";
+"Name:" = "Name:";
+"Host:" = "Host:";
+"User:" = "User:";
+"Password:" = "Password:";
+"Database:" = "Database:";
+"File:" = "File:";
+"SSH Host:" = "SSH Host:";
+"SSH User:" = "SSH User:";
+"Key File:" = "Key File:";
+"Add Database" = "Add Database";
+"Edit Database" = "Edit Database";
+"Choose the SQLite database file." = "Choose the SQLite database file.";
+"Choose the private key for the SSH tunnel." = "Choose the private key for the SSH tunnel.";
+
 /* MinorIDE/DocumentWindow.swift */
 "Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project." = "Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project.";
 
@@ -39,11 +93,6 @@
 "Trust the project “%@”?" = "Trust the project “%@”?";
 "A trusted project can run code when MinorIDE uses Git, language servers, tools, run configurations or the debugger on it. Trust only projects from authors you trust." = "A trusted project can run code when MinorIDE uses Git, language servers, tools, run configurations or the debugger on it. Trust only projects from authors you trust.";
 "Trust" = "Trust";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
-"Cancel" = "Cancel";
-
-/* MinorIDE/DocumentWindow.swift */
 "Look Up “%@”" = "Look Up “%@”";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
@@ -101,11 +150,6 @@
 "Save as UTF-8" = "Save as UTF-8";
 "Do you want to save the changes made to the document “%@”?" = "Do you want to save the changes made to the document “%@”?";
 "Your changes will be lost if you don’t save them." = "Your changes will be lost if you don’t save them.";
-
-/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
-"Save" = "Save";
-
-/* MinorIDE/DocumentWindow.swift */
 "Don’t Save" = "Don’t Save";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/PanelView.swift */
@@ -242,8 +286,6 @@
 
 /* MinorIDE/PanelView.swift */
 "Database" = "Database";
-"No Databases" = "No Databases";
-"Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here." = "Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here.";
 "Server" = "Server";
 "No Servers" = "No Servers";
 "Files on servers connected over SFTP or FTPS will appear here." = "Files on servers connected over SFTP or FTPS will appear here.";
@@ -306,7 +348,6 @@
 
 /* MinorIDE/SettingsWindow.swift */
 "Newline at end of file" = "Newline at end of file";
-"Add" = "Add";
 "Don’t add" = "Don’t add";
 "Trailing spaces" = "Trailing spaces";
 "Remove from edited lines" = "Remove from edited lines";
