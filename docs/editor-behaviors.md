@@ -36,8 +36,8 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Nahradit vybranou shodu a přejít na další; Nahradit vše je jeden krok Zpět — `FindControllerTests.replaceAndFindThenReplaceAllIsOneUndo`
 - [x] Zvýraznění shod jdou s editací, se zavřenou lištou zmizí — `FindControllerTests.highlightsFollowTypingAndHideWithBar`
 - [x] Hledá se mimo hlavní vlákno nad snímkem ropu; novější dotaz nebo editace starší výsledek zahodí
-- [ ] Sdílená schránka hledání macOS (⌘E v jiné aplikaci → ⌘G tady) — ruční kontrola (zbývá)
-- [ ] Lišta: Return další, Shift+Return předchozí, Esc zavře a vrátí fokus editoru — ruční kontrola (zbývá)
+- [x] Sdílená schránka hledání macOS (⌘E v jiné aplikaci → ⌘G tady) — ruční kontrola 2026-11-16
+- [x] Lišta: Return další, Shift+Return předchozí, Esc zavře a vrátí fokus editoru — ruční kontrola 2026-11-16
 
 ## Sbalování podle odsazení (Zobrazení › Sbalování kódu: ⌥⌘←, ⌥⌘→, ⌥⇧⌘←, ⌥⇧⌘→)
 - [x] Oblast = řádky odsazené hlouběji než hlavička; prázdné řádky uvnitř patří k ní, uzavírací `}` zůstane vidět — `FoldRegionTests.regionsByIndentation`
@@ -46,7 +46,7 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Sbalení jdou s editacemi; výběr nebo kurzor uvnitř (Najít, Zpět) oblast rozbalí — `FoldingTests.editsMoveFoldsAndEditsInsideUnfold`
 - [x] Backspace pod sbalenou oblastí ji rozbalí (neschová řádek) — `FoldingTests.backspaceBelowFoldUnfoldsInsteadOfHidingTheLine`
 - [x] Mapa řádků ↔ zobrazených řádků — `FoldRegionTests.displayMapRowsAndLines`
-- [ ] Šipka v gutteru (klik sbalí/rozbalí), „…“ za řádkem (klik rozbalí) — ruční kontrola (zbývá; snímek `MINORIDE_FOLD=4 --snapshot` ověřen)
+- [x] Šipka v gutteru (klik sbalí/rozbalí), „…“ za řádkem (klik rozbalí) — ruční kontrola 2026-11-16
 
 ## Zalamování řádků (1f)
 - [x] Zlom za poslední mezerou v řádku, jinak na sloupci; mezery přečnívají, diakritika zůstane u písmene, tabulátory po zarážkách — `WrapTests.breaksAfterSpacesOrAtTheColumn`
@@ -54,7 +54,7 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Mapa řádků se sbalením i zalomením — `WrapTests.displayMapWithWrapsAndFolds`, `WrapEditorTests.foldsAndWrapsTogether`
 - [x] Šipky nahoru/dolů po zobrazených řádcích, ⌘←/⌘→ na začátek a konec zobrazeného řádku, ⌃A/⌃E po řádcích textu, klik na pokračování — `WrapEditorTests.rowsCaretsAndMoves`
 - [x] Psaní mění počet zobrazených řádků, Zpět, vypnutí — `WrapEditorTests.editsChangeRowsAndSwitchOff`
-- [ ] Vzhled (výběr přes zlom, emoji a čeština v pokračování, gutter, „…“ za sbaleným zalomeným řádkem) — snímek `MINORIDE_WRAP=1 --snapshot` ověřen; ruční kontrola zbývá
+- [x] Vzhled (výběr přes zlom, emoji a čeština v pokračování, gutter, „…“ za sbaleným zalomeným řádkem) — snímek `MINORIDE_WRAP=1 --snapshot` ověřen; ruční kontrola 2026-11-16
 
 ## Jazykové příkazy (Go, PHP, SQL, NEON, Latte, JSON)
 - [x] ⌘/ zakomentuje řádky na společném odsazení, podruhé odkomentuje; prázdné řádky vynechá — `LanguageCommandTests.lineCommentsToggleAtCommonIndent`
@@ -72,8 +72,8 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Editace se oznamují s textem (VoiceOver přečte smazaný znak) — `AccessibilityTests.editsCarryTheirText`
 - [x] Pohyb kurzoru se oznamuje se směrem a krokem (znak, slovo, řádek) — ruční kontrola 2026-11-15
 - [x] Zvýšit kontrast: barvy syntaxe aspoň 7:1 proti pozadí, silnější zvýraznění řádku a shod — `AccessibilityTests.highContrastThemeReachesSevenToOne`
-- [ ] Omezit pohyb: panely bez animace — ruční kontrola
-- [ ] VoiceOver: čtení po znacích/slovech/řádcích a úprava souboru bez myši (i se zalamováním), Zvýšit kontrast na obrazovce — ruční kontrola
+- [x] Omezit pohyb: panely bez animace — ruční kontrola 2026-11-16
+- [x] VoiceOver: čtení po znacích/slovech/řádcích a úprava souboru bez myši (i se zalamováním), Zvýšit kontrast na obrazovce — ruční kontrola 2026-11-16
 
 ## Systémové textové funkce (1f)
 - [x] Přetažení výběru přesune text jedním krokem Zpět, puštění do přetahovaného textu jen vybere, text odjinud se vloží a vybere — `TextDragTests`
@@ -81,4 +81,4 @@ Každý bod má test (soubor v `Tests/`) nebo je označen jako ruční kontrola.
 - [x] Vyhledat bere výběr, jinak slovo u kurzoru — `TextDragTests.lookUpTakesTheSelectionOrTheWordAtTheCaret`
 - [x] Emotikony a symboly, Zahájit diktování a Vyplnit přidává AppKit do menu Úpravy (`--dump-menu`); vkládají přes `insertText` (`TextInputTests`)
 - [x] Služby s výběrem, Řeč — kontextové menu, ruční kontrola 2026-11-15
-- [ ] Ruční kontrola: přetažení (s ⌥, do jiné aplikace, z jiné aplikace, autoscroll), silný stisk a ⌃⌘D, výběr emoji, sdílená schránka hledání ⌘E
+- [x] Ruční kontrola 2026-11-16: přetažení (s ⌥, do jiné aplikace, z jiné aplikace, autoscroll), silný stisk a ⌃⌘D, výběr emoji, sdílená schránka hledání ⌘E
