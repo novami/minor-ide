@@ -50,11 +50,19 @@ final class ToolsModel {
 
 	/// Git with the login shell's PATH and environment; nil when git is not installed.
 	func gitTool() async -> GitTool? {
+		let (env, environment) = await processEnvironment()
+		guard let path = env.which("git") else { return nil }
+		return GitTool(path: path, environment: environment)
+	}
+
+	/// The login shell environment and the environment for started tools (the app's own with
+	/// the shell's values on top).
+	func processEnvironment() async -> (LoginEnvironment, [String: String]) {
 		loadEnvironment()
-		guard let env = await loading?.value, let path = env.which("git") else { return nil }
+		let env = await loading!.value
 		var environment = ProcessInfo.processInfo.environment
 		environment.merge(env.values) { $1 }
-		return GitTool(path: path, environment: environment)
+		return (env, environment)
 	}
 
 	/// Checks every tool again, off the main thread.

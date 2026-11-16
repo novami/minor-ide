@@ -13,6 +13,11 @@ public final class TextDocument {
 	public var anchors = AnchorSet()
 	/// Called once after every text change, whichever view made it (dirty tracking).
 	public var onChange: (() -> Void)?
+	/// Increases with every text change (language server document versions).
+	public private(set) var version = 0
+	/// Called after every text change with the change (ranges in the text before it), the new
+	/// text and its version. One owner: the language server session of the file's project.
+	public var onTextEdit: ((ChangeSet, Rope, Int) -> Void)?
 	/// Shown but not editable (files too large to edit safely); editors refuse every change.
 	public var isReadOnly = false
 	/// Large or minified file (simplified mode): no colouring and no soft wrapping.
@@ -58,7 +63,10 @@ public final class TextDocument {
 	/// Replaces the text of a document no editor shows (rewriting a file that is not open).
 	func setText(_ new: Rope) {
 		precondition(views.isEmpty, "use an editor to change a shown document")
+		let whole = ChangeSet([(0..<rope.byteCount, new.string)])
 		rope = new
+		version += 1
+		onTextEdit?(whole, rope, version)
 	}
 
 	/// Columns of the widest line (horizontal scrolling). Edits widen it at once; narrowing
@@ -139,6 +147,8 @@ public final class TextDocument {
 			view.didEdit(changes, edit, selections: view.selections.mapped(through: changes), isSource: false)
 		}
 		source.didEdit(changes, edit, selections: selectionsAfter(changes), isSource: true)
+		version += 1
+		onTextEdit?(changes, rope, version)
 		onChange?()
 		if gitBase != nil { scheduleGitDiff(delay: .milliseconds(200)) }
 		if let highlighter, highlighter.validUpTo < rope.lineCount - 1 { scheduleBackgroundHighlight(delay: .milliseconds(300)) }

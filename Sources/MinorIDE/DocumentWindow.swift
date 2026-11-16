@@ -167,6 +167,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			self?.statusBar.update()
 		}
 		project?.onGitHeadChange.append { [weak self] in self?.statusBar.updateGitHead() }
+		project?.languageServers.onUpdate.append { [weak self] in self?.statusBar.updateLanguageServer() }
+		statusBar.updateLanguageServer()
 		updateTrustBanner()
 	}
 
@@ -403,7 +405,19 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		}
 		togglePanel(item)
 		guard showing else { return } // still collapsed while it slides in
-		if bottomPanel?.selected == PanelView.searchSection { project?.findInFiles.focus(query: nil) } else { focusTerminal(evenIfCollapsed: true) }
+		switch bottomPanel?.selected {
+		case PanelView.searchSection: project?.findInFiles.focus(query: nil)
+		case PanelView.languageServersSection: break
+		default: focusTerminal(evenIfCollapsed: true)
+		}
+	}
+
+	/// The Language Servers section of the bottom panel (status bar click).
+	func showLanguageServers() {
+		guard let bottomPanel, let item = panels?.bottom else { return }
+		attachTerminal()
+		bottomPanel.select(PanelView.languageServersSection)
+		if item.isCollapsed { togglePanel(item) }
 	}
 
 	/// View › New Terminal Tab (⌃⇧`): another shell in the bottom panel.
@@ -432,6 +446,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		guard let project, let bottomPanel else { return }
 		bottomPanel.setContent(project.makeTerminal().view, at: PanelView.terminalSection)
 		bottomPanel.setContent(project.findInFiles.view, at: PanelView.searchSection)
+		bottomPanel.setContent(project.languageServersPanel.view, at: PanelView.languageServersSection)
 	}
 
 	private func focusTerminal(evenIfCollapsed: Bool = false) {
@@ -719,6 +734,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	/// Editors of a closed window stop following their files at once (the file may stay open elsewhere).
 	func windowWillClose(_ notification: Notification) {
 		for pane in panes { pane.document.text.detach(pane.editor) }
+		project?.languageServers.scheduleSync()
 	}
 }
 

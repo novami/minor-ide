@@ -21,6 +21,23 @@ struct TextDocumentTests {
 		#expect(!a.validateMenuItem(cut) && a.validateMenuItem(copy))
 	}
 
+	/// What a language server gets: every change (undo included) replayed on the old text gives
+	/// the new one, with increasing versions.
+	@Test func textEditsReplayToTheSameText() {
+		let a = EditorView(text: "a\nb")
+		var mirror = a.rope, versions: [Int] = []
+		a.document.onTextEdit = { changes, rope, version in
+			changes.apply(to: &mirror)
+			#expect(mirror.string == rope.string)
+			versions.append(version)
+		}
+		a.setSelections(SelectionSet(caret: 1))
+		a.insertText("x", replacementRange: NSRange(location: NSNotFound, length: 0))
+		a.replace([(0..<1, "č"), (3..<4, "")])
+		a.undo(nil)
+		#expect(mirror.string == a.rope.string && versions == [1, 2, 3])
+	}
+
 	@Test func editsUndoAndFoldsFollowAcrossPanes() {
 		let a = EditorView(text: "func f() {\n\tx\n}\nend")
 		let b = EditorView(document: a.document)

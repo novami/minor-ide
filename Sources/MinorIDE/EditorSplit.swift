@@ -144,6 +144,7 @@ extension DocumentWindow {
 			pane.view.removeFromSuperview()
 			pane.document.text.detach(pane.editor)
 			panes.removeAll { $0 === pane }
+			project?.languageServers.scheduleSync()
 			find.editor = panes[0].editor
 			window.makeFirstResponder(panes[0].editor)
 			updateTitle()
@@ -160,6 +161,7 @@ extension DocumentWindow {
 	func configure(_ pane: EditorPane) {
 		let editor = pane.editor
 		project?.loadGitBase(pane.document)
+		project?.languageServers.scheduleSync()
 		editor.setAccessibilityLabel(L("Editor"))
 		editor.contextMenuProvider = { DocumentWindow.contextMenu(for: $0) }
 		editor.onFocus = { [weak self] focused in

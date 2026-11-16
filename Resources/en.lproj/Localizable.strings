@@ -37,7 +37,7 @@
 "Clone into" = "Clone into";
 "Clone" = "Clone";
 
-/* MinorIDE/CloneSheet.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+/* MinorIDE/CloneSheet.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/LanguageServersPanel.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Cancel";
 
 /* MinorIDE/CloneSheet.swift */
@@ -230,6 +230,31 @@
 "Showing the first 1 MB of %@." = "Showing the first 1 MB of %@.";
 "Hex View" = "Hex View";
 
+/* MinorIDE/LanguageServersPanel.swift, MinorIDE/StatusBar.swift */
+"Install gopls…" = "Install gopls…";
+
+/* MinorIDE/LanguageServersPanel.swift */
+"Restart" = "Restart";
+"Language Server Log" = "Language Server Log";
+
+/* MinorIDE/LanguageServersPanel.swift, MinorIDE/ToolsSettings.swift */
+"Check Again" = "Check Again";
+
+/* MinorIDE/LanguageServersPanel.swift */
+"Starts when you open a Go file" = "Starts when you open a Go file";
+"Looking for gopls…" = "Looking for gopls…";
+"Not installed. Install it with go install." = "Not installed. Install it with go install.";
+"Not installed. Install Go first, then gopls." = "Not installed. Install Go first, then gopls.";
+"Installing…" = "Installing…";
+"Starting…" = "Starting…";
+"Restarting after a crash (%d of 3)…" = "Restarting after a crash (%d of 3)…";
+"Running" = "Running";
+"Stopped" = "Stopped";
+"Stopped after repeated crashes. Click Restart to try again." = "Stopped after repeated crashes. Click Restart to try again.";
+"Install gopls?" = "Install gopls?";
+"Go code intelligence needs gopls. MinorIDE runs “go install golang.org/x/tools/gopls@latest”, which downloads it from the Go module proxy into your Go bin folder." = "Go code intelligence needs gopls. MinorIDE runs “go install golang.org/x/tools/gopls@latest”, which downloads it from the Go module proxy into your Go bin folder.";
+"Install" = "Install";
+
 /* MinorIDE/LocalHistoryWindow.swift */
 "No saved versions yet. A copy of the file is kept each time you save it, for 14 days." = "No saved versions yet. A copy of the file is kept each time you save it, for 14 days.";
 "Saved Versions" = "Saved Versions";
@@ -359,6 +384,9 @@
 "Search" = "Search";
 "No Search" = "No Search";
 "Results of Find in Project will appear here." = "Results of Find in Project will appear here.";
+"Language Servers" = "Language Servers";
+"No Language Servers" = "No Language Servers";
+"The state and log of gopls will appear here." = "The state and log of gopls will appear here.";
 
 /* MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
 "Bottom Panel" = "Bottom Panel";
@@ -499,6 +527,10 @@
 "Line %d, Column %d" = "Line %d, Column %d";
 "Git branch: %@" = "Git branch: %@";
 "Detached HEAD at %@" = "Detached HEAD at %@";
+"gopls not installed" = "gopls not installed";
+"Installing gopls…" = "Installing gopls…";
+"Starting gopls…" = "Starting gopls…";
+"gopls stopped" = "gopls stopped";
 
 /* MinorIDE/StatusBar.swift, MinorIDE/main.swift */
 "%d spaces|one" = "%d space";
@@ -526,7 +558,6 @@
 "Optional." = "Optional.";
 "Your shell’s PATH could not be read, so MinorIDE looks in /opt/homebrew/bin, /usr/local/bin and ~/go/bin too." = "Your shell’s PATH could not be read, so MinorIDE looks in /opt/homebrew/bin, /usr/local/bin and ~/go/bin too.";
 "Tools are found with the PATH of your login shell. A missing tool only turns off what needs it." = "Tools are found with the PATH of your login shell. A missing tool only turns off what needs it.";
-"Check Again" = "Check Again";
 "Installed" = "Installed";
 "%@ (needs %@)" = "%@ (needs %@)";
 

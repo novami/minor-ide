@@ -145,8 +145,8 @@ extension PanelView {
 		return panel
 	}
 
-	/// Bottom panel: the project's terminal and Find in Project.
-	static let terminalSection = 0, searchSection = 1
+	/// Bottom panel: the project's terminal, Find in Project and the language servers.
+	static let terminalSection = 0, searchSection = 1, languageServersSection = 2
 
 	static func bottom() -> PanelView {
 		PanelView(sections: [
@@ -156,6 +156,9 @@ extension PanelView {
 			Section(title: L("Search"), symbol: "magnifyingglass",
 			        emptyTitle: L("No Search"),
 			        emptyText: L("Results of Find in Project will appear here.")),
+			Section(title: L("Language Servers"), symbol: "gearshape.2",
+			        emptyTitle: L("No Language Servers"),
+			        emptyText: L("The state and log of gopls will appear here.")),
 		], label: L("Bottom Panel"), defaultsKey: "BottomPanelSection", leading: true,
 		   hide: (#selector(DocumentWindow.toggleBottomPanel(_:)), "chevron.down", L("Hide Bottom Panel")))
 	}

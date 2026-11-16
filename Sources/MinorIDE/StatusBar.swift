@@ -16,6 +16,8 @@ final class StatusBar: NSView {
 	private let indentation = StatusBar.popUp(L("Indentation"))
 	private let encoding = StatusBar.popUp(L("Encoding"))
 	private let restricted = NSButton()
+	/// gopls progress, start, crash or a missing install (hidden while it runs idle).
+	private let languageServer = NSButton()
 	/// Shows or hides the bottom panel (project windows only); lit while it is shown.
 	private let bottomPanel = NSButton()
 	/// Checked-out Git branch (trusted project in a repository only).
@@ -63,8 +65,18 @@ final class StatusBar: NSView {
 		branchView.setAccessibilityRole(.staticText)
 		branch.setContentCompressionResistancePriority(.defaultLow + 1, for: .horizontal)
 
+		languageServer.isBordered = false
+		languageServer.controlSize = .small
+		languageServer.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+		languageServer.imagePosition = .imageLeading
+		languageServer.lineBreakMode = .byTruncatingTail
+		languageServer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+		languageServer.target = self
+		languageServer.action = #selector(languageServerClicked(_:))
+		languageServer.isHidden = true
+
 		readOnly.toolTip = L("Files larger than 256 MB open read-only.")
-		let right = NSStackView(views: [restricted, readOnly, language, lineEnding, indentation, encoding])
+		let right = NSStackView(views: [languageServer, restricted, readOnly, language, lineEnding, indentation, encoding])
 		right.spacing = 10
 		let row = NSStackView(views: [bottomPanel, branchView, position, right])
 		row.distribution = .fill
@@ -95,7 +107,7 @@ final class StatusBar: NSView {
 
 	/// What the bar shows, for snapshot runs.
 	var summary: String {
-		[branchView.isHidden ? "" : branch.stringValue, position.stringValue, restricted.isHidden ? "" : restricted.title, readOnly.isHidden ? "" : readOnly.stringValue, language.stringValue,
+		[branchView.isHidden ? "" : branch.stringValue, position.stringValue, languageServer.isHidden ? "" : languageServer.title, restricted.isHidden ? "" : restricted.title, readOnly.isHidden ? "" : readOnly.stringValue, language.stringValue,
 		 lineEnding.titleOfSelectedItem ?? lineEnding.itemTitle(at: 0), indentation.itemTitle(at: 0), encoding.itemTitle(at: 0)]
 			.filter { !$0.isEmpty }.joined(separator: " | ")
 	}
@@ -241,6 +253,49 @@ final class StatusBar: NSView {
 	}
 
 	@objc private func toggleBottomPanel(_ sender: Any?) { owner?.toggleBottomPanel(sender) }
+
+	/// Shows gopls when something is worth seeing: work in progress, starting, a crash or a
+	/// missing install (which the click offers to install).
+	func updateLanguageServer() {
+		guard let services = owner?.project?.languageServers else {
+			languageServer.isHidden = true
+			return
+		}
+		let status = services.status
+		var title: String?, symbol: String?, tint = NSColor.secondaryLabelColor
+		switch status {
+		case .idle, .locating, .server(.stopped):
+			break
+		case .missing(let goInstalled):
+			title = goInstalled ? L("Install gopls…") : L("gopls not installed")
+			symbol = "exclamationmark.triangle"
+			tint = .systemOrange
+		case .installing:
+			title = L("Installing gopls…")
+		case .server(.starting), .server(.restarting):
+			title = L("Starting gopls…")
+		case .server(.running):
+			title = services.progress.text.map { "gopls: " + $0 }
+		case .server(.failed):
+			title = L("gopls stopped")
+			symbol = "exclamationmark.triangle"
+			tint = .systemOrange
+		}
+		languageServer.isHidden = title == nil
+		languageServer.title = title ?? ""
+		languageServer.image = symbol.flatMap { NSImage(systemSymbolName: $0, accessibilityDescription: nil) }
+		languageServer.contentTintColor = tint
+		languageServer.toolTip = "gopls — " + LanguageServersPanel.describe(status, progress: services.progress)
+	}
+
+	@objc private func languageServerClicked(_ sender: Any?) {
+		guard let owner, let services = owner.project?.languageServers else { return }
+		if services.status == .missing(goInstalled: true) {
+			LanguageServersPanel.confirmInstall(services, in: owner.window)
+		} else {
+			owner.showLanguageServers()
+		}
+	}
 
 	@objc private func trustProject(_ sender: Any?) { owner?.toggleProjectTrust(sender) }
 }

@@ -36,6 +36,8 @@
 <h2>Binární a velké soubory</h2>
 <p>Binární soubory se neotevírají jako text; jejich bajty ukáže <b>Zobrazit hex</b>, náhled nabídne Finder. Soubory nad 5 MB nebo s velmi dlouhými řádky se kvůli rychlosti otevřou bez barvení syntaxe. Soubory nad 256 MB se otevřou jen pro čtení: můžete je číst, prohledávat a kopírovat, ale ne měnit (stavový řádek ukáže <b>Jen pro čtení</b>).</p>
 <p>V důvěryhodném projektu, který je repozitářem Git, ukazuje stavový řádek vlevo aktuální větev (nebo commit, když není vybraná žádná větev).</p>
+<h2>Jazykový server Go</h2>
+<p>Když v důvěryhodném projektu otevřete soubor Go, MinorIDE pro projekt spustí <code>gopls</code> (najde ho v PATH vašeho shellu nebo ve složce bin pro Go); <code>go.work</code> a víc modulů zvládá gopls sám. Během načítání balíčků ukazuje stavový řádek průběh. Když gopls chybí, klikněte ve stavovém řádku na <b>Nainstalovat gopls…</b>: MinorIDE se zeptá a spustí <code>go install golang.org/x/tools/gopls@latest</code>. Sekce <b>Jazykové servery</b> ve spodním panelu ukazuje stav a log, tlačítko <b>Restartovat</b> server spustí znovu (po pádu se spouští sám, nejvýš třikrát za minutu).</p>
 </main>
 </body>
 </html>

@@ -36,6 +36,8 @@
 <h2>Binary and large files</h2>
 <p>Binary files are not opened as text; you can view their bytes with <b>Show Hex</b> or preview them in the Finder. Files over 5 MB or with very long lines open without syntax colouring to stay fast. Files over 256 MB open read-only: you can read, search and copy, but not change them (the status bar shows <b>Read Only</b>).</p>
 <p>In a trusted project that is a Git repository, the left end of the status bar shows the current branch (or the commit when no branch is checked out).</p>
+<h2>Go language server</h2>
+<p>When you open a Go file in a trusted project, MinorIDE starts <code>gopls</code> (found in your shell’s PATH or the Go bin folder) for the project; <code>go.work</code> and several modules are handled by gopls itself. While it loads packages, the status bar shows its progress. If gopls is missing, click <b>Install gopls…</b> in the status bar: MinorIDE runs <code>go install golang.org/x/tools/gopls@latest</code> after asking. The <b>Language Servers</b> section of the bottom panel shows its state and log, and <b>Restart</b> starts it again (it restarts on its own after a crash, at most three times a minute).</p>
 </main>
 </body>
 </html>

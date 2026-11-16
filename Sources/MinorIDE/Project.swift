@@ -58,6 +58,7 @@ final class Project {
 		for handler in onTrustChange { handler() }
 		refreshGitHead()
 		refreshGitBases()
+		languageServers.sync()
 	}
 
 	/// Re-reads `HEAD` (only the file, no Git process). Called on start, trust change, window
@@ -80,6 +81,7 @@ final class Project {
 	/// Re-reads loaded folders that FSEvents reported (or the parents of reported files).
 	private func changed(_ paths: [String]) {
 		onFiles?(paths)
+		languageServers.filesChanged(paths)
 		self.paths.update(changed: paths)
 		if paths.contains(where: { $0.hasSuffix("/HEAD") }) { refreshGitHead() }
 		// A commit, checkout or reset moved HEAD or a branch: the change gutters compare anew.
@@ -145,7 +147,13 @@ final class Project {
 	/// Find in Project, shared by the project's tabs like the terminal.
 	private(set) lazy var findInFiles = FindInFiles(project: self)
 
+	/// gopls and later other language servers of the project.
+	private(set) lazy var languageServers = LanguageServices(project: self)
+	/// Their section of the bottom panel, shared by the project's tabs.
+	private(set) lazy var languageServersPanel = LanguageServersPanel(services: languageServers)
+
 	func close() {
+		languageServers.close()
 		if hasTerminal { terminal.stop() }
 		watcher?.stop()
 		watcher = nil

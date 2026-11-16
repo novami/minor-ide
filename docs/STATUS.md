@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (fáze 2b hotová v kódu; fáze 2 odložena na Apple Developer účet)
+**Poslední aktualizace:** 2026-11-16 (fáze 3 krok 2: gopls napojený na aplikaci; fáze 2 odložena na Apple Developer účet)
 
 ## Kde jsme
 
@@ -173,7 +173,11 @@ Známé mezery 2b: výsledek hledání v jiném souboru otevře nový nativní t
 
 Známé mezery 3/1: požadavek se pošle po už zařazených změnách dokumentu, ale editace během jeho cesty může předběhnout (výsledek pak musí klient zahodit podle verze); `didChange` počítá pozice na sériové frontě (velké vícenásobné změny ji zdrží, ne hlavní vlákno).
 
-**Další krok: fáze 3, krok 2** — napojení na aplikaci: gopls (3.3: detekce v PATH a `~/go/bin`, nabídka instalace, `staticcheck: true`, `go.work`), sezení per jazyk a projekt jen v důvěryhodném projektu, editor → `open/change/save/close`, FSEvents → `filesChanged`, `$/progress` ve stavovém řádku, panel „Language Servers“ s logem a Restartem.
+**Fáze 3, krok 2 hotový** (2026-11-16): napojení LSP na aplikaci (zbytek 3.1, 3.3). `LSPKit/Gopls.swift` (`languageID` pro `.go`, `go.mod`, `go.sum`, `go.work`; `locate`: PATH, `$GOBIN`, první `$GOPATH/bin`, `~/go/bin`; `staticcheck: true` v `initializationOptions` i v `workspace/configuration`; `go.work` a víc modulů řeší gopls sám nad složkou projektu; `ProgressTracker`: nejnovější běžící úloha jako jeden řádek). `TextDocument.version` a `onTextEdit` (změna + nový rope + verze, i Zpět a `setText`), `FileDocument.didSave`. `MinorIDE/LanguageServices.swift` (per projekt): gopls se spustí s prvním zobrazeným souborem Go jen v důvěryhodném projektu (prostředí z login shellu, pracovní složka projekt), běží do zavření projektu nebo omezení (pak shutdown); `sync()` po otevření/zavření části a okna, změně URL a uložení otevře/zavře dokumenty; FSEvents → `filesChanged` (mimo `.git/`, existuje → changed, jinak deleted); log (stderr, `window/logMessage`/`showMessage`, max 5000 řádků). Chybějící gopls: ve stavovém řádku „Nainstalovat gopls…“ → dotaz → `go install golang.org/x/tools/gopls@latest` v domovské složce, výstup do logu, pak start. Stavový řádek: průběh („gopls: Loading packages…“), start, pád (oranžově) — klik otevře sekci; v klidu skryto. Spodní panel: třetí sekce Jazykové servery (`LanguageServersPanel.swift`: stav, Restartovat, Nainstalovat, log). Nápověda doplněna. Testy `GoplsTests` (vč. testu proti skutečnému gopls, pokud je nainstalovaný: inkrementální změna za emoji → `documentSymbol`), `TextDocumentTests.textEditsReplayToTheSameText`. Ověřeno naostro `MINORIDE_LSP_CHECK=1 MINORIDE_OPEN=<soubor.go> --snapshot <png> <projekt>` na `~/MinorDLNA` (gopls 0.24: běží, 41 balíčků, editace v paměti dorazí, Zpět); nedůvěryhodný projekt → gopls se nespustí. Bench BUDGET OK.
+
+Známé mezery 3/2: gopls 0.24 vyjednal UTF-16 (klient nabízí UTF-8, převody otestované); soubor ve dvou vnořených otevřených projektech posílá změny jen tomu, kdo ho otevřel naposled; soubory mimo projekt (samostatná okna) server nemají; diagnostiky (`publishDiagnostics`), `applyEdit` a `showMessageRequest` se zatím zahazují (3.7); instalace gopls nejde zrušit; po ruční instalaci se gopls hledá znovu až tlačítkem Zkontrolovat znovu v panelu; ruční kontrola v GUI (stavový řádek, panel, instalace) zbývá.
+
+**Další krok: fáze 3, krok 3** — 3.4 Napovídání: vlastní popup (NSPanel), trigger znaky, ⌃Space a ⌥Esc, lokální fuzzy filtrování (nový dotaz jen při `isIncomplete`), `completionItem/resolve` pro dokumentaci, snippety s Tab skoky, `additionalTextEdits` (auto-import). Výsledek zahodit, pokud se mezitím změnila `TextDocument.version`.
 
 **Dluh — ruční kontrola (odložena uživatelem 2026-11-16 znovu, udělat až po dokončení fáze 3):** 2b s uživatelem (spustit z Finderu: ⇧⌘O, ⇧⌘F včetně Nahradit vše, gutter a Vrátit, klonování, víc terminálů, zabezpečené zadávání) a zbylé ruční kontroly U2–U8.
 

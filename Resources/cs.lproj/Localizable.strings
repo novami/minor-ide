@@ -38,7 +38,7 @@
 "Clone into" = "Klonovat do";
 "Clone" = "Klonovat";
 
-/* MinorIDE/CloneSheet.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+/* MinorIDE/CloneSheet.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/LanguageServersPanel.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Zrušit";
 
 /* MinorIDE/CloneSheet.swift */
@@ -233,6 +233,31 @@
 "Showing the first 1 MB of %@." = "Zobrazen je první 1 MB z %@.";
 "Hex View" = "Hexadecimální náhled";
 
+/* MinorIDE/LanguageServersPanel.swift, MinorIDE/StatusBar.swift */
+"Install gopls…" = "Nainstalovat gopls…";
+
+/* MinorIDE/LanguageServersPanel.swift */
+"Restart" = "Restartovat";
+"Language Server Log" = "Log jazykového serveru";
+
+/* MinorIDE/LanguageServersPanel.swift, MinorIDE/ToolsSettings.swift */
+"Check Again" = "Zkontrolovat znovu";
+
+/* MinorIDE/LanguageServersPanel.swift */
+"Starts when you open a Go file" = "Spustí se po otevření souboru Go";
+"Looking for gopls…" = "Hledá se gopls…";
+"Not installed. Install it with go install." = "Není nainstalovaný. Nainstalujte ho přes go install.";
+"Not installed. Install Go first, then gopls." = "Není nainstalovaný. Nejdřív nainstalujte Go, pak gopls.";
+"Installing…" = "Instaluje se…";
+"Starting…" = "Spouští se…";
+"Restarting after a crash (%d of 3)…" = "Nové spuštění po pádu (%d ze 3)…";
+"Running" = "Běží";
+"Stopped" = "Zastaveno";
+"Stopped after repeated crashes. Click Restart to try again." = "Zastaveno po opakovaných pádech. Zkuste to znovu tlačítkem Restartovat.";
+"Install gopls?" = "Nainstalovat gopls?";
+"Go code intelligence needs gopls. MinorIDE runs “go install golang.org/x/tools/gopls@latest”, which downloads it from the Go module proxy into your Go bin folder." = "Funkce pro kód v Go potřebují gopls. MinorIDE spustí „go install golang.org/x/tools/gopls@latest“, který ho stáhne z proxy modulů Go do vaší složky bin pro Go.";
+"Install" = "Nainstalovat";
+
 /* MinorIDE/LocalHistoryWindow.swift */
 "No saved versions yet. A copy of the file is kept each time you save it, for 14 days." = "Zatím žádné uložené verze. Při každém uložení se kopie souboru uchová na 14 dní.";
 "Saved Versions" = "Uložené verze";
@@ -362,6 +387,9 @@
 "Search" = "Hledat";
 "No Search" = "Žádné hledání";
 "Results of Find in Project will appear here." = "Zde se zobrazí výsledky hledání v projektu.";
+"Language Servers" = "Jazykové servery";
+"No Language Servers" = "Žádné jazykové servery";
+"The state and log of gopls will appear here." = "Zde se zobrazí stav a log gopls.";
 
 /* MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
 "Bottom Panel" = "Spodní panel";
@@ -502,6 +530,10 @@
 "Line %d, Column %d" = "Řádek %d, sloupec %d";
 "Git branch: %@" = "Větev Git: %@";
 "Detached HEAD at %@" = "Odpojená HEAD na %@";
+"gopls not installed" = "gopls není nainstalovaný";
+"Installing gopls…" = "Instaluje se gopls…";
+"Starting gopls…" = "Spouští se gopls…";
+"gopls stopped" = "gopls se zastavil";
 
 /* MinorIDE/StatusBar.swift, MinorIDE/main.swift */
 "%d spaces|one" = "%d mezera";
@@ -532,7 +564,6 @@
 "Optional." = "Volitelné.";
 "Your shell’s PATH could not be read, so MinorIDE looks in /opt/homebrew/bin, /usr/local/bin and ~/go/bin too." = "PATH z vašeho shellu se nepodařilo načíst, MinorIDE proto hledá i v /opt/homebrew/bin, /usr/local/bin a ~/go/bin.";
 "Tools are found with the PATH of your login shell. A missing tool only turns off what needs it." = "Nástroje se hledají podle PATH z vašeho přihlašovacího shellu. Chybějící nástroj vypne jen to, co ho potřebuje.";
-"Check Again" = "Zkontrolovat znovu";
 "Installed" = "Nainstalováno";
 "%@ (needs %@)" = "%@ (potřeba %@)";
 

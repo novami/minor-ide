@@ -19,6 +19,9 @@ public final class FileDocument {
 	public static let didReplace = Notification.Name("FileDocumentDidReplace")
 	public static let replacementKey = "replacement"
 
+	/// Posted (object: the document) after the text was written to its file.
+	public static let didSave = Notification.Name("FileDocumentDidSave")
+
 	public let text: TextDocument
 	public private(set) var url: URL?
 	/// Indentation, line ending and charset used when saving.
@@ -380,6 +383,7 @@ public final class FileDocument {
 		diskNotice = nil
 		text.history.seal()
 		post()
+		NotificationCenter.default.post(name: Self.didSave, object: self)
 	}
 }
 
