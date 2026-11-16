@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-16 (U1–U6 a U9 hotové; další U7)
+**Poslední aktualizace:** 2026-11-16 (fáze 2b hotová v kódu; fáze 2 odložena na Apple Developer účet)
 
 ## Kde jsme
 
@@ -157,7 +157,19 @@ Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split 
 - [x] **U7 Spodní panel vždy rozbalitelný** (2026-11-16): ověřeno, přepínač z U4 to splňuje — stavový řádek je v editorové části nad spodním panelem, po sbalení (tažením i Skrýt) zůstává dole v okně; po přepnutí tabu se stav obnoví v `windowDidBecomeKey`. Kontrola `MINORIDE_BOTTOM_CHECK=1 --snapshot <png> <projekt>`: sbalený panel, okno 1300×800 i nejmenší (824×250) → tlačítko viditelné uvnitř okna, OK. Okno bez projektu spodní panel (terminál) nemá, tlačítko je tam skryté záměrně. Ruční kontrola tažením zbývá.
 - [x] **U8 Název Git větve** (2026-11-16): `MinorCore/GitHead.swift` čte `HEAD` přímo ze souboru (žádný proces Git): nejbližší `.git` v projektu nebo nad ním, `.git` jako soubor (worktree, submodul) přes `gitdir:`; odpojená HEAD = 7 znaků hashe. Stavový řádek vlevo za přepínačem panelu: ikona větve + název, tooltip a přístupnost. Jen v důvěryhodném projektu; obnoví se při otevření, změně důvěry, aktivaci okna a při FSEvents na `…/HEAD` v projektu. Test `GitHeadTests`; ověřeno snímkem (důvěryhodný repozitář → „main“, Omezený režim → nic). Nápověda doplněna. Mezera: repozitář nad složkou projektu nebo worktree mimo ni se nesleduje průběžně, jen při aktivaci okna.
 
-**Všechny úpravy U1–U9 hotové.** Další krok: ruční kontroly zbývající u U2–U8; pak čeká fáze 2 (Apple Developer účet), jinak 2b.1.
+**Všechny úpravy U1–U9 hotové.**
+
+**Fáze 2 odložena** (rozhodnutí uživatele 2026-11-16): čeká na Apple Developer účet. Podepisovací nástroj release bude Swift skript `tools/signrelease.swift` (CryptoKit + Klíčenka), ne Go: Go bez cgo umí Klíčenku jen přes příkaz `security`, který by dostal klíč v argumentech (rozhodnutí uživatele; plán zatím neupraven).
+
+**Fáze 2b je hotová v kódu** (2026-11-16), ruční kontrola zbývá:
+- **2b.1 Rychle otevřít** (⇧⌘O, `d8247b2`): `MinorCore/PathIndex.swift` (cesty v paměti, `readdir`, aktualizace z FSEvents, hledání paralelně po blocích), `FuzzyMatch.swift` (DP: začátky slov, camelCase, název souboru, souvislé úseky; mezery = víc termínů), `GitIgnore.swift` (vzory, `!`, `**`, vnořené `.gitignore`, `.git/info/exclude`). Ignorované soubory jsou níž (`vendor/`), ignorované skryté složky a `node_modules` se nečtou. Nedávné soubory projektu výš; `název:řádek`; ⌥Return do druhé části. Bench: 20 000 souborů, klávesa max 12,6 ms (rozpočet 50 ms), index 0,77 s na pozadí. Oprava `GitHead` (`40d80fa`): mimo repozitář se hledání `.git` zacyklilo u `/`.
+- **2b.2 Najít v projektu** (⇧⌘F, `bde74c7`): `minoride-server search` (`server/internal/search`: RE2, `.gitignore`, paralelně, výsledky po souborech jako notifikace `search/file`, `cancel`, limit 20 000 výskytů, binární a > 20 MB soubory vynechány, dlouhé řádky oříznuté kolem shody). Go bench: první výsledek 0,5 ms, celé hledání 20 000 souborů 0,24 s. Klient `MinorCore/FileSearch.swift`, UI `MinorIDE/FindInFiles.swift` = sekce Hledat ve spodním panelu (sdílená taby projektu): Aa/W/.*, hledá při psaní, výběr řádku ukáže shodu v editoru, Return/dvojklik přesune fokus, Delete vyřadí soubor/řádek. Neuložené soubory se hledají v textu editoru. Nahradit vše (rozhodnutí uživatele): otevřené soubory v editoru (Zpět jde), ostatní hned uložené přes `FileDocument.replace(in:)` s Místní historií; nahrazují se jen řádky ve výsledcích.
+- **2b.3 Git** (`52dc24f`, `35f9b82`): `MinorCore/Git.swift` (`GitTool`: pole argumentů, PATH z login shellu, `GIT_TERMINAL_PROMPT=0`, SSH jen se známým klíčem a bez dotazů), `TextEngine/LineChanges.swift` (Myers nad řádky, společný začátek a konec přeskočen, CRLF = beze změny), `EditorKit/GitGutter.swift` (pruh vlevo v gutteru: zelená/modrá/červený klín; klik → popover s řádky z commitu a Vrátit). HEAD se čte `git cat-file` jen v důvěryhodném projektu; obnova po změně HEAD/refs. Klonovat repozitář Git… v uvítacím okně a Soubor: https/ssh/git/scp adresy, `--` před adresou, `protocol.ext.allow=never`, bez hooků, průběh, Zrušit (smaže rozpracovanou složku); klon se otevře v Omezeném režimu.
+- **2b.4 Terminál** (`8100462`): víc shellů (lišta panelů nad terminálem jen při víc než jednom, +/×, `exit` zavře, název z titulku shellu), Zobrazení › Nový panel terminálu ⌃⇧\`, MinorIDE › Zabezpečené zadávání z klávesnice (`EnableSecureEventInput` jen když má fokus terminál v aktivní aplikaci), písmo terminálu = písmo editoru (živě), licence SwiftTerm v `Resources/Licenses` a odkaz v O aplikaci.
+
+Známé mezery 2b: výsledek hledání v jiném souboru otevře nový nativní tab (procházení výsledků přidává taby); nahrazení počítá shody znovu přes `NSRegularExpression`, náhled je z RE2 (u běžných výrazů stejné); zvýraznění shod v Rychle otevřít jen ASCII; gutter Git se neobnoví po Uložit jako/přejmenování a 200 ms po editaci ukazuje staré pozice; klonování neumí zadat heslo (GUI askpass až 7.5) ani přijmout neznámý klíč SSH serveru (nutno přes terminál); nápověda (Help Book) zatím nepopisuje funkce 2b.
+
+**Další krok:** ruční kontrola 2b s uživatelem (spustit z Finderu: ⇧⌘O, ⇧⌘F včetně Nahradit vše, gutter a Vrátit, klonování, víc terminálů, zabezpečené zadávání) a zbylé ruční kontroly U2–U8. Pak fáze 3 (LSP klient a Go), protože fáze 2 čeká na účet.
 
 **Fáze 1e:** ruční kontrola oken prošla (2026-11-16); `.minoride/local.json` až s prvním uživatelem (servery v 6b).
 
