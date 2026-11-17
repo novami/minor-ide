@@ -510,6 +510,15 @@ public final class LanguageServer: @unchecked Sendable {
 			"implementation": ["linkSupport": true],
 			"typeDefinition": ["linkSupport": true],
 			"references": [:],
+			"hover": ["contentFormat": ["markdown", "plaintext"]],
+			"signatureHelp": [
+				"contextSupport": true,
+				"signatureInformation": [
+					"documentationFormat": ["markdown", "plaintext"],
+					"parameterInformation": ["labelOffsetSupport": true],
+					"activeParameterSupport": true,
+				],
+			],
 		],
 		"window": ["workDoneProgress": true],
 	]

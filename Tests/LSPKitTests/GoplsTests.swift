@@ -74,6 +74,20 @@ struct GoplsTests {
 		}
 		#expect(names == ["main", "helper"])
 		#expect(states.value.contains(.running))
+
+		let hover = try await server.hover(uri: uri, offset: text.string.components(separatedBy: "func helper")[0].utf8.count + 7, in: text)
+		#expect(hover?.contents.blocks.first == .code("func helper() int", language: "go"))
+		// Inside a call, after the comma: the second parameter (inside the string literal gopls has none).
+		let call = "func use(a int, b string) {}\nfunc z() { use(1, \"x\") }\n"
+		let tail = text.byteCount
+		let more = ChangeSet([(tail..<tail, call)])
+		more.apply(to: &text)
+		server.change(uri: uri, version: 3, changes: more, text: text)
+		let caret = text.byteCount - " \"x\") }\n".utf8.count
+		let help = try await server.signatureHelp(uri: uri, offset: caret, in: text, trigger: .character(0x2C), current: nil)
+		#expect(help?.active.label == "use(a int, b string)")
+		#expect(help?.activeParameter == 1)
+		#expect(help.map { (help!.active.label as NSString).substring(with: NSRange(location: $0.active.parameters[1].range.lowerBound, length: $0.active.parameters[1].range.count)) } == "b string")
 		await server.stop()
 	}
 }

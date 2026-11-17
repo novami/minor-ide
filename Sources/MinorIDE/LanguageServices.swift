@@ -132,10 +132,10 @@ final class LanguageServices {
 
 	/// Snapshot check: waits for gopls to settle, edits `editor` in memory and asks for its
 	/// symbols; prints the state, the symbols and the end of the log.
-	func checkForSnapshot(_ editor: EditorView, url: URL, completion: CompletionController?,
-	                      navigation: NavigationController?, usages: UsagesPanel) {
-		let deadline = Date().addingTimeInterval(30)
+	func checkForSnapshot(_ editor: EditorView, url: URL, pane: EditorPane, usages: UsagesPanel) {
+		let completion = pane.completion, navigation = pane.navigation
 		func wait(_ done: () -> Bool) {
+			let deadline = Date().addingTimeInterval(15)
 			while !done() && Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
 		}
 		wait { status == .server(.running) && !progress.isActive }
@@ -225,6 +225,25 @@ final class LanguageServices {
 		print("back from the standard library:", stdWindow != nil && editor.caret == before,
 		      "tab in front:", editor.window.map { $0.tabGroup?.selectedWindow === $0 } ?? false)
 		editor.undo(nil)
+		// Documentation under the resting mouse, then parameter info while typing a call.
+		let e6 = editor.rope.byteCount
+		editor.replace([(e6..<e6, "\n// minorideDoc says *hi*.\nfunc minorideDoc(a int, b string) {}\n\nfunc minorideCall() { minorideDoc }\n")])
+		let callEnd = editor.rope.byteCount - " }\n".utf8.count
+		let symbol = editor.rope.wordRange(at: callEnd - 2)
+		RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+		editor.mouseWord = symbol
+		editor.onMouseWord?(symbol)
+		wait { pane.hover?.isShowing == true }
+		print("hover:", pane.hover?.debugText?.replacingOccurrences(of: "\n", with: " | ") ?? "none")
+		editor.setSelections(SelectionSet(caret: callEnd))
+		print("hover closes on caret move:", pane.hover?.isShowing == false)
+		for c in "(1, " { editor.insertText(String(c), replacementRange: NSRange(location: NSNotFound, length: 0)) }
+		wait { pane.signatureHelp?.debugText?.hasSuffix("b string") == true }
+		print("parameter info:", pane.signatureHelp?.debugText ?? "none")
+		_ = editor.commandInterceptor?(#selector(NSResponder.cancelOperation(_:)))
+		print("parameter info closes on Esc:", pane.signatureHelp?.isShowing == false)
+		for _ in 0..<5 { editor.undo(nil) }
+		print("text restored:", editor.rope.byteCount == e6)
 		for line in log.suffix(8) { print("  ", line) }
 	}
 

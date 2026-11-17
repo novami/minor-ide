@@ -108,6 +108,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		didSet { if oldValue != linkRange { linkChanged(oldValue) } }
 	}
 	public internal(set) var hoveredWord: Range<Int>?
+	/// The word the mouse rests over with no modifier and no button held, nil when it leaves
+	/// it (documentation on hover); the handler is told about every change.
+	public var onMouseWord: ((Range<Int>?) -> Void)?
+	public var mouseWord: Range<Int>?
 	/// Tab stops of the inserted snippet while Tab visits them (framed in the text).
 	var snippetSession: SnippetSession? {
 		didSet {

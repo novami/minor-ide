@@ -247,6 +247,10 @@
 "Showing the first 1 MB of %@." = "Showing the first 1 MB of %@.";
 "Hex View" = "Hex View";
 
+/* MinorIDE/Hover.swift */
+"Documentation" = "Documentation";
+"Parameter Info" = "Parameter Info";
+
 /* MinorIDE/LanguageServersPanel.swift, MinorIDE/StatusBar.swift */
 "Install gopls…" = "Install gopls…";
 
@@ -318,6 +322,8 @@
 "Move Line Up" = "Move Line Up";
 "Move Line Down" = "Move Line Down";
 "Show Completions" = "Show Completions";
+"Show Parameter Info" = "Show Parameter Info";
+"Show Documentation" = "Show Documentation";
 "Find and Replace…" = "Find and Replace…";
 "Find in Project…" = "Find in Project…";
 "Use Selection for Find" = "Use Selection for Find";

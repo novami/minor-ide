@@ -461,6 +461,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	@objc func jumpToImplementation(_ sender: Any?) { focusedPane.navigation?.jump(.implementation) }
 	@objc func jumpToTypeDefinition(_ sender: Any?) { focusedPane.navigation?.jump(.typeDefinition) }
 	@objc func findUsages(_ sender: Any?) { focusedPane.navigation?.findUsages() }
+	@objc func showDocumentation(_ sender: Any?) { focusedPane.hover?.invoke() }
+	@objc func showParameterInfo(_ sender: Any?) { focusedPane.signatureHelp?.invoke() }
 
 	/// Before a jump away from the focused place (Back returns there).
 	func recordJump() { project?.jumps.record(from: self) }
@@ -525,6 +527,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		case #selector(jumpToImplementation(_:)): return focusedPane.navigation?.supports(.implementation) ?? false
 		case #selector(jumpToTypeDefinition(_:)): return focusedPane.navigation?.supports(.typeDefinition) ?? false
 		case #selector(findUsages(_:)): return focusedPane.navigation?.supports(.references) ?? false
+		case #selector(showDocumentation(_:)): return focusedPane.hover?.isAvailable ?? false
+		case #selector(showParameterInfo(_:)): return focusedPane.signatureHelp?.isAvailable ?? false
 		case #selector(navigateBack(_:)): return project?.jumps.canGoBack ?? false
 		case #selector(navigateForward(_:)): return project?.jumps.canGoForward ?? false
 		case #selector(showRecentFiles(_:)): return project != nil

@@ -30,6 +30,8 @@ final class EditorPane {
 	let banner = DiskBanner()
 	/// Completion from the project's language server (nil outside a project).
 	var completion: CompletionController?
+	var signatureHelp: SignatureHelpController?
+	var hover: HoverController?
 	/// Jumps to definitions and usages (nil outside a project).
 	var navigation: NavigationController?
 	/// Notice the banner shows, so repeated state changes do not rebuild it.
@@ -183,8 +185,23 @@ extension DocumentWindow {
 				return services.endpoint(for: doc)
 			}
 			pane.completion = completion
-			editor.commandInterceptor = { [weak completion] in completion?.handle($0) ?? false }
-			editor.onTypedText = { [weak completion] in completion?.typed($0) }
+			let signatureHelp = SignatureHelpController(editor: editor) { [weak services, weak doc = pane.document] in
+				guard let services, let doc else { return nil }
+				return services.endpoint(for: doc)
+			}
+			pane.signatureHelp = signatureHelp
+			let hover = HoverController(editor: editor) { [weak services, weak doc = pane.document] in
+				guard let services, let doc else { return nil }
+				return services.endpoint(for: doc)
+			}
+			pane.hover = hover
+			editor.commandInterceptor = { [weak completion, weak signatureHelp, weak hover] selector in
+				completion?.handle(selector) == true || signatureHelp?.handle(selector) == true || hover?.handle(selector) == true
+			}
+			editor.onTypedText = { [weak completion, weak signatureHelp] in
+				completion?.typed($0)
+				signatureHelp?.typed($0)
+			}
 			editor.onWillTypeText = { [weak completion] in completion?.willType($0) }
 			let navigation = NavigationController(editor: editor) { [weak services, weak doc = pane.document] in
 				guard let services, let doc else { return nil }
@@ -193,23 +210,31 @@ extension DocumentWindow {
 			navigation.showUsages = { [weak self] name, search in self?.showUsages(name, search) }
 			pane.navigation = navigation
 		}
-		let completion = pane.completion
+		let completion = pane.completion, signatureHelp = pane.signatureHelp, hover = pane.hover
 		editor.onFocus = { [weak self] focused in
 			guard let self else { return }
-			for other in panes where other.editor !== focused { other.completion?.close() }
+			for other in panes where other.editor !== focused {
+				other.completion?.close()
+				other.signatureHelp?.close()
+				other.hover?.close()
+			}
 			find.editor = focused
 			updateTitle()
 			revealInSidebar()
 			if let url { project?.noteOpened(url) }
 		}
 		// Matches follow the text of the focused pane's file, whichever editor changed it.
-		editor.onTextChange = { [weak self, weak editor, weak completion] in
+		editor.onTextChange = { [weak self, weak editor, weak completion, weak signatureHelp, weak hover] in
 			completion?.textChanged()
+			signatureHelp?.textOrCaretsChanged()
+			hover?.textOrCaretsChanged()
 			guard let self, editor === find.editor else { return }
 			if findBarView.isHidden { find.invalidate() } else { find.refresh(delay: .milliseconds(100)) }
 		}
-		editor.onCaretsChange = { [weak self, weak editor, weak completion] in
+		editor.onCaretsChange = { [weak self, weak editor, weak completion, weak signatureHelp, weak hover] in
 			completion?.caretsChanged()
+			signatureHelp?.textOrCaretsChanged()
+			hover?.textOrCaretsChanged()
 			guard let self, editor === find.editor else { return }
 			statusBar.setNeedsUpdate()
 		}

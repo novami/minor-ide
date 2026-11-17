@@ -14,19 +14,33 @@ extension EditorView {
 	}
 
 	public override func mouseMoved(with event: NSEvent) {
+		let point = convert(event.locationInWindow, from: nil)
+		updateMouseWord(at: point, modifiers: event.modifierFlags)
 		guard onLinkHover != nil else { return super.mouseMoved(with: event) }
-		updateLinkHover(at: convert(event.locationInWindow, from: nil), modifiers: event.modifierFlags)
+		updateLinkHover(at: point, modifiers: event.modifierFlags)
 	}
 
 	public override func flagsChanged(with event: NSEvent) {
 		super.flagsChanged(with: event)
-		guard onLinkHover != nil, let window else { return }
-		updateLinkHover(at: convert(window.mouseLocationOutsideOfEventStream, from: nil), modifiers: event.modifierFlags)
+		guard let window else { return }
+		let point = convert(window.mouseLocationOutsideOfEventStream, from: nil)
+		updateMouseWord(at: point, modifiers: event.modifierFlags)
+		if onLinkHover != nil { updateLinkHover(at: point, modifiers: event.modifierFlags) }
 	}
 
 	public override func mouseExited(with event: NSEvent) {
 		super.mouseExited(with: event)
+		updateMouseWord(at: nil, modifiers: [])
 		updateLinkHover(at: nil, modifiers: [])
+	}
+
+	func updateMouseWord(at point: NSPoint?, modifiers: NSEvent.ModifierFlags) {
+		guard let onMouseWord else { return }
+		let plain = modifiers.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock).isEmpty && NSEvent.pressedMouseButtons == 0
+		let word = point.flatMap { plain && visibleRect.contains($0) ? linkWord(at: $0) : nil }
+		guard word != mouseWord else { return }
+		mouseWord = word
+		onMouseWord(word)
 	}
 
 	public override func otherMouseDown(with event: NSEvent) {
@@ -53,6 +67,9 @@ extension EditorView {
 	/// Scrolling moves the text under a still mouse: the word under it is looked up again
 	/// while ⌘ is held (called before drawing, which scrolling causes).
 	func recheckLinkHover() {
+		if mouseWord != nil, let window {
+			updateMouseWord(at: convert(window.mouseLocationOutsideOfEventStream, from: nil), modifiers: NSEvent.modifierFlags)
+		}
 		guard onLinkHover != nil, hoveredWord != nil || NSEvent.modifierFlags.contains(.command), let window else { return }
 		updateLinkHover(at: convert(window.mouseLocationOutsideOfEventStream, from: nil), modifiers: NSEvent.modifierFlags)
 	}

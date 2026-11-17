@@ -61,6 +61,8 @@ enum MainMenu {
 			m.item(L("Move Line Up"), #selector(EditorView.moveLinesUp(_:)), up, [.command, .option])
 			m.item(L("Move Line Down"), #selector(EditorView.moveLinesDown(_:)), down, [.command, .option])
 			m.item(L("Show Completions"), #selector(EditorView.showCompletions(_:)), " ", .control)
+			m.item(L("Show Parameter Info"), #selector(DocumentWindow.showParameterInfo(_:)), " ", [.control, .shift])
+			m.item(L("Show Documentation"), #selector(DocumentWindow.showDocumentation(_:)), String(UnicodeScalar(NSF1FunctionKey)!), [])
 			KeyboardLayout.bind(m.item(L("Comment Selection"), #selector(EditorView.toggleComment(_:)), "/"), keyCode: UInt16(kVK_ANSI_Slash))
 			m.addItem(.separator())
 			let find = m.item(L("Find"), nil)

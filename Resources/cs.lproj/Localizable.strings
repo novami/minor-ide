@@ -250,6 +250,10 @@
 "Showing the first 1 MB of %@." = "Zobrazen je první 1 MB z %@.";
 "Hex View" = "Hexadecimální náhled";
 
+/* MinorIDE/Hover.swift */
+"Documentation" = "Dokumentace";
+"Parameter Info" = "Informace o parametrech";
+
 /* MinorIDE/LanguageServersPanel.swift, MinorIDE/StatusBar.swift */
 "Install gopls…" = "Nainstalovat gopls…";
 
@@ -321,6 +325,8 @@
 "Move Line Up" = "Přesunout řádek nahoru";
 "Move Line Down" = "Přesunout řádek dolů";
 "Show Completions" = "Zobrazit doplnění";
+"Show Parameter Info" = "Zobrazit informace o parametrech";
+"Show Documentation" = "Zobrazit dokumentaci";
 "Find and Replace…" = "Najít a nahradit…";
 "Find in Project…" = "Najít v projektu…";
 "Use Selection for Find" = "Použít výběr pro hledání";
