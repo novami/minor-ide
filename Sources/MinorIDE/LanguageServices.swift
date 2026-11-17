@@ -105,6 +105,7 @@ final class LanguageServices {
 			server?.close(uri: entry.uri)
 			entry.doc?.text.onTextEdit = nil
 			entry.doc?.text.setDiagnostics([])
+			entry.doc?.text.showsDiagnostics = false
 			edits[entry.uri] = nil
 			opened[id] = nil
 		}
@@ -123,6 +124,7 @@ final class LanguageServices {
 				if let n = self?.edits[uri]?.count, n > Self.keptEdits { self?.edits[uri]?.removeFirst(n - Self.keptEdits) }
 			}
 			opened[ObjectIdentifier(doc)] = Opened(doc: doc, uri: uri)
+			text.showsDiagnostics = true
 			// Problems the server found before the file was opened (positions in the text on disk).
 			if let report = problems[uri] {
 				let encoding = server.positionEncoding
@@ -166,8 +168,13 @@ final class LanguageServices {
 	}
 
 	static func diagnostic(_ d: Diagnostic, _ range: Range<Int>) -> EditorDiagnostic {
-		EditorDiagnostic(range: range, severity: EditorDiagnostic.Severity(rawValue: d.severity.rawValue) ?? .error,
-		                 message: d.message, source: d.source, unnecessary: d.unnecessary)
+		let related = d.related.compactMap { r -> EditorDiagnostic.Related? in
+			guard let url = URL(string: r.location.uri), url.isFileURL else { return nil }
+			return EditorDiagnostic.Related(url: url, line: r.location.range.start.line, character: r.location.range.start.character, message: r.message)
+		}
+		let link = d.href.flatMap(URL.init(string:)).flatMap { ["http", "https"].contains($0.scheme?.lowercased()) ? $0 : nil }
+		return EditorDiagnostic(range: range, severity: EditorDiagnostic.Severity(rawValue: d.severity.rawValue) ?? .error,
+		                        message: d.message, source: d.source, code: d.code, link: link, related: related, unnecessary: d.unnecessary)
 	}
 
 	private func clearProblems() {
@@ -311,6 +318,12 @@ final class LanguageServices {
 		let e7 = editor.rope.byteCount
 		editor.replace([(e7..<e7, "\nfunc minorideBad() { minorideMissing() }\n")])
 		let doc = editor.document
+		if let scroll = editor.enclosingScrollView, let strip = editor.diagnosticStrip {
+			let f = { (r: NSRect) in "x \(Int(r.minX))–\(Int(r.maxX))" }
+			print("strip:", strip.isHidden ? "hidden" : f(strip.frame), "scroller:", scroll.verticalScroller.map { f($0.frame) } ?? "none",
+			      "clip:", f(scroll.contentView.frame), "insets:", scroll.contentView.contentInsets.left, scroll.contentView.contentInsets.right,
+			      "editor width:", Int(editor.frame.width), "scroll width:", Int(scroll.frame.width))
+		}
 		wait { doc.diagnostics.contains { $0.message.contains("minorideMissing") } }
 		editor.replace([(0..<0, "\n")])
 		let bad = doc.diagnostics.first { $0.message.contains("minorideMissing") }
@@ -447,7 +460,10 @@ final class LanguageServices {
 
 	private func shutDown(log reason: String) {
 		clearProblems()
-		for entry in opened.values { entry.doc?.text.onTextEdit = nil }
+		for entry in opened.values {
+			entry.doc?.text.onTextEdit = nil
+			entry.doc?.text.showsDiagnostics = false
+		}
 		opened = [:]
 		edits = [:]
 		progress.reset()

@@ -252,6 +252,7 @@
 
 /* MinorIDE/Hover.swift */
 "Documentation" = "Dokumentace";
+"Description" = "Popis";
 "Error" = "Chyba";
 "Warning" = "Varování";
 "Information" = "Informace";

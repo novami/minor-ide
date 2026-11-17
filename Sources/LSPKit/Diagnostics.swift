@@ -3,6 +3,12 @@ import TextEngine
 
 /// One problem from `textDocument/publishDiagnostics` (plan 3.7).
 public struct Diagnostic: Sendable, Equatable {
+	/// Another place that explains the problem ("other declaration of x").
+	public struct Related: Sendable, Equatable {
+		public var location: Location
+		public var message: String
+	}
+
 	public enum Severity: Int, Sendable, Comparable {
 		case error = 1, warning, information, hint
 		public static func < (a: Severity, b: Severity) -> Bool { a.rawValue < b.rawValue }
@@ -13,6 +19,9 @@ public struct Diagnostic: Sendable, Equatable {
 	public var message: String
 	public var source: String?
 	public var code: String?
+	/// Where the code is explained (`codeDescription.href`).
+	public var href: String?
+	public var related: [Related]
 	/// Unused code (drawn faded by some editors).
 	public var unnecessary: Bool
 	public var deprecated: Bool
@@ -29,6 +38,11 @@ public struct Diagnostic: Sendable, Equatable {
 		case .string(let s)?: code = s
 		case .number(let n)?: code = String(Int(n))
 		default: code = nil
+		}
+		href = json["codeDescription"]?["href"]?.stringValue
+		related = (json["relatedInformation"]?.arrayValue ?? []).compactMap { r in
+			guard let location = Location(r["location"] ?? .null), let message = r["message"]?.stringValue else { return nil }
+			return Related(location: location, message: message)
 		}
 		let tags = (json["tags"]?.arrayValue ?? []).compactMap(\.doubleValue)
 		unnecessary = tags.contains(1)

@@ -19,6 +19,8 @@ final class HoverController {
 	private var shown: (range: Range<Int>, byMouse: Bool)?
 	private var observers: [NSObjectProtocol] = []
 	private var generation = 0
+	/// Problems in the popup (their related places are links into this list).
+	private var shownProblems: [EditorDiagnostic] = []
 
 	static let delay = Duration.milliseconds(500)
 
@@ -130,7 +132,9 @@ final class HoverController {
 		let popup = self.popup ?? InfoPopup(accessibilityLabel: L("Documentation"))
 		self.popup = popup
 		popup.onMouseExit = { [weak self] in self?.scheduleHideUnlessMouseInside() }
+		popup.onLink = { [weak self] in self?.openRelated($0) ?? false }
 		shown = (word, byMouse)
+		shownProblems = problems
 		let text = NSMutableAttributedString(attributedString: Self.problemsText(problems))
 		if let markup {
 			if text.length > 0 { text.append(NSAttributedString(string: "\n\n")) }
@@ -159,7 +163,33 @@ final class HoverController {
 }
 
 extension HoverController {
-	/// One line per problem: a severity symbol, the message and who reported it.
+	static let relatedScheme = "minoride-related"
+
+	/// A related place of a shown problem: opens it like a jump (Back returns).
+	private func openRelated(_ url: URL) -> Bool {
+		guard url.scheme == Self.relatedScheme else { return false }
+		let parts = (url.host ?? "").split(separator: "-").compactMap { Int($0) }
+		guard parts.count == 2, parts[0] < shownProblems.count, parts[1] < shownProblems[parts[0]].related.count else { return true }
+		let r = shownProblems[parts[0]].related[parts[1]]
+		let position = Position(line: r.line, character: r.character)
+		let location = Location(uri: r.url.absoluteString, range: LSPRange(start: position, end: position))
+		let encoding = endpoint()?.server.positionEncoding ?? .utf16
+		let window = editor?.window?.delegate as? DocumentWindow
+		Task { [weak self] in
+			guard let target = await NavigationTarget.resolve([location], encoding: encoding).first else { return NSSound.beep() }
+			let caret = target.range.lowerBound..<target.range.lowerBound
+			window?.recordJump()
+			if let editor = self?.editor, editor.document === FileDocument.document(for: target.url)?.text {
+				editor.reveal(caret)
+			} else {
+				(NSApp.delegate as? AppDelegate)?.open(target.url, range: caret, from: window?.project)
+			}
+		}
+		return true
+	}
+
+	/// One line per problem: a severity symbol, the message, who reported it (the code links to
+	/// its description), then its related places as links.
 	static func problemsText(_ problems: [EditorDiagnostic]) -> NSAttributedString {
 		let out = NSMutableAttributedString()
 		let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
@@ -175,8 +205,19 @@ extension HoverController {
 				out.append(NSAttributedString(string: " "))
 			}
 			out.append(NSAttributedString(string: d.message, attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
-			if let source = d.source, !source.isEmpty {
-				out.append(NSAttributedString(string: "  " + source, attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]))
+			let secondary: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.secondaryLabelColor]
+			if let source = d.source, !source.isEmpty { out.append(NSAttributedString(string: "  " + source, attributes: secondary)) }
+			if let code = d.code, !code.isEmpty {
+				var attributes = secondary
+				if let link = d.link { attributes[.link] = link }
+				out.append(NSAttributedString(string: (d.source?.isEmpty == false ? " " : "  ") + code, attributes: attributes))
+			} else if let link = d.link {
+				out.append(NSAttributedString(string: "  " + L("Description"), attributes: secondary.merging([.link: link]) { $1 }))
+			}
+			for (j, r) in d.related.enumerated() {
+				out.append(NSAttributedString(string: "\n    " + r.message + "  ", attributes: secondary))
+				let place = r.url.lastPathComponent + ":" + String(r.line + 1)
+				out.append(NSAttributedString(string: place, attributes: secondary.merging([.link: URL(string: "\(relatedScheme)://\(i)-\(j)")!]) { $1 }))
 			}
 		}
 		return out

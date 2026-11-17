@@ -534,7 +534,7 @@ public final class LanguageServer: @unchecked Sendable {
 			"implementation": ["linkSupport": true],
 			"typeDefinition": ["linkSupport": true],
 			"references": [:],
-			"publishDiagnostics": ["versionSupport": true, "tagSupport": ["valueSet": [1, 2]], "codeDescriptionSupport": true],
+			"publishDiagnostics": ["relatedInformation": true, "versionSupport": true, "tagSupport": ["valueSet": [1, 2]], "codeDescriptionSupport": true],
 			"hover": ["contentFormat": ["markdown", "plaintext"]],
 			"signatureHelp": [
 				"contextSupport": true,

@@ -4,6 +4,21 @@ import TextEngine
 /// A problem in the text (a language server's diagnostic): a wavy underline, a dot in the
 /// gutter and a mark along the right edge.
 public struct EditorDiagnostic: Sendable, Equatable {
+	/// Another place that explains the problem; line and character as the server counts them.
+	public struct Related: Sendable, Equatable {
+		public var url: URL
+		public var line: Int
+		public var character: Int
+		public var message: String
+
+		public init(url: URL, line: Int, character: Int, message: String) {
+			self.url = url
+			self.line = line
+			self.character = character
+			self.message = message
+		}
+	}
+
 	public enum Severity: Int, Sendable, Comparable {
 		case error = 1, warning, information, hint
 		public static func < (a: Severity, b: Severity) -> Bool { a.rawValue < b.rawValue }
@@ -14,14 +29,22 @@ public struct EditorDiagnostic: Sendable, Equatable {
 	public var message: String
 	/// Who reported it ("compiler", "staticcheck"…).
 	public var source: String?
+	public var code: String?
+	/// Where the code is explained.
+	public var link: URL?
+	public var related: [Related]
 	/// Unused code: the text is drawn faded.
 	public var unnecessary: Bool
 
-	public init(range: Range<Int>, severity: Severity, message: String, source: String? = nil, unnecessary: Bool = false) {
+	public init(range: Range<Int>, severity: Severity, message: String, source: String? = nil, code: String? = nil,
+	            link: URL? = nil, related: [Related] = [], unnecessary: Bool = false) {
 		self.range = range
 		self.severity = severity
 		self.message = message
 		self.source = source
+		self.code = code
+		self.link = link
+		self.related = related
 		self.unnecessary = unnecessary
 	}
 
@@ -64,6 +87,17 @@ extension TextDocument {
 	}
 
 	public var hasDiagnostics: Bool { !diagnosticMarks.isEmpty }
+
+	/// A language server checks this document: editors reserve a column for the problem marks
+	/// (kept while there are none, so the text does not shift as problems come and go).
+	public var showsDiagnostics: Bool {
+		get { diagnosticsShown }
+		set {
+			guard newValue != diagnosticsShown else { return }
+			diagnosticsShown = newValue
+			for view in views { view.diagnosticStrip?.update() }
+		}
+	}
 
 	/// The problems where they are now, in text order (errors first at the same place).
 	public var diagnostics: [EditorDiagnostic] {
@@ -136,6 +170,21 @@ extension EditorView {
 		}
 	}
 
+	/// The narrowest problem whose underline is under `point` (also off words: a missing
+	/// semicolon, an operator), so the message shows under the resting mouse.
+	func diagnosticRange(at point: NSPoint) -> Range<Int>? {
+		guard document.hasDiagnostics else { return nil }
+		let line = line(atY: point.y)
+		guard line < rope.lineCount else { return nil }
+		return diagnostics(lines: line...line).filter { d in
+			rangeRects(d.range, lines: line...line).contains { r in
+				var r = r
+				if r.width < 2 { r.size.width = newlineWidth }
+				return r.contains(point)
+			}
+		}.min { $0.range.count < $1.range.count }?.range
+	}
+
 	/// The most severe problem by the line it starts on (hints have no dot).
 	func worstDiagnostics(lines: ClosedRange<Int>) -> [Int: EditorDiagnostic] {
 		var worst: [Int: EditorDiagnostic] = [:]
@@ -185,8 +234,8 @@ extension EditorView {
 }
 
 /// Marks of the problems along the right edge of the editor, over the whole file: a click
-/// goes to one. A sibling of the clip view at its right edge (an overlay scroller covers it
-/// while it shows); hidden without problems.
+/// goes to one. A column of its own right of the clip view and the scroller (a right content
+/// inset of the scroll view), shown while a language server checks the file.
 @MainActor
 public final class DiagnosticStripView: NSView {
 	private weak var editor: EditorView?
@@ -225,12 +274,22 @@ public final class DiagnosticStripView: NSView {
 
 	public override var isFlipped: Bool { true }
 
-	/// Frame at the clip view's right edge; hidden without problems.
+	/// Reserves the column (or gives it back) and fills it.
 	func update() {
 		guard let editor, let scroll = editor.enclosingScrollView else { return }
-		isHidden = editor.document.diagnosticMarks.isEmpty
+		let shown = editor.document.showsDiagnostics
+		isHidden = !shown
+		let inset: CGFloat = shown ? Self.width : 0
+		if scroll.contentInsets.right != inset {
+			scroll.automaticallyAdjustsContentInsets = false
+			var insets = scroll.contentInsets
+			insets.right = inset
+			scroll.contentInsets = insets
+			editor.updateSize()
+		}
+		guard shown else { return }
 		let clip = scroll.contentView.frame
-		let frame = NSRect(x: clip.maxX - Self.width, y: clip.minY, width: Self.width, height: clip.height)
+		let frame = NSRect(x: scroll.bounds.maxX - Self.width, y: clip.minY, width: Self.width, height: clip.height)
 		if frame != self.frame { self.frame = frame }
 		needsDisplay = true
 		window?.invalidateCursorRects(for: self)

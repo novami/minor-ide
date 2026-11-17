@@ -249,6 +249,7 @@
 
 /* MinorIDE/Hover.swift */
 "Documentation" = "Documentation";
+"Description" = "Description";
 "Error" = "Error";
 "Warning" = "Warning";
 "Information" = "Information";

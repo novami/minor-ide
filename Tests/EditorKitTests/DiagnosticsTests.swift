@@ -21,6 +21,15 @@ struct DiagnosticsTests {
 		#expect(a.document.anchors.count == anchors - 2) // old anchors released
 	}
 
+	/// The resting mouse finds a problem off words too (an operator).
+	@Test func problemUnderThePointer() {
+		let a = EditorView(text: "a := b +\n")
+		a.document.setDiagnostics([EditorDiagnostic(range: 7..<8, severity: .error, message: "expected operand")])
+		let r = a.rangeRects(7..<8, lines: 0...0)[0]
+		#expect(a.diagnosticRange(at: NSPoint(x: r.midX, y: r.midY)) == 7..<8)
+		#expect(a.diagnosticRange(at: NSPoint(x: a.rangeRects(0..<1, lines: 0...0)[0].midX, y: r.midY)) == nil)
+	}
+
 	/// F2 / ⇧F2: from the caret to the next / previous problem, around the end; hints are
 	/// skipped while there are other problems.
 	@Test func nextAndPreviousProblemWrapAround() {

@@ -37,7 +37,7 @@ extension EditorView {
 	func updateMouseWord(at point: NSPoint?, modifiers: NSEvent.ModifierFlags) {
 		guard let onMouseWord else { return }
 		let plain = modifiers.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock).isEmpty && NSEvent.pressedMouseButtons == 0
-		let word = point.flatMap { plain && visibleRect.contains($0) ? linkWord(at: $0) : nil }
+		let word = point.flatMap { plain && visibleRect.contains($0) ? linkWord(at: $0) ?? diagnosticRange(at: $0) : nil }
 		guard word != mouseWord else { return }
 		mouseWord = word
 		onMouseWord(word)

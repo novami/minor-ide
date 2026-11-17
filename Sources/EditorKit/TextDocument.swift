@@ -14,6 +14,7 @@ public final class TextDocument {
 	/// Problems from the language server, held in `anchors` (Diagnostics.swift).
 	var diagnosticMarks: [DiagnosticMark] = []
 	var diagnosticCache: (version: Int, items: [EditorDiagnostic])?
+	var diagnosticsShown = false
 	/// Called once after every text change, whichever view made it (dirty tracking).
 	public var onChange: (() -> Void)?
 	/// Increases with every text change (language server document versions).

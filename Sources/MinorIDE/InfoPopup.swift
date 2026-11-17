@@ -12,6 +12,8 @@ final class InfoPopup: NSObject, NSTextViewDelegate {
 
 	/// The mouse left the panel.
 	var onMouseExit: (() -> Void)?
+	/// A clicked link the owner handles itself (returns true); web links open in the browser.
+	var onLink: ((URL) -> Bool)?
 
 	private let panel: NSPanel
 	private let scroll = NSScrollView()
@@ -114,8 +116,12 @@ final class InfoPopup: NSObject, NSTextViewDelegate {
 	}
 
 	func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
-		guard let url = (link as? URL) ?? (link as? String).flatMap(URL.init(string:)),
-		      ["http", "https"].contains(url.scheme?.lowercased()) else { return true }
+		guard let url = (link as? URL) ?? (link as? String).flatMap(URL.init(string:)) else { return true }
+		if onLink?(url) == true {
+			hide()
+			return true
+		}
+		guard ["http", "https"].contains(url.scheme?.lowercased()) else { return true }
 		NSWorkspace.shared.open(url)
 		hide()
 		return true

@@ -10,7 +10,10 @@ struct DiagnosticsTests {
 			"uri": "file:///p/a.go", "version": 3,
 			"diagnostics": [
 				["range": ["start": ["line": 1, "character": 0], "end": ["line": 1, "character": 2]], "message": "undefined: x",
-				 "severity": 1, "source": "compiler", "code": "UndeclaredName"],
+				 "severity": 1, "source": "compiler", "code": "UndeclaredName",
+				 "codeDescription": ["href": "https://pkg.go.dev/x"],
+				 "relatedInformation": [["location": ["uri": "file:///p/b.go", "range": ["start": ["line": 4, "character": 1], "end": ["line": 4, "character": 2]]],
+				                         "message": "other declaration"]]],
 				["range": ["start": ["line": 0, "character": 0], "end": ["line": 0, "character": 1]], "message": "unused", "severity": 4,
 				 "code": 1001, "tags": [1]],
 				["message": "no range"],
@@ -20,6 +23,9 @@ struct DiagnosticsTests {
 		#expect(report?.diagnostics.map(\.severity) == [.error, .hint])
 		#expect(report?.diagnostics.map(\.code) == ["UndeclaredName", "1001"])
 		#expect(report?.diagnostics.last?.unnecessary == true)
+		#expect(report?.diagnostics.first?.href == "https://pkg.go.dev/x")
+		#expect(report?.diagnostics.first?.related.map(\.message) == ["other declaration"])
+		#expect(report?.diagnostics.first?.related.first?.location.range.start == Position(line: 4, character: 1))
 	}
 
 	/// Ranges are bytes in the text of the version the server diagnosed, also after later edits.
