@@ -35,6 +35,8 @@ public struct CompletionItem: Sendable {
 	public var additionalTextEdits: [TextEdit]
 	public var deprecated: Bool
 	public var preselect: Bool
+	/// Typing one of these accepts the item, then the character goes in.
+	public var commitCharacters: Set<UInt8>
 	/// Set after `completionItem/resolve` (or when the server has nothing to resolve).
 	public var resolved: Bool
 	/// The item as the server sent it, for `completionItem/resolve`.
@@ -63,6 +65,8 @@ public struct CompletionItem: Sendable {
 		deprecated = json["deprecated"] == .bool(true)
 			|| (json["tags"]?.arrayValue?.contains(.number(1)) ?? false)
 		preselect = json["preselect"] == .bool(true)
+		let commit = json["commitCharacters"]?.arrayValue ?? defaults?["commitCharacters"]?.arrayValue ?? []
+		commitCharacters = Set(commit.compactMap { $0.stringValue?.utf8.count == 1 ? $0.stringValue?.utf8.first : nil })
 		resolved = false
 		raw = json
 	}

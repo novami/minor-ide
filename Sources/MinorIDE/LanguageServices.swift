@@ -167,6 +167,13 @@ final class LanguageServices {
 		print("typed: word", word, "dot", completion?.isShowing == true)
 		_ = editor.commandInterceptor?(#selector(NSResponder.cancelOperation(_:)))
 		for _ in 0..<4 { editor.undo(nil) }
+		// Not in a comment, also at its end.
+		let e3 = editor.rope.byteCount
+		editor.replace([(e3..<e3, "\n// ")])
+		for c in "strin" { editor.insertText(String(c), replacementRange: NSRange(location: NSNotFound, length: 0)) }
+		RunLoop.main.run(until: Date().addingTimeInterval(1))
+		print("in comment:", completion?.isShowing == true)
+		for _ in 0..<3 { editor.undo(nil) }
 		for line in log.suffix(8) { print("  ", line) }
 	}
 

@@ -174,6 +174,7 @@ extension DocumentWindow {
 			pane.completion = completion
 			editor.commandInterceptor = { [weak completion] in completion?.handle($0) ?? false }
 			editor.onTypedText = { [weak completion] in completion?.typed($0) }
+			editor.onWillTypeText = { [weak completion] in completion?.willType($0) }
 		}
 		let completion = pane.completion
 		editor.onFocus = { [weak self] focused in

@@ -59,6 +59,9 @@
 /* MinorIDE/CompareWindow.swift */
 "The versions are identical." = "The versions are identical.";
 
+/* MinorIDE/Completion.swift, MinorIDE/FindBar.swift */
+"%d of %d" = "%d of %d";
+
 /* MinorIDE/CompletionPopup.swift */
 "Completions" = "Completions";
 "Method" = "Method";
@@ -215,9 +218,6 @@
 
 /* MinorIDE/FindBar.swift, MinorIDE/ToolsSettings.swift */
 "Not found" = "Not found";
-
-/* MinorIDE/FindBar.swift */
-"%d of %d" = "%d of %d";
 
 /* MinorIDE/FindBar.swift, MinorIDE/FindInFiles.swift */
 "%d matches|one" = "%d match";

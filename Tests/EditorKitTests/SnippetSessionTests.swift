@@ -36,4 +36,15 @@ struct SnippetSessionTests {
 		e.doCommand(by: #selector(NSResponder.cancelOperation(_:)))
 		#expect(!e.isInSnippet)
 	}
+
+	@Test func everyCaretGetsTheSnippetAndLateEditsJoinTheUndoStep() {
+		let e = EditorView(text: "a.Pr\nb.Pr\n")
+		e.insertSnippet(Snippet(parsing: "Printf(${1:f})"), replacing: [2..<4, 7..<9])
+		#expect(e.rope.string == "a.Printf(f)\nb.Printf(f)\n")
+		#expect(e.selections.all.map { e.rope.string(in: $0.range) } == ["f", "f"])
+		e.replaceJoiningUndo([(0..<0, "import x\n")])
+		#expect(e.isInSnippet && e.selections.all.map { e.rope.string(in: $0.range) } == ["f", "f"])
+		e.undo(nil)
+		#expect(e.rope.string == "a.Pr\nb.Pr\n")
+	}
 }

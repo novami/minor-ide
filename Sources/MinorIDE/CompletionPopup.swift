@@ -37,6 +37,7 @@ final class CompletionPopup: NSObject, NSTableViewDataSource, NSTableViewDelegat
 	private var rows: [Row] = []
 	private var font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
 	private var anchorRect = NSRect.zero
+	private weak var parentWindow: NSWindow?
 
 	override init() {
 		panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: Self.width, height: 100),
@@ -88,6 +89,7 @@ final class CompletionPopup: NSObject, NSTableViewDataSource, NSTableViewDelegat
 		self.rows = rows
 		self.font = font
 		anchorRect = rect
+		parentWindow = parent
 		table.rowHeight = ceil(font.ascender - font.descender + font.leading) + 4
 		table.reloadData()
 		if panel.parent !== parent {
@@ -96,6 +98,15 @@ final class CompletionPopup: NSObject, NSTableViewDataSource, NSTableViewDelegat
 		}
 		setDocs(text)
 		select(selected)
+		panel.orderFront(nil)
+	}
+
+	/// The word moved (scrolling): the list follows, shown again if it was hidden.
+	func move(to rect: NSRect) {
+		anchorRect = rect
+		layout()
+		guard !panel.isVisible, let parentWindow else { return }
+		parentWindow.addChildWindow(panel, ordered: .above)
 		panel.orderFront(nil)
 	}
 

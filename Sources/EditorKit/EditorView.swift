@@ -95,10 +95,21 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public var onCaretsChange: (() -> Void)?
 	/// Gets every command (key binding) first and returns true when it handled it (completion popup).
 	public var commandInterceptor: ((Selector) -> Bool)?
+	/// Called before typed text goes in (a completion commit character accepts the item first).
+	public var onWillTypeText: ((String) -> Void)?
 	/// Called after text was typed (not pasted or replaced), with that text.
 	public var onTypedText: ((String) -> Void)?
-	/// Tab stops of the inserted snippet while Tab visits them.
-	var snippetSession: SnippetSession?
+	/// Tab stops of the inserted snippet while Tab visits them (framed in the text).
+	var snippetSession: SnippetSession? {
+		didSet {
+			for s in [oldValue, snippetSession].compactMap({ $0 }) {
+				let span = s.span, end = rope.byteCount
+				for line in rope.line(containing: min(span.lowerBound, end))...rope.line(containing: min(span.upperBound, end)) {
+					setNeedsDisplay(lineRect(line))
+				}
+			}
+		}
+	}
 	/// Folded regions as byte ranges (`Rope.foldRange`), sorted by start; nested folds allowed.
 	public internal(set) var folds: [Range<Int>] = []
 	/// Rows on screen after folding and wrapping.
@@ -255,6 +266,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			drawnLines += shown.count
 			drawFindMatches(ctx, lines: first...last)
 			drawSelectionBackground(ctx, visible, lines: first...last)
+			if let snippetSession { drawSnippetStops(ctx, snippetSession, lines: first...last) }
 			highlighter?.prepare(upTo: last, in: rope)
 			drawText(ctx, rows: rows(inY: dirtyRect.minY, dirtyRect.maxY), highlighter: highlighter, textColor: textColor,
 			         xRange: dirtyRect.minX...dirtyRect.maxX)
@@ -503,6 +515,16 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	/// Replaces a byte range, leaving a single caret after the new text.
 	public func replace(_ range: Range<Int>, with text: String) {
 		apply(ChangeSet([(range, text)]), kind: .other) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
+	}
+
+	/// Applies replacements as part of the previous undo step; selections follow the edit.
+	public func replaceJoiningUndo(_ edits: [(Range<Int>, String)]) {
+		let changes = ChangeSet(edits)
+		guard !changes.isEmpty, !isReadOnly else { return }
+		let before = rope, selectionsBefore = selections
+		apply(changes) { selections.mapped(through: $0) }
+		document.history.record(Transaction(changes, on: before, before: selectionsBefore, after: selections,
+		                                    kind: .other, time: ProcessInfo.processInfo.systemUptime), joiningLast: true)
 	}
 
 	/// Applies several replacements as one undo step; selections follow the edit.
@@ -939,6 +961,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			apply(ChangeSet([(range, text)]), kind: .other) { cs in SelectionSet(caret: cs.map(range.upperBound, bias: .after)) }
 			return
 		}
+		onWillTypeText?(text)
 		defer { onTypedText?(text) }
 		if text.utf8.count == 1, language != nil, typePairCharacter(text.utf8.first!) { return }
 		replaceSelections(text.contains("\n") ? .other : .typing) { _ in text }

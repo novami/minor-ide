@@ -24,6 +24,8 @@ struct CompletionTests {
 		var c = list.items[2]
 		c.merge(resolved: ["label": "Errorf", "detail": "func(format string) error"])
 		#expect(c.resolved && c.detail == "func(format string) error")
+		let commit = CompletionList(["itemDefaults": ["commitCharacters": [".", "(("]], "items": [["label": "x"], ["label": "y", "commitCharacters": [";"]]]])
+		#expect(commit.items[0].commitCharacters == [0x2E] && commit.items[1].commitCharacters == [0x3B])
 		#expect(CompletionList(["items": []]).items.isEmpty && CompletionList([["label": "x"]]).items.count == 1)
 	}
 

@@ -44,9 +44,12 @@ public struct EditHistory: Sendable {
 	public var canUndo: Bool { !undoStack.isEmpty }
 	public var canRedo: Bool { !redoStack.isEmpty }
 
-	public mutating func record(_ t: Transaction) {
+	/// `joiningLast`: the edit belongs to the previous step whatever its kind (a completion's late import).
+	public mutating func record(_ t: Transaction, joiningLast: Bool = false) {
 		redoStack.removeAll()
-		if !sealed, let last = undoStack.last?.transactions.last, Self.coalesces(last, t, pause: pause) {
+		if joiningLast, !undoStack.isEmpty {
+			undoStack[undoStack.count - 1].transactions.append(t)
+		} else if !sealed, let last = undoStack.last?.transactions.last, Self.coalesces(last, t, pause: pause) {
 			undoStack[undoStack.count - 1].transactions.append(t)
 		} else {
 			undoStack.append(Step(transactions: [t]))

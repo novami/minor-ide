@@ -26,22 +26,53 @@ extension EditorView {
 	/// Replaces `range` with the snippet (indented like the current line) and applies `additionalEdits`
 	/// (which must not overlap it) as one undo step; selects the first tab stop.
 	public func insertSnippet(_ snippet: Snippet, replacing range: Range<Int>, additionalEdits: [(Range<Int>, String)] = []) {
-		let lineStart = rope.offset(ofLine: rope.line(containing: range.lowerBound))
-		let indent = String(decoding: rope.bytes(in: lineStart..<range.lowerBound).prefix { $0 == 0x20 || $0 == 0x09 }, as: UTF8.self)
-		let snippet = snippet.indented(indent)
-		let extra = additionalEdits.filter { $0.0.upperBound <= range.lowerBound || $0.0.lowerBound >= range.upperBound }
-		// Where the snippet starts after the edit: shifted by the extra edits in front of it.
-		let base = range.lowerBound + extra.filter { $0.0.upperBound <= range.lowerBound }
-			.reduce(0) { $0 + $1.1.utf8.count - $1.0.count }
-		let stops = snippet.stops.map { $0.map { (base + $0.lowerBound)..<(base + $0.upperBound) } }
+		insertSnippet(snippet, replacing: [range], additionalEdits: additionalEdits)
+	}
+
+	/// The snippet at every range (one per caret, sorted, not overlapping); their tab stops are
+	/// visited together. `additionalEdits` overlapping a range are dropped.
+	public func insertSnippet(_ snippet: Snippet, replacing ranges: [Range<Int>], additionalEdits: [(Range<Int>, String)] = []) {
+		guard !ranges.isEmpty else { return }
+		let extra = additionalEdits.filter { e in ranges.allSatisfy { e.0.upperBound <= $0.lowerBound || e.0.lowerBound >= $0.upperBound } }
+		var edits = extra.map { (range: $0.0, text: $0.1) }
+		var instances: [(range: Range<Int>, snippet: Snippet)] = []
+		for range in ranges {
+			let lineStart = rope.offset(ofLine: rope.line(containing: range.lowerBound))
+			let indent = String(decoding: rope.bytes(in: lineStart..<range.lowerBound).prefix { $0 == 0x20 || $0 == 0x09 }, as: UTF8.self)
+			let s = snippet.indented(indent)
+			instances.append((range, s))
+			edits.append((range, s.text))
+		}
+		// Where each copy starts after the edit: shifted by every edit in front of it.
+		var stops = [[Range<Int>]](repeating: [], count: snippet.stops.count)
+		for (range, s) in instances {
+			let base = range.lowerBound + edits.filter { $0.range.upperBound <= range.lowerBound && $0.range != range }
+				.reduce(0) { $0 + $1.text.utf8.count - $1.range.count }
+			for (i, stop) in s.stops.enumerated() { stops[i] += stop.map { (base + $0.lowerBound)..<(base + $0.upperBound) } }
+		}
 		snippetSession = nil
-		apply(ChangeSet(extra + [(range, snippet.text)]), kind: .other) { _ in Self.selections(stops[0]) }
+		apply(ChangeSet(edits.map { ($0.range, $0.text) }), kind: .other) { _ in Self.selections(stops[0]) }
 		if stops.count > 1 { snippetSession = SnippetSession(stops: stops) }
 	}
 
 	/// Edit › Show Completions (⌃Space); ⌥Esc arrives as the `complete:` command.
 	@objc public func showCompletions(_ sender: Any?) {
 		if commandInterceptor?(#selector(NSResponder.complete(_:))) != true { NSSound.beep() }
+	}
+
+	/// Frames around the tab stops still to visit.
+	func drawSnippetStops(_ ctx: CGContext, _ session: SnippetSession, lines: ClosedRange<Int>) {
+		ctx.setStrokeColor(NSColor.tertiaryLabelColor.cgColor)
+		ctx.setLineWidth(1)
+		for stop in session.stops.dropLast() {
+			for range in stop where range.upperBound <= rope.byteCount {
+				for rect in rangeRects(range, lines: lines) {
+					let r = CGRect(x: rect.minX, y: rect.minY, width: max(rect.width, 2), height: rect.height).insetBy(dx: 0.5, dy: 0.5)
+					ctx.addPath(CGPath(roundedRect: r, cornerWidth: 2, cornerHeight: 2, transform: nil))
+				}
+			}
+		}
+		ctx.strokePath()
 	}
 
 	/// Whether a snippet is being filled in.
