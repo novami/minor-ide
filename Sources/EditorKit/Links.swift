@@ -50,6 +50,13 @@ extension EditorView {
 		onLinkHover(word)
 	}
 
+	/// Scrolling moves the text under a still mouse: the word under it is looked up again
+	/// while ⌘ is held (called before drawing, which scrolling causes).
+	func recheckLinkHover() {
+		guard onLinkHover != nil, hoveredWord != nil || NSEvent.modifierFlags.contains(.command), let window else { return }
+		updateLinkHover(at: convert(window.mouseLocationOutsideOfEventStream, from: nil), modifiers: NSEvent.modifierFlags)
+	}
+
 	/// The word (letters, digits, _) under `point`; nil past the end of a line or over spaces.
 	func linkWord(at point: NSPoint) -> Range<Int>? {
 		let offset = offset(at: point)

@@ -38,6 +38,9 @@ final class LanguageServices {
 	}
 	private var opened: [ObjectIdentifier: Opened] = [:]
 	private var observers: [NSObjectProtocol] = []
+	/// Files outside the project opened from it (a jump into the standard library): the
+	/// server takes them too.
+	private var adopted: Set<String> = []
 	private var closed = false
 	private let time: DateFormatter = {
 		let f = DateFormatter()
@@ -85,7 +88,8 @@ final class LanguageServices {
 		guard let project, !closed else { return }
 		guard project.isTrusted else { return shutDown(log: "restricted mode") }
 		let wanted = FileDocument.all.filter { doc in
-			guard let url = doc.url, project.contains(url), !doc.text.views.isEmpty else { return false }
+			guard let url = doc.url, project.contains(url) || adopted.contains(url.standardizedFileURL.path),
+			      !doc.text.views.isEmpty else { return false }
 			return Gopls.languageID(forPath: url.path) != nil
 		}
 		for (id, entry) in opened {
@@ -109,6 +113,8 @@ final class LanguageServices {
 			opened[ObjectIdentifier(doc)] = Opened(doc: doc, uri: uri)
 		}
 	}
+
+	func adopt(_ url: URL) { adopted.insert(url.standardizedFileURL.path) }
 
 	static func uri(_ url: URL) -> String { url.standardizedFileURL.absoluteString }
 
@@ -191,6 +197,22 @@ final class LanguageServices {
 		RunLoop.main.run(until: Date().addingTimeInterval(0.1))
 		wait { !usages.isSearching }
 		print("usages:", usages.statusText, usages.rowsForSnapshot)
+		// The list follows edits of the file.
+		editor.replace([(0..<0, "\n")])
+		print("usages after edit:", usages.rowsForSnapshot.dropFirst().map { $0.prefix(9) })
+		editor.undo(nil)
+		editor.undo(nil)
+		// Into the standard library: a tab of this project, and gopls has the file.
+		let e5 = editor.rope.byteCount
+		editor.replace([(e5..<e5, "\nfunc minorideStd() { fmt.Println() }\n")])
+		editor.setSelections(SelectionSet(caret: editor.rope.byteCount - "Println() }\n".utf8.count + 2))
+		navigation?.jump(.definition)
+		var std: FileDocument?
+		wait {
+			std = FileDocument.all.first { $0.url?.lastPathComponent == "print.go" }
+			return std.map { endpoint(for: $0) != nil } ?? false
+		}
+		print("standard library:", std?.url?.path ?? "not opened", "served:", std.map { endpoint(for: $0) != nil } ?? false)
 		editor.undo(nil)
 		for line in log.suffix(8) { print("  ", line) }
 	}

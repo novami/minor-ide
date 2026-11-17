@@ -35,7 +35,11 @@ struct NavigationTarget: Sendable {
 	}
 
 	private static func target(_ url: URL, _ rope: Rope, _ range: LSPRange, _ encoding: PositionEncoding) -> NavigationTarget {
-		let bytes = rope.range(of: range, encoding: encoding)
+		NavigationTarget(url: url, bytes: rope.range(of: range, encoding: encoding), in: rope)
+	}
+
+	/// The target of a byte range of `rope` (the file's current text).
+	init(url: URL, bytes: Range<Int>, in rope: Rope) {
 		let line = rope.line(containing: bytes.lowerBound)
 		var lineRange = rope.lineRange(line)
 		while lineRange.upperBound > lineRange.lowerBound, [0x0A, 0x0D].contains(rope.byte(at: lineRange.upperBound - 1)) {
@@ -45,9 +49,9 @@ struct NavigationTarget: Sendable {
 		let from = rope.scalarBoundary(atOrBefore: max(lineRange.lowerBound, bytes.lowerBound - 80))
 		let to = rope.scalarBoundary(atOrBefore: min(lineRange.upperBound, max(bytes.upperBound, from) + 160))
 		let marked = (bytes.lowerBound - from)..<(min(bytes.upperBound, to) - from)
-		return NavigationTarget(url: url, range: bytes,
-		                        line: FileSearchLine(line: line, column: from - lineRange.lowerBound,
-		                                             text: rope.string(in: from..<to), ranges: [marked]))
+		self.url = url
+		range = bytes
+		self.line = FileSearchLine(line: line, column: from - lineRange.lowerBound, text: rope.string(in: from..<to), ranges: [marked])
 	}
 }
 
@@ -175,7 +179,8 @@ final class NavigationController {
 		if let editor, editor.document === FileDocument.document(for: target.url)?.text {
 			editor.reveal(caret)
 		} else {
-			(NSApp.delegate as? AppDelegate)?.open(target.url, range: caret)
+			let project = (editor?.window?.delegate as? DocumentWindow)?.project
+			(NSApp.delegate as? AppDelegate)?.open(target.url, range: caret, from: project)
 		}
 	}
 

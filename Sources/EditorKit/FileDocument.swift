@@ -21,6 +21,8 @@ public final class FileDocument {
 
 	/// Posted (object: the document) after the text was written to its file.
 	public static let didSave = Notification.Name("FileDocumentDidSave")
+	/// Posted after every text change (lists of places in the file update their lines).
+	public static let textDidChange = Notification.Name("FileDocumentTextDidChange")
 
 	public let text: TextDocument
 	public private(set) var url: URL?
@@ -51,8 +53,10 @@ public final class FileDocument {
 		self.format = format
 		self.text.format = format
 		self.text.onChange = { [weak self] in
-			self?.markEdited()
-			self?.scheduleBackup()
+			guard let self else { return }
+			markEdited()
+			scheduleBackup()
+			NotificationCenter.default.post(name: Self.textDidChange, object: self)
 		}
 	}
 

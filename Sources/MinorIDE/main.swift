@@ -120,7 +120,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	/// Opens a file or a folder (project), or brings its window to front when already open.
 	/// A file inside an open project opens as a tab of that project's window.
-	func open(_ url: URL) {
+	func open(_ url: URL) { open(url, from: nil) }
+
+	/// `from`: the project a jump starts in; a file outside every project (Go's standard library,
+	/// the module cache) opens as its tab, and the project's language server takes it.
+	func open(_ url: URL, from origin: Project?) {
 		let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
 		if isFolder { return openProject(url) }
 		if let existing = documents.first(where: { $0.pane(showing: url) != nil }) {
@@ -129,15 +133,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return
 		}
 		guard let file = loadText(url) else { return }
-		let project = projects.first { $0.contains(url) }
+		let project = projects.first { $0.contains(url) } ?? origin
+		if let project, !project.contains(url) { project.languageServers.adopt(url) }
 		let doc = DocumentWindow(document: file, project: project)
 		if let project { addTab(doc, in: project) } else { add(doc) }
 		NSDocumentController.shared.noteNewRecentDocumentURL(url)
 	}
 
 	/// Opens a file and selects a place in it: a line (0-based) or a byte range.
-	func open(_ url: URL, line: Int? = nil, range: Range<Int>? = nil, inSplitOf window: DocumentWindow? = nil) {
-		if let window { open(url, inSplitOf: window) } else { open(url) }
+	func open(_ url: URL, line: Int? = nil, range: Range<Int>? = nil, inSplitOf window: DocumentWindow? = nil,
+	          from origin: Project? = nil) {
+		if let window { open(url, inSplitOf: window) } else { open(url, from: origin) }
 		guard line != nil || range != nil,
 		      let pane = documents.lazy.compactMap({ $0.pane(showing: url) }).first else { return }
 		if let range { pane.editor.reveal(range) } else if let line { pane.editor.reveal(line: line) }
@@ -147,6 +153,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	/// Opens a file of the project in the other pane of `window`'s editor.
 	func open(_ url: URL, inSplitOf window: DocumentWindow) {
 		guard let file = loadText(url) else { return }
+		if let project = window.project, !project.contains(url) { project.languageServers.adopt(url) }
 		window.openInSplit(file)
 		NSDocumentController.shared.noteNewRecentDocumentURL(url)
 	}

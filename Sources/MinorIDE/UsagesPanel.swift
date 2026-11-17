@@ -1,10 +1,12 @@
 import AppKit
 import EditorKit
 import MinorCore
+import TextEngine
 
 /// Find Usages (⌥F7): a section of the bottom panel shared by the project's tabs, with the
 /// usages from the language server by file. Selecting a line shows it in the editor, Return
-/// or a double click also moves the focus there.
+/// or a double click also moves the focus there. Places in open files follow their edits
+/// (anchors), so the list and the jumps stay right while you change the code.
 @MainActor
 final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
 	let view = NSView()
@@ -16,16 +18,29 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		let url: URL
 		let path: String
 		var lines: [LineItem] = []
+		/// The open document whose anchors the lines follow.
+		weak var doc: FileDocument?
 		init(_ url: URL, _ path: String) { self.url = url; self.path = path }
 	}
 
-	private final class LineItem {
+	@MainActor private final class LineItem {
 		unowned let file: FileItem
-		let target: NavigationTarget
-		init(_ file: FileItem, _ target: NavigationTarget) { self.file = file; self.target = target }
+		let found: NavigationTarget
+		var anchors: (start: AnchorID, end: AnchorID)?
+		init(_ file: FileItem, _ target: NavigationTarget) { self.file = file; self.found = target }
+
+		/// Where the usage is now: moved by the edits of the open file since the search.
+		var target: NavigationTarget {
+			guard let anchors, let rope = file.doc?.text.rope, let lo = file.doc?.text.anchors.offset(of: anchors.start),
+			      let hi = file.doc?.text.anchors.offset(of: anchors.end), hi <= rope.byteCount else { return found }
+			return NavigationTarget(url: file.url, bytes: lo..<max(lo, hi), in: rope)
+		}
 	}
 
 	private var files: [FileItem] = []
+	private var name = ""
+	private var observer: NSObjectProtocol?
+	private var refreshPending: Set<ObjectIdentifier> = []
 	private var generation = 0
 	private(set) var isSearching = false
 
@@ -34,6 +49,44 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		super.init()
 		build()
 		status.stringValue = L("Usages of a symbol appear here. Use Navigate › Find Usages in an editor.")
+		observer = NotificationCenter.default.addObserver(forName: FileDocument.textDidChange, object: nil, queue: .main) { [weak self] note in
+			guard let doc = note.object as? FileDocument else { return }
+			let id = ObjectIdentifier(doc)
+			MainActor.assumeIsolated { self?.textChanged(id) }
+		}
+	}
+
+	/// Anchors in the open file: the lines follow its edits from now on. The positions must
+	/// fit its text (found in it, or the file was just loaded from disk).
+	private func track(_ f: FileItem) {
+		guard f.doc == nil, let doc = FileDocument.document(for: f.url) else { return }
+		f.doc = doc
+		for l in f.lines {
+			l.anchors = (doc.text.anchors.add(at: l.found.range.lowerBound, bias: .after),
+			             doc.text.anchors.add(at: l.found.range.upperBound, bias: .before))
+		}
+	}
+
+	private func untrackAll() {
+		for f in files {
+			guard let doc = f.doc else { continue }
+			for case let (start, end)? in f.lines.map(\.anchors) {
+				doc.text.anchors.remove(start)
+				doc.text.anchors.remove(end)
+			}
+		}
+	}
+
+	/// The lines of an edited file show their new numbers and text, after a short pause.
+	private func textChanged(_ id: ObjectIdentifier) {
+		guard let f = files.first(where: { $0.doc.map(ObjectIdentifier.init) == id }), refreshPending.insert(id).inserted else { return }
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self, weak f] in
+			MainActor.assumeIsolated {
+				guard let self else { return }
+				self.refreshPending.remove(id)
+				if let f, self.files.contains(where: { $0 === f }) { self.outline.reloadItem(f, reloadChildren: true) }
+			}
+		}
 	}
 
 	private func build() {
@@ -80,7 +133,9 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		generation += 1
 		let gen = generation
 		isSearching = true
+		untrackAll()
 		files = []
+		self.name = name
 		outline.reloadData()
 		status.stringValue = L("Finding usages of “%@”…", name)
 		Task { [weak self] in
@@ -101,6 +156,7 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 				}()
 				file.lines.append(LineItem(file, target))
 			}
+			files.forEach(track)
 			outline.reloadData()
 			outline.expandItem(nil, expandChildren: true)
 			status.stringValue = found.isEmpty ? L("No usages of “%@”.", name)
@@ -135,17 +191,31 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	}
 
 	private func openSelected(focusEditor: Bool) {
-		let target: NavigationTarget
+		let line: LineItem
 		switch outline.item(atRow: outline.selectedRow) {
-		case let l as LineItem: target = l.target
+		case let l as LineItem: line = l
 		case let f as FileItem:
 			guard let first = f.lines.first else { return }
-			target = first.target
+			line = first
 		default: return
 		}
 		guard let app = NSApp.delegate as? AppDelegate else { return }
-		app.open(target.url, range: target.range)
-		if !focusEditor {
+		let url = line.file.url
+		app.open(url, from: project)
+		let wasTracked = line.file.doc != nil
+		track(line.file)
+		guard let doc = line.file.doc, let editor = doc.text.views.first(where: { $0.window?.isKeyWindow == true }) ?? doc.text.views.first else { return }
+		var range = line.target.range
+		// Opened earlier and edited before this list knew it: the nearest occurrence of the name.
+		if !wasTracked, !name.isEmpty, doc.text.rope.string(in: range) != name {
+			let near = doc.text.rope.ranges(of: Array(name.utf8), wholeWord: true)
+			if let best = near.min(by: { abs($0.lowerBound - range.lowerBound) < abs($1.lowerBound - range.lowerBound) }) { range = best }
+		}
+		editor.reveal(range)
+		if focusEditor {
+			editor.window?.makeFirstResponder(editor)
+		} else {
+			// The panel moves with the tab in front; keep browsing usages there.
 			DispatchQueue.main.async { [weak self] in
 				guard let self, let window = view.window else { return }
 				window.makeFirstResponder(outline)

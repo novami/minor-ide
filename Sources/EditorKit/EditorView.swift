@@ -300,6 +300,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		super.viewWillDraw()
 		updateCaretsIfNeeded() // scrolling exposes lines whose carets are not in the path yet
 		sticky?.update()
+		recheckLinkHover()
 	}
 
 	public override func layout() {
