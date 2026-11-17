@@ -131,6 +131,11 @@ enum MainMenu {
 			m.item(L("Jump to Implementation"), #selector(DocumentWindow.jumpToImplementation(_:)), "b", [.command, .option])
 			m.item(L("Jump to Type Definition"), #selector(DocumentWindow.jumpToTypeDefinition(_:)), "b", [.command, .shift])
 			m.item(L("Find Usages"), #selector(DocumentWindow.findUsages(_:)), String(UnicodeScalar(NSF7FunctionKey)!), .option)
+			m.addItem(.separator())
+			let f2 = String(UnicodeScalar(NSF2FunctionKey)!)
+			m.item(L("Next Problem"), #selector(DocumentWindow.nextProblem(_:)), f2, [])
+			m.item(L("Previous Problem"), #selector(DocumentWindow.previousProblem(_:)), f2, .shift)
+			m.item(L("Show Problems"), #selector(DocumentWindow.showProblems(_:)))
 		}
 
 		main.add(submenu: L("Window")) { m in

@@ -239,7 +239,7 @@
 "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History.";
 "Some files could not be changed." = "Some files could not be changed.";
 
-/* MinorIDE/FindInFiles.swift, MinorIDE/UsagesPanel.swift */
+/* MinorIDE/FindInFiles.swift, MinorIDE/ProblemsPanel.swift, MinorIDE/UsagesPanel.swift */
 "in %d files|one" = "in %d file";
 "in %d files|other" = "in %d files";
 
@@ -249,6 +249,10 @@
 
 /* MinorIDE/Hover.swift */
 "Documentation" = "Documentation";
+"Error" = "Error";
+"Warning" = "Warning";
+"Information" = "Information";
+"Hint" = "Hint";
 "Parameter Info" = "Parameter Info";
 
 /* MinorIDE/LanguageServersPanel.swift, MinorIDE/StatusBar.swift */
@@ -378,6 +382,9 @@
 "Recent Files…" = "Recent Files…";
 "Jump to Implementation" = "Jump to Implementation";
 "Jump to Type Definition" = "Jump to Type Definition";
+"Next Problem" = "Next Problem";
+"Previous Problem" = "Previous Problem";
+"Show Problems" = "Show Problems";
 "Window" = "Window";
 "Minimize" = "Minimize";
 "Zoom" = "Zoom";
@@ -425,12 +432,33 @@
 /* MinorIDE/PanelView.swift */
 "No Usages" = "No Usages";
 "Usages of a symbol found with Navigate › Find Usages will appear here." = "Usages of a symbol found with Navigate › Find Usages will appear here.";
+
+/* MinorIDE/PanelView.swift, MinorIDE/ProblemsPanel.swift */
+"Problems" = "Problems";
+
+/* MinorIDE/PanelView.swift */
+"No Problems" = "No Problems";
+
+/* MinorIDE/PanelView.swift, MinorIDE/ProblemsPanel.swift */
+"Errors and warnings from the language server will appear here." = "Errors and warnings from the language server will appear here.";
+
+/* MinorIDE/PanelView.swift */
 "Language Servers" = "Language Servers";
 "No Language Servers" = "No Language Servers";
 "The state and log of gopls will appear here." = "The state and log of gopls will appear here.";
 
 /* MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
 "Bottom Panel" = "Bottom Panel";
+
+/* MinorIDE/ProblemsPanel.swift */
+"No problems." = "No problems.";
+"line %d, column %d" = "line %d, column %d";
+"%d errors|one" = "%d error";
+"%d errors|other" = "%d errors";
+"%d warnings|one" = "%d warning";
+"%d warnings|other" = "%d warnings";
+"%d notes|one" = "%d note";
+"%d notes|other" = "%d notes";
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Project Files";

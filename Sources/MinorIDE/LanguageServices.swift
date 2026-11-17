@@ -30,6 +30,14 @@ final class LanguageServices {
 	var onUpdate: [() -> Void] = []
 	/// Called with every new log line (the panel appends it).
 	var onLog: ((String) -> Void)?
+	/// Diagnostics by URI as the server published them (files with none are left out).
+	private(set) var problems: [String: PublishedDiagnostics] = [:]
+	/// Called when diagnostics arrive or are cleared (Problems panel).
+	var onProblems: [() -> Void] = []
+	/// Edits of open documents by the version they made: diagnostics of an older version are
+	/// moved through them to the current text.
+	private var edits: [String: [(version: Int, changes: ChangeSet)]] = [:]
+	static let keptEdits = 64
 
 	private var server: LanguageServer?
 	private struct Opened {
@@ -96,6 +104,8 @@ final class LanguageServices {
 			if let doc = entry.doc, wanted.contains(where: { $0 === doc }), doc.url.map(Self.uri) == entry.uri { continue }
 			server?.close(uri: entry.uri)
 			entry.doc?.text.onTextEdit = nil
+			entry.doc?.text.setDiagnostics([])
+			edits[entry.uri] = nil
 			opened[id] = nil
 		}
 		guard let server else {
@@ -107,11 +117,64 @@ final class LanguageServices {
 			let uri = Self.uri(url)
 			let text = doc.text
 			server.open(uri: uri, languageID: languageID, version: text.version, text: text.rope)
-			text.onTextEdit = { [weak server] changes, rope, version in
+			text.onTextEdit = { [weak server, weak self] changes, rope, version in
 				server?.change(uri: uri, version: version, changes: changes, text: rope)
+				self?.edits[uri, default: []].append((version, changes))
+				if let n = self?.edits[uri]?.count, n > Self.keptEdits { self?.edits[uri]?.removeFirst(n - Self.keptEdits) }
 			}
 			opened[ObjectIdentifier(doc)] = Opened(doc: doc, uri: uri)
+			// Problems the server found before the file was opened (positions in the text on disk).
+			if let report = problems[uri] {
+				let encoding = server.positionEncoding
+				text.setDiagnostics(zip(report.diagnostics, report.diagnostics.map { text.rope.range(of: $0.range, encoding: encoding) }).map(Self.diagnostic))
+			}
 		}
+	}
+
+	/// How the server counts characters (positions of files that are not open).
+	var positionEncoding: PositionEncoding { server?.positionEncoding ?? .utf16 }
+
+	/// Whether the server has `doc` open (its diagnostics are in its text).
+	func isTracking(_ doc: FileDocument) -> Bool { opened[ObjectIdentifier(doc)]?.doc === doc }
+
+	// MARK: Diagnostics
+
+	private func received(_ report: PublishedDiagnostics) {
+		problems[report.uri] = report.diagnostics.isEmpty ? nil : report
+		if let entry = opened.values.first(where: { $0.uri == report.uri }), let doc = entry.doc {
+			// Too old to move to the current text: the server publishes again for the newer one.
+			if let ranges = report.ranges, let version = report.version, let current = moved(ranges, uri: report.uri, from: version, to: doc.text.version) {
+				doc.text.setDiagnostics(zip(report.diagnostics, current).map(Self.diagnostic))
+			}
+		}
+		for handler in onProblems { handler() }
+	}
+
+	/// Byte ranges of `version` in the text of `current`, through the edits in between.
+	private func moved(_ ranges: [Range<Int>], uri: String, from version: Int, to current: Int) -> [Range<Int>]? {
+		guard version != current else { return ranges }
+		let log = edits[uri] ?? []
+		guard version < current, let first = log.firstIndex(where: { $0.version == version + 1 }), log.last?.version == current else { return nil }
+		return ranges.map { r in
+			var lo = r.lowerBound, hi = r.upperBound
+			for (_, changes) in log[first...] {
+				lo = changes.map(lo, bias: .after)
+				hi = max(lo, changes.map(hi, bias: .before))
+			}
+			return lo..<hi
+		}
+	}
+
+	static func diagnostic(_ d: Diagnostic, _ range: Range<Int>) -> EditorDiagnostic {
+		EditorDiagnostic(range: range, severity: EditorDiagnostic.Severity(rawValue: d.severity.rawValue) ?? .error,
+		                 message: d.message, source: d.source, unnecessary: d.unnecessary)
+	}
+
+	private func clearProblems() {
+		guard !problems.isEmpty || opened.values.contains(where: { $0.doc?.text.hasDiagnostics == true }) else { return }
+		problems = [:]
+		for entry in opened.values { entry.doc?.text.setDiagnostics([]) }
+		for handler in onProblems { handler() }
 	}
 
 	func adopt(_ url: URL) { adopted.insert(url.standardizedFileURL.path) }
@@ -244,6 +307,28 @@ final class LanguageServices {
 		print("parameter info closes on Esc:", pane.signatureHelp?.isShowing == false)
 		for _ in 0..<5 { editor.undo(nil) }
 		print("text restored:", editor.rope.byteCount == e6)
+		// Diagnostics: an undefined call, an edit above it while gopls works, F2, the Problems panel.
+		let e7 = editor.rope.byteCount
+		editor.replace([(e7..<e7, "\nfunc minorideBad() { minorideMissing() }\n")])
+		let doc = editor.document
+		wait { doc.diagnostics.contains { $0.message.contains("minorideMissing") } }
+		editor.replace([(0..<0, "\n")])
+		let bad = doc.diagnostics.first { $0.message.contains("minorideMissing") }
+		print("diagnostic:", bad.map { "\($0.severity) \($0.message) at “\(editor.rope.string(in: $0.range))”" } ?? "none")
+		RunLoop.main.run(until: Date().addingTimeInterval(1))
+		print("after edit:", doc.diagnostics.first { $0.message.contains("minorideMissing") }.map { editor.rope.string(in: $0.range) } ?? "none")
+		editor.setSelections(SelectionSet(caret: e7))
+		(editor.window?.delegate as? DocumentWindow)?.nextProblem(nil)
+		print("F2:", editor.rope.string(in: editor.caret..<min(editor.caret + 15, editor.rope.byteCount)), "popup:",
+		      pane.hover?.debugText ?? "none")
+		if let problems = project?.problems {
+			RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+			print("problems:", problems.statusText, problems.rowsForSnapshot.filter { $0.contains("minoride") })
+		}
+		editor.undo(nil)
+		editor.undo(nil)
+		wait { !doc.diagnostics.contains { $0.message.contains("minorideMissing") } }
+		print("diagnostic gone after undo:", !doc.diagnostics.contains { $0.message.contains("minorideMissing") }, "text restored:", editor.rope.byteCount == e7)
 		for line in log.suffix(8) { print("  ", line) }
 	}
 
@@ -296,6 +381,7 @@ final class LanguageServices {
 			Self.main {
 				guard let self, gen == self.generation, self.server != nil else { return }
 				if state != .running { self.progress.reset() }
+				if case .failed = state { self.clearProblems() }
 				self.setStatus(.server(state))
 			}
 		}
@@ -304,6 +390,12 @@ final class LanguageServices {
 				guard let self, gen == self.generation, self.server != nil else { return }
 				self.progress.apply(event)
 				self.notify()
+			}
+		}
+		handlers.diagnostics = { [weak self] report in
+			Self.main {
+				guard let self, gen == self.generation, self.server != nil else { return }
+				self.received(report)
 			}
 		}
 		handlers.notification = { [weak self] method, params in
@@ -354,8 +446,10 @@ final class LanguageServices {
 	}
 
 	private func shutDown(log reason: String) {
+		clearProblems()
 		for entry in opened.values { entry.doc?.text.onTextEdit = nil }
 		opened = [:]
+		edits = [:]
 		progress.reset()
 		if let server {
 			self.server = nil

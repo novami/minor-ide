@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-17 (fáze 3 krok 5: historie navigace; fáze 2 odložena na Apple Developer účet)
+**Poslední aktualizace:** 2026-11-17 (fáze 3 krok 6b: diagnostiky; fáze 2 odložena na Apple Developer účet)
 
 ## Kde jsme
 
@@ -197,7 +197,11 @@ Známé mezery 3/5: gesto přejetí (zpět/vpřed na trackpadu) chybí; historie
 
 Známé mezery 3/6a: gopls uvnitř řetězcového literálu ve volání vrací null, takže nápověda parametrů se při psaní řetězce zavře (znovu ji otevře čárka nebo ⌃⇧Space); F1 na klávesnici Macu vyžaduje fn (nebo „standardní funkční klávesy“); dokumentace se může překrýt se seznamem napovídání; vzhled popupů (materiál, tmavý režim, odkazy, posouvání, najetí myší do popupu) ověřen jen výpisem textu — ruční kontrola zbývá.
 
-**Další krok: fáze 3, krok 6b** — 3.7 diagnostiky: `publishDiagnostics` (vlnovky, značky v gutteru a ve scrollbaru, panel Problems, F2/⇧F2 na další/předchozí). Potom 6c quick-fixy ⌥Enter + rename ⇧F6 s náhledem, 6d formátování ⌥⌘L a při uložení, 6e semantic tokens přes lexer.
+**Fáze 3, krok 6b hotový** (2026-11-17): 3.7 diagnostiky. `LSPKit/Diagnostics.swift` (`Diagnostic`: závažnost, zpráva, zdroj, kód číslo i řetězec, tagy unnecessary/deprecated, původní JSON pro quick-fixy; `PublishedDiagnostics`), `LanguageServer` drží posledních 32 textů dokumentu podle verze a převede pozice na bajty v textu verze, kterou server diagnostikoval (bez verze = poslední odeslaná; neotevřený soubor = bez bajtů), klient hlásí `publishDiagnostics` s `versionSupport`. `LanguageServices`: posledních 64 editací každého otevřeného dokumentu → diagnostiky starší verze se posunou na aktuální text (gopls při stejném výsledku znovu nepublikuje, takže zahodit je nejde); příliš staré se zahodí (ukazují se předchozí, v kotvách); `problems` podle URI i pro neotevřené soubory; při otevření souboru se použijí už známé; při pádu (`failed`), omezení a zavření se smažou. `EditorKit/Diagnostics.swift`: `EditorDiagnostic`, `TextDocument.setDiagnostics` (kotvy, cache podle verze), vlnovky (chyba červeně, varování oranžově, informace modře, tip tečkovaně, nepoužitý kód vybledlý; prázdný rozsah = šířka znaku), tečka v gutteru u nejhoršího problému řádku (popisek se zprávami, klik → kurzor na problém a zpráva), `DiagnosticStripView` u pravého okraje (značky přes celý soubor, klik skočí; jen značky berou kliky, jinak text pod nimi), `goToDiagnostic` (F2/⇧F2 dokola, tipy jen když nic jiného není). Aplikace: Navigace › Další problém F2, Předchozí problém ⇧F2 (zpráva pod problémem), Zobrazit problémy; dokumentace pod myší ukazuje i zprávy problémů na slově; spodní panel: nová sekce **Problémy** (`ProblemsPanel.swift`: soubory → problémy se symbolem závažnosti, zdrojem, řádkem a sloupcem, bez tipů; otevřené soubory podle kotev; stav „1 chyba v 1 souboru“; výběr ukáže, Return přesune fokus). Nápověda, zkratky a `docs/keymap.md` doplněny. Testy `DiagnosticsTests` (LSPKit: parsování, rozsahy ve verzi před editací; EditorKit: kotvy, nahrazení, F2 dokola). Naostro proti gopls (`MINORIDE_LSP_CHECK=1`, `~/MinorDLNA/internal/store/store.go`): „error undefined: minorideMissing“ na správném slově, po vložení řádku nad ním dál na slově, F2 + popup, panel „1 chyba v 1 souboru“ s řádkem 291:22, po Zpět zmizí. Bench BUDGET OK (psaní p99 0,23 ms, Go 0,41 ms).
+
+Známé mezery 3/6b: pruh značek překrývá pravých 7 bodů textu (u zalomených řádků je pod značkou konec řádku) a překryvný posuvník ho při zobrazení zakryje; dokumentace pod myší se ptá jen nad slovem (problém na interpunkci ukáže tečka, F2 nebo panel); `relatedInformation` a `codeDescription` (odkaz na popis) se nezobrazují; panel se po každé editaci souboru s problémy přestaví (po 0,2 s); ruční kontrola (vzhled vlnovek a teček, tmavý režim, popisky, kliky na pruh, panel) zbývá.
+
+**Další krok: fáze 3, krok 6c** — 3.7 quick-fixy ⌥Enter (`codeAction` s diagnostikami z `Diagnostic.json`) + rename ⇧F6 s náhledem. Potom 6d formátování ⌥⌘L a při uložení, 6e semantic tokens přes lexer.
 
 **Dluh — ruční kontrola (odložena uživatelem 2026-11-16 znovu, udělat až po dokončení fáze 3):** 2b s uživatelem (spustit z Finderu: ⇧⌘O, ⇧⌘F včetně Nahradit vše, gutter a Vrátit, klonování, víc terminálů, zabezpečené zadávání) a zbylé ruční kontroly U2–U8.
 

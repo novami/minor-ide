@@ -32,6 +32,7 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Přejít na definici (také ⌘+klik a klik kolečkem; na deklaraci → použití) | ⌘B | Navigace |
 | Přejít na implementaci / na definici typu | ⌥⌘B / ⇧⌘B | Navigace |
 | Najít použití (spodní panel Použití) | ⌥F7 | Navigace |
+| Další / předchozí problém (se zprávou pod ním; spodní panel Problémy přes Navigace › Zobrazit problémy) | F2 / ⇧F2 | Navigace |
 | Zpět / Vpřed po skocích (také boční tlačítka myši 3/4) | ⌃⌘← / ⌃⌘→ | Navigace |
 | Nedávné soubory… | ⌃⌘E | Navigace |
 | Sbalit / Rozbalit | ⌥⌘← / ⌥⌘→ | Zobrazení › Sbalování kódu |

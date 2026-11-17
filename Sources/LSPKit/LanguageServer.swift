@@ -53,7 +53,9 @@ public struct LanguageServerHandlers: Sendable {
 	public var log: @Sendable (String) -> Void = { _ in }
 	public var state: @Sendable (ServerState) -> Void = { _ in }
 	public var progress: @Sendable (ProgressEvent) -> Void = { _ in }
-	/// Notifications not handled here (publishDiagnostics, showMessage…).
+	/// `textDocument/publishDiagnostics`, with byte ranges for open documents.
+	public var diagnostics: @Sendable (PublishedDiagnostics) -> Void = { _ in }
+	/// Notifications not handled here (showMessage…).
 	public var notification: @Sendable (String, JSONValue) -> Void = { _, _ in }
 	/// `workspace/applyEdit`: the WorkspaceEdit; returns whether it was applied.
 	public var applyEdit: @Sendable (JSONValue) async -> Bool = { _ in false }
@@ -75,7 +77,13 @@ public final class LanguageServer: @unchecked Sendable {
 		var languageID: String
 		var version: Int
 		var text: Rope
+		/// Recent earlier texts by version: diagnostics may come for a version already edited.
+		var earlier: [(version: Int, text: Rope)] = []
+
+		func text(of v: Int) -> Rope? { v == version ? text : earlier.last { $0.version == v }?.text }
 	}
+
+	static let keptVersions = 32
 
 	private struct Watcher {
 		var glob: LSPGlob
@@ -315,6 +323,8 @@ public final class LanguageServer: @unchecked Sendable {
 		queue.async { [self] in
 			guard var doc = docs[uri] else { return }
 			let old = doc.text
+			doc.earlier.append((doc.version, old))
+			if doc.earlier.count > Self.keptVersions { doc.earlier.removeFirst() }
 			doc.version = version
 			doc.text = text
 			docs[uri] = doc
@@ -410,6 +420,20 @@ public final class LanguageServer: @unchecked Sendable {
 			}
 		case "window/logMessage":
 			handlers.log(params["message"]?.stringValue ?? "")
+		case "textDocument/publishDiagnostics":
+			guard let report = PublishedDiagnostics(params) else { return }
+			queue.async { [self] in
+				var published = report
+				// Positions become bytes in the text the server saw.
+				if let doc = docs[published.uri] {
+					let version = published.version ?? doc.version
+					if let text = doc.text(of: version) {
+						published.version = version
+						published.ranges = published.diagnostics.map { text.range(of: $0.range, encoding: encoding) }
+					}
+				}
+				handlers.diagnostics(published)
+			}
 		default:
 			if method == "window/showMessage" { handlers.log(params["message"]?.stringValue ?? "") }
 			handlers.notification(method, params)
@@ -510,6 +534,7 @@ public final class LanguageServer: @unchecked Sendable {
 			"implementation": ["linkSupport": true],
 			"typeDefinition": ["linkSupport": true],
 			"references": [:],
+			"publishDiagnostics": ["versionSupport": true, "tagSupport": ["valueSet": [1, 2]], "codeDescriptionSupport": true],
 			"hover": ["contentFormat": ["markdown", "plaintext"]],
 			"signatureHelp": [
 				"contextSupport": true,

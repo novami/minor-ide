@@ -66,6 +66,7 @@ extension DocumentWindow {
 		scroll.documentView = editor
 		GutterView.install(for: editor)
 		StickyLinesView.install(for: editor)
+		DiagnosticStripView.install(for: editor)
 		return scroll
 	}
 
@@ -195,6 +196,7 @@ extension DocumentWindow {
 				return services.endpoint(for: doc)
 			}
 			pane.hover = hover
+			editor.onDiagnosticActivated = { [weak hover] in hover?.showProblems(at: $0) }
 			editor.commandInterceptor = { [weak completion, weak signatureHelp, weak hover] selector in
 				completion?.handle(selector) == true || signatureHelp?.handle(selector) == true || hover?.handle(selector) == true
 			}

@@ -57,6 +57,60 @@
 			<string>Zobrazit všech %d použití</string>
 		</dict>
 	</dict>
+	<key>%d errors</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d chyba</string>
+			<key>few</key>
+			<string>%d chyby</string>
+			<key>other</key>
+			<string>%d chyb</string>
+		</dict>
+	</dict>
+	<key>%d warnings</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d varování</string>
+			<key>few</key>
+			<string>%d varování</string>
+			<key>other</key>
+			<string>%d varování</string>
+		</dict>
+	</dict>
+	<key>%d notes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d poznámka</string>
+			<key>few</key>
+			<string>%d poznámky</string>
+			<key>other</key>
+			<string>%d poznámek</string>
+		</dict>
+	</dict>
 	<key>%d spaces</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

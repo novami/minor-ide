@@ -145,8 +145,8 @@ extension PanelView {
 		return panel
 	}
 
-	/// Bottom panel: the project's terminal, Find in Project, usages and the language servers.
-	static let terminalSection = 0, searchSection = 1, usagesSection = 2, languageServersSection = 3
+	/// Bottom panel: the project's terminal, Find in Project, usages, problems and the language servers.
+	static let terminalSection = 0, searchSection = 1, usagesSection = 2, problemsSection = 3, languageServersSection = 4
 
 	static func bottom() -> PanelView {
 		PanelView(sections: [
@@ -159,6 +159,9 @@ extension PanelView {
 			Section(title: L("Usages"), symbol: "arrow.up.left.and.arrow.down.right",
 			        emptyTitle: L("No Usages"),
 			        emptyText: L("Usages of a symbol found with Navigate › Find Usages will appear here.")),
+			Section(title: L("Problems"), symbol: "exclamationmark.triangle",
+			        emptyTitle: L("No Problems"),
+			        emptyText: L("Errors and warnings from the language server will appear here.")),
 			Section(title: L("Language Servers"), symbol: "gearshape.2",
 			        emptyTitle: L("No Language Servers"),
 			        emptyText: L("The state and log of gopls will appear here.")),

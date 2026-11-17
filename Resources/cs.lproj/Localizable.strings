@@ -241,7 +241,7 @@
 "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Otevřené soubory se změní v editoru a jde to tam vrátit. Ostatní soubory se hned uloží; jejich předchozí verze zůstanou v Místní historii.";
 "Some files could not be changed." = "Některé soubory nešlo změnit.";
 
-/* MinorIDE/FindInFiles.swift, MinorIDE/UsagesPanel.swift */
+/* MinorIDE/FindInFiles.swift, MinorIDE/ProblemsPanel.swift, MinorIDE/UsagesPanel.swift */
 "in %d files|one" = "v %d souboru";
 "in %d files|few" = "v %d souborech";
 "in %d files|other" = "v %d souborech";
@@ -252,6 +252,10 @@
 
 /* MinorIDE/Hover.swift */
 "Documentation" = "Dokumentace";
+"Error" = "Chyba";
+"Warning" = "Varování";
+"Information" = "Informace";
+"Hint" = "Tip";
 "Parameter Info" = "Informace o parametrech";
 
 /* MinorIDE/LanguageServersPanel.swift, MinorIDE/StatusBar.swift */
@@ -381,6 +385,9 @@
 "Recent Files…" = "Nedávné soubory…";
 "Jump to Implementation" = "Přejít na implementaci";
 "Jump to Type Definition" = "Přejít na definici typu";
+"Next Problem" = "Další problém";
+"Previous Problem" = "Předchozí problém";
+"Show Problems" = "Zobrazit problémy";
 "Window" = "Okno";
 "Minimize" = "Minimalizovat";
 "Zoom" = "Zvětšit";
@@ -429,12 +436,36 @@
 /* MinorIDE/PanelView.swift */
 "No Usages" = "Žádná použití";
 "Usages of a symbol found with Navigate › Find Usages will appear here." = "Zde se zobrazí použití symbolu nalezená přes Navigace › Najít použití.";
+
+/* MinorIDE/PanelView.swift, MinorIDE/ProblemsPanel.swift */
+"Problems" = "Problémy";
+
+/* MinorIDE/PanelView.swift */
+"No Problems" = "Žádné problémy";
+
+/* MinorIDE/PanelView.swift, MinorIDE/ProblemsPanel.swift */
+"Errors and warnings from the language server will appear here." = "Zde se zobrazí chyby a varování od jazykového serveru.";
+
+/* MinorIDE/PanelView.swift */
 "Language Servers" = "Jazykové servery";
 "No Language Servers" = "Žádné jazykové servery";
 "The state and log of gopls will appear here." = "Zde se zobrazí stav a log gopls.";
 
 /* MinorIDE/PanelView.swift, MinorIDE/StatusBar.swift */
 "Bottom Panel" = "Spodní panel";
+
+/* MinorIDE/ProblemsPanel.swift */
+"No problems." = "Žádné problémy.";
+"line %d, column %d" = "řádek %d, sloupec %d";
+"%d errors|one" = "%d chyba";
+"%d errors|few" = "%d chyby";
+"%d errors|other" = "%d chyb";
+"%d warnings|one" = "%d varování";
+"%d warnings|few" = "%d varování";
+"%d warnings|other" = "%d varování";
+"%d notes|one" = "%d poznámka";
+"%d notes|few" = "%d poznámky";
+"%d notes|other" = "%d poznámek";
 
 /* MinorIDE/ProjectSidebar.swift */
 "Project Files" = "Soubory projektu";

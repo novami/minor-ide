@@ -412,7 +412,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		guard showing else { return } // still collapsed while it slides in
 		switch bottomPanel?.selected {
 		case PanelView.searchSection: project?.findInFiles.focus(query: nil)
-		case PanelView.languageServersSection, PanelView.usagesSection: break
+		case PanelView.languageServersSection, PanelView.usagesSection, PanelView.problemsSection: break
 		default: focusTerminal(evenIfCollapsed: true)
 		}
 	}
@@ -452,6 +452,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		bottomPanel.setContent(project.makeTerminal().view, at: PanelView.terminalSection)
 		bottomPanel.setContent(project.findInFiles.view, at: PanelView.searchSection)
 		bottomPanel.setContent(project.usages.view, at: PanelView.usagesSection)
+		bottomPanel.setContent(project.problems.view, at: PanelView.problemsSection)
 		bottomPanel.setContent(project.languageServersPanel.view, at: PanelView.languageServersSection)
 	}
 
@@ -463,6 +464,24 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	@objc func findUsages(_ sender: Any?) { focusedPane.navigation?.findUsages() }
 	@objc func showDocumentation(_ sender: Any?) { focusedPane.hover?.invoke() }
 	@objc func showParameterInfo(_ sender: Any?) { focusedPane.signatureHelp?.invoke() }
+
+	/// Navigate › Next Problem (F2) / Previous Problem (⇧F2) in the focused file, with its message.
+	@objc func nextProblem(_ sender: Any?) { goToProblem(forward: true) }
+	@objc func previousProblem(_ sender: Any?) { goToProblem(forward: false) }
+
+	private func goToProblem(forward: Bool) {
+		let pane = focusedPane
+		guard let d = pane.editor.goToDiagnostic(forward: forward) else { return }
+		pane.hover?.showProblems(at: d)
+	}
+
+	/// Navigate › Show Problems: the Problems section of the bottom panel.
+	@objc func showProblems(_ sender: Any?) {
+		guard let bottomPanel, let item = panels?.bottom else { return }
+		attachTerminal()
+		bottomPanel.select(PanelView.problemsSection)
+		if item.isCollapsed { togglePanel(item) }
+	}
 
 	/// Before a jump away from the focused place (Back returns there).
 	func recordJump() { project?.jumps.record(from: self) }
@@ -530,6 +549,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		case #selector(showDocumentation(_:)): return focusedPane.hover?.isAvailable ?? false
 		case #selector(showParameterInfo(_:)): return focusedPane.signatureHelp?.isAvailable ?? false
 		case #selector(navigateBack(_:)): return project?.jumps.canGoBack ?? false
+		case #selector(nextProblem(_:)), #selector(previousProblem(_:)): return focusedPane.editor.document.hasDiagnostics
+		case #selector(showProblems(_:)): return project != nil
 		case #selector(navigateForward(_:)): return project?.jumps.canGoForward ?? false
 		case #selector(showRecentFiles(_:)): return project != nil
 		case #selector(showLocalHistory(_:)):

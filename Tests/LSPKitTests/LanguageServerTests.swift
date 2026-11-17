@@ -47,12 +47,14 @@ final class Harness: @unchecked Sendable {
 	let servers = Locked<[FakeServer]>([])
 	let states = Locked<[ServerState]>([])
 	let progress = Locked<[ProgressEvent]>([])
+	let diagnostics = Locked<[PublishedDiagnostics]>([])
 	let lsp: LanguageServer
 
 	init(capabilities: JSONValue = ["positionEncoding": "utf-8", "textDocumentSync": 2], settings: JSONValue = [:]) {
 		var h = LanguageServerHandlers()
-		let states = states, progress = progress, servers = servers
+		let states = states, progress = progress, servers = servers, diagnostics = diagnostics
 		h.state = { s in states.mutate { $0.append(s) } }
+		h.diagnostics = { d in diagnostics.mutate { $0.append(d) } }
 		h.progress = { e in progress.mutate { $0.append(e) } }
 		lsp = LanguageServer(root: URL(fileURLWithPath: "/p"), settings: settings, handlers: h) { _ in
 			let s = FakeServer(capabilities: capabilities)

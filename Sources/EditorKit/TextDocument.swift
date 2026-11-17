@@ -11,6 +11,9 @@ public final class TextDocument {
 	public internal(set) var history = EditHistory()
 	/// Positions that follow edits, undo and redo included.
 	public var anchors = AnchorSet()
+	/// Problems from the language server, held in `anchors` (Diagnostics.swift).
+	var diagnosticMarks: [DiagnosticMark] = []
+	var diagnosticCache: (version: Int, items: [EditorDiagnostic])?
 	/// Called once after every text change, whichever view made it (dirty tracking).
 	public var onChange: (() -> Void)?
 	/// Increases with every text change (language server document versions).
@@ -151,6 +154,7 @@ public final class TextDocument {
 		onTextEdit?(changes, rope, version)
 		onChange?()
 		if gitBase != nil { scheduleGitDiff(delay: .milliseconds(200)) }
+		if !diagnosticMarks.isEmpty, rope.lineCount != edit.oldLines { for view in editors { view.diagnosticStrip?.needsDisplay = true } }
 		if let highlighter, highlighter.validUpTo < rope.lineCount - 1 { scheduleBackgroundHighlight(delay: .milliseconds(300)) }
 	}
 

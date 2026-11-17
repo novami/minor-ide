@@ -41,7 +41,7 @@ final class HoverController {
 			// Moving towards the popup crosses other words: it closes only if the mouse ends up elsewhere.
 			scheduleHideUnlessMouseInside()
 		}
-		guard let word, word != shown?.range, let end = endpoint(), end.server.supportsHover else { return }
+		guard let word, word != shown?.range, let end = endpoint(), end.server.supportsHover || !problems(at: word).isEmpty else { return }
 		askTask = Task { [weak self] in
 			try? await Task.sleep(for: Self.delay)
 			guard !Task.isCancelled, let self, popup?.contains(screenPoint: NSEvent.mouseLocation) != true else { return }
@@ -61,9 +61,10 @@ final class HoverController {
 
 	/// Edit › Show Documentation (F1): the symbol at the caret.
 	func invoke() {
-		guard let editor, let end = endpoint(), end.server.supportsHover else { return NSSound.beep() }
+		guard let editor, let end = endpoint() else { return NSSound.beep() }
 		var word = editor.rope.wordRange(at: editor.caret)
 		if word.count > 200 { word = editor.caret..<editor.caret }
+		guard end.server.supportsHover || !problems(at: word).isEmpty else { return NSSound.beep() }
 		askTask?.cancel()
 		askTask = Task { [weak self] in await self?.ask(end, word: word, byMouse: false) }
 	}
@@ -98,21 +99,43 @@ final class HoverController {
 		guard let editor else { return }
 		generation += 1
 		let gen = generation, rope = editor.rope, version = editor.document.version
-		let hover = try? await end.server.hover(uri: end.uri, offset: word.lowerBound, in: rope)
+		let hover = end.server.supportsHover ? try? await end.server.hover(uri: end.uri, offset: word.lowerBound, in: rope) : nil
 		guard gen == generation, let editor = self.editor, editor.document.version == version,
 		      !byMouse || editor.mouseWord == word else { return }
-		guard let hover else { return byMouse ? () : NSSound.beep() }
-		show(hover.contents, word: word, byMouse: byMouse)
+		let problems = problems(at: word)
+		guard hover != nil || !problems.isEmpty else { return byMouse ? () : NSSound.beep() }
+		show(hover?.contents, problems: problems, word: word, byMouse: byMouse)
 	}
 
-	private func show(_ markup: Markup, word: Range<Int>, byMouse: Bool) {
+	/// Next Problem (F2): the messages of the problems at the caret below it.
+	func showProblems(at d: EditorDiagnostic) {
+		guard let editor else { return }
+		askTask?.cancel()
+		generation += 1
+		let here = editor.document.diagnostics.filter { $0.range.lowerBound == d.range.lowerBound }
+		show(nil, problems: here.isEmpty ? [d] : here, word: d.range, byMouse: false)
+	}
+
+	/// Problems overlapping a word (an empty one at its edges too), most severe first.
+	private func problems(at word: Range<Int>) -> [EditorDiagnostic] {
+		guard let editor, editor.document.hasDiagnostics else { return [] }
+		return editor.document.diagnostics.filter { d in
+			d.range.overlaps(word) || d.range.isEmpty && (word.lowerBound...word.upperBound).contains(d.range.lowerBound)
+		}.sorted { $0.severity < $1.severity }
+	}
+
+	private func show(_ markup: Markup?, problems: [EditorDiagnostic], word: Range<Int>, byMouse: Bool) {
 		guard let editor, let window = editor.window else { return }
 		hideTask?.cancel()
 		let popup = self.popup ?? InfoPopup(accessibilityLabel: L("Documentation"))
 		self.popup = popup
 		popup.onMouseExit = { [weak self] in self?.scheduleHideUnlessMouseInside() }
 		shown = (word, byMouse)
-		let text = MarkupText.attributed(markup, codeFont: editor.font, appearance: editor.effectiveAppearance)
+		let text = NSMutableAttributedString(attributedString: Self.problemsText(problems))
+		if let markup {
+			if text.length > 0 { text.append(NSAttributedString(string: "\n\n")) }
+			text.append(MarkupText.attributed(markup, codeFont: editor.font, appearance: editor.effectiveAppearance))
+		}
 		let from = editor.rope.utf16Offset(ofByte: word.lowerBound), to = editor.rope.utf16Offset(ofByte: word.upperBound)
 		let rect = editor.firstRect(forCharacterRange: NSRange(location: from, length: to - from), actualRange: nil)
 		popup.show(text, at: rect, placement: .below, parent: window)
@@ -131,6 +154,41 @@ final class HoverController {
 			observers.append(center.addObserver(forName: NSView.boundsDidChangeNotification, object: clip, queue: .main) { [weak self] _ in
 				MainActor.assumeIsolated { self?.close() }
 			})
+		}
+	}
+}
+
+extension HoverController {
+	/// One line per problem: a severity symbol, the message and who reported it.
+	static func problemsText(_ problems: [EditorDiagnostic]) -> NSAttributedString {
+		let out = NSMutableAttributedString()
+		let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+		for (i, d) in problems.enumerated() {
+			if i > 0 { out.append(NSAttributedString(string: "\n")) }
+			let (symbol, label) = severitySymbol(d.severity)
+			if let image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)?
+				.withSymbolConfiguration(.init(pointSize: font.pointSize, weight: .regular).applying(.init(paletteColors: [d.color]))) {
+				let attachment = NSTextAttachment()
+				attachment.image = image
+				attachment.bounds = CGRect(x: 0, y: font.descender + 1, width: image.size.width, height: image.size.height)
+				out.append(NSAttributedString(attachment: attachment))
+				out.append(NSAttributedString(string: " "))
+			}
+			out.append(NSAttributedString(string: d.message, attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+			if let source = d.source, !source.isEmpty {
+				out.append(NSAttributedString(string: "  " + source, attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]))
+			}
+		}
+		return out
+	}
+
+	/// SF Symbol and spoken name of a severity.
+	static func severitySymbol(_ severity: EditorDiagnostic.Severity) -> (String, String) {
+		switch severity {
+		case .error: ("xmark.octagon.fill", L("Error"))
+		case .warning: ("exclamationmark.triangle.fill", L("Warning"))
+		case .information: ("info.circle.fill", L("Information"))
+		case .hint: ("lightbulb", L("Hint"))
 		}
 	}
 }

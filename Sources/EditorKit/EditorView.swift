@@ -175,6 +175,10 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public internal(set) weak var gutter: GutterView?
 	/// Enclosing lines pinned over the top of the scroll view.
 	public internal(set) weak var sticky: StickyLinesView?
+	/// Problem marks along the right edge.
+	public internal(set) weak var diagnosticStrip: DiagnosticStripView?
+	/// A problem mark in the gutter or the strip was clicked (the caret is on the problem).
+	public var onDiagnosticActivated: ((EditorDiagnostic) -> Void)?
 
 	public convenience init(text: String, font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)) {
 		self.init(document: TextDocument(text: text), font: font)
@@ -284,6 +288,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			drawText(ctx, rows: rows(inY: dirtyRect.minY, dirtyRect.maxY), highlighter: highlighter, textColor: textColor,
 			         xRange: dirtyRect.minX...dirtyRect.maxX)
 			if !foldedHeaders.isEmpty { drawFoldPlaceholders(ctx, lines: shown) }
+			if !document.diagnosticMarks.isEmpty { drawDiagnostics(ctx, lines: first...last) }
 			if linkRange != nil { drawLink(ctx, lines: first...last) }
 		}
 		if !markedText.isEmpty, visible.contains(selections.primary) { drawMarkedText(ctx, at: caret) }

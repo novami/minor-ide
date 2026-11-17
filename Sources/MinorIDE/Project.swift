@@ -147,6 +147,7 @@ final class Project {
 	/// Find in Project, shared by the project's tabs like the terminal.
 	private(set) lazy var findInFiles = FindInFiles(project: self)
 	private(set) lazy var usages = UsagesPanel(project: self)
+	private(set) lazy var problems = ProblemsPanel(project: self)
 	/// Back and Forward of the project's windows.
 	let jumps = JumpHistory()
 
