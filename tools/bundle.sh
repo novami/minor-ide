@@ -82,4 +82,7 @@ EOF
 # Helpers first, then the app (inside-out signing).
 codesign --force --sign - "$APP/Contents/Helpers/minoride-server"
 codesign --force --sign - "$APP"
+# The bundle is recreated each time: refresh the Finder icon cache and LaunchServices.
+touch "$APP"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP" 2>/dev/null || true
 echo "built $APP ($VERSION)"
