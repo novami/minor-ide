@@ -349,10 +349,11 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 
 	func outlineViewSelectionDidChange(_ notification: Notification) {
 		// Keyboard moves show the match too (the focus stays here).
-		if NSApp.currentEvent?.type == .keyDown { openSelected(focusEditor: false) }
+		// Browsing with the arrow keys is not a jump of its own (Back returns to where it began).
+		if NSApp.currentEvent?.type == .keyDown { openSelected(focusEditor: false, record: false) }
 	}
 
-	private func openSelected(focusEditor: Bool) {
+	private func openSelected(focusEditor: Bool, record: Bool = true) {
 		let item = outline.item(atRow: outline.selectedRow)
 		let url: URL, line: FileSearchLine?
 		if let l = item as? LineItem {
@@ -363,6 +364,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 			line = f.result.lines.first
 		} else { return }
 		guard let app = NSApp.delegate as? AppDelegate else { return }
+		if record { (view.window?.delegate as? DocumentWindow)?.recordJump() }
 		app.open(url)
 		guard let doc = FileDocument.document(for: url), let editor = doc.text.views.first(where: { $0.window?.isKeyWindow == true }) ?? doc.text.views.first else { return }
 		if let line {

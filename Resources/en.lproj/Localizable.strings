@@ -367,6 +367,9 @@
 "Unfold All" = "Unfold All";
 "Enter Full Screen" = "Enter Full Screen";
 "Navigate" = "Navigate";
+"Back" = "Back";
+"Forward" = "Forward";
+"Recent Files…" = "Recent Files…";
 "Jump to Implementation" = "Jump to Implementation";
 "Jump to Type Definition" = "Jump to Type Definition";
 "Window" = "Window";
@@ -438,6 +441,7 @@
 
 /* MinorIDE/QuickOpen.swift */
 "Open Quickly" = "Open Quickly";
+"Recent Files" = "Recent Files";
 "File name" = "File name";
 "Matching files" = "Matching files";
 "No recent files" = "No recent files";

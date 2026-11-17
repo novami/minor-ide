@@ -370,6 +370,9 @@
 "Unfold All" = "Rozbalit vše";
 "Enter Full Screen" = "Zapnout režim celé obrazovky";
 "Navigate" = "Navigace";
+"Back" = "Zpět";
+"Forward" = "Vpřed";
+"Recent Files…" = "Nedávné soubory…";
 "Jump to Implementation" = "Přejít na implementaci";
 "Jump to Type Definition" = "Přejít na definici typu";
 "Window" = "Okno";
@@ -442,6 +445,7 @@
 
 /* MinorIDE/QuickOpen.swift */
 "Open Quickly" = "Rychle otevřít";
+"Recent Files" = "Nedávné soubory";
 "File name" = "Název souboru";
 "Matching files" = "Nalezené soubory";
 "No recent files" = "Žádné nedávné soubory";

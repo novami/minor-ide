@@ -19,9 +19,13 @@ final class QuickOpenPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate,
 	private static let rowHeight: CGFloat = 36
 	private static let maxRows = 10
 
-	init(project: Project, owner: DocumentWindow) {
+	/// Navigate › Recent Files (⌃⌘E): only files opened lately, newest first.
+	let recentOnly: Bool
+
+	init(project: Project, owner: DocumentWindow, recentOnly: Bool = false) {
 		self.project = project
 		self.owner = owner
+		self.recentOnly = recentOnly
 		super.init(contentRect: NSRect(x: 0, y: 0, width: 620, height: 60),
 		           styleMask: [.titled, .fullSizeContentView], backing: .buffered, defer: true)
 		titleVisibility = .hidden
@@ -37,7 +41,7 @@ final class QuickOpenPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate,
 		background.state = .active
 		contentView = background
 
-		field.placeholderString = L("Open Quickly")
+		field.placeholderString = recentOnly ? L("Recent Files") : L("Open Quickly")
 		field.font = .systemFont(ofSize: 18)
 		field.focusRingType = .none
 		field.delegate = self
@@ -121,9 +125,13 @@ final class QuickOpenPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate,
 		generation += 1
 		let gen = generation, index = project.paths, q = text
 		let current = owner?.url.flatMap { index.relative($0.standardizedFileURL.path) }
-		let recent = project.recentFiles.filter { $0 != current }
+		let recent = project.recentFiles.filter { $0 != current }, recentOnly = recentOnly
 		index.whenReady {
-			let found = index.search(q, recent: recent, limit: 200)
+			var found = index.search(q, recent: recent, limit: 200)
+			if recentOnly {
+				let set = Set(recent)
+				found = found.filter { set.contains($0.path) }
+			}
 			DispatchQueue.main.async { [weak self] in
 				guard let self, gen == generation else { return }
 				show(found, for: q)
@@ -184,6 +192,7 @@ final class QuickOpenPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate,
 		let split = NSApp.currentEvent?.modifierFlags.contains(.option) == true ? owner : nil
 		let line = line
 		close()
+		if split == nil { owner?.recordJump() }
 		app.open(url, line: line, inSplitOf: split)
 	}
 

@@ -11,6 +11,15 @@ final class EditorWindow: NSWindow {
 		if sender is NSMenuItem, closesPane?() == true { return }
 		super.performClose(sender)
 	}
+
+	/// Side buttons of a mouse: Back (3) and Forward (4) wherever the pointer is in the window.
+	override func otherMouseDown(with event: NSEvent) {
+		switch event.buttonNumber {
+		case 3: NSApp.sendAction(#selector(DocumentWindow.navigateBack(_:)), to: nil, from: self)
+		case 4: NSApp.sendAction(#selector(DocumentWindow.navigateForward(_:)), to: nil, from: self)
+		default: super.otherMouseDown(with: event)
+		}
+	}
 }
 
 /// One part of a window's editor: a file's editor with the bar for changes on disk above it.

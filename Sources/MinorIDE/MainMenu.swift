@@ -120,6 +120,11 @@ enum MainMenu {
 		}
 
 		main.add(submenu: L("Navigate")) { m in
+			let left = String(UnicodeScalar(UInt16(NSLeftArrowFunctionKey))!), right = String(UnicodeScalar(UInt16(NSRightArrowFunctionKey))!)
+			m.item(L("Back"), #selector(DocumentWindow.navigateBack(_:)), left, [.command, .control])
+			m.item(L("Forward"), #selector(DocumentWindow.navigateForward(_:)), right, [.command, .control])
+			m.item(L("Recent Files…"), #selector(DocumentWindow.showRecentFiles(_:)), "e", [.command, .control])
+			m.addItem(.separator())
 			m.item(L("Jump to Definition"), #selector(DocumentWindow.jumpToDefinition(_:)), "b")
 			m.item(L("Jump to Implementation"), #selector(DocumentWindow.jumpToImplementation(_:)), "b", [.command, .option])
 			m.item(L("Jump to Type Definition"), #selector(DocumentWindow.jumpToTypeDefinition(_:)), "b", [.command, .shift])

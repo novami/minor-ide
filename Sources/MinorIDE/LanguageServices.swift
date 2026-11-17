@@ -190,6 +190,11 @@ final class LanguageServices {
 		navigation?.jump(.definition)
 		wait { editor.caret == declaration }
 		print("definition:", editor.caret == declaration)
+		let window = editor.window?.delegate as? DocumentWindow
+		window?.navigateBack(nil)
+		let back = editor.caret == call + 3
+		window?.navigateForward(nil)
+		print("back:", back, "forward:", editor.caret == declaration)
 		_ = editor.onNavigate?(declaration + 2)
 		wait { editor.caret == call }
 		print("declaration click → usage:", editor.caret == call)
@@ -213,6 +218,12 @@ final class LanguageServices {
 			return std.map { endpoint(for: $0) != nil } ?? false
 		}
 		print("standard library:", std?.url?.path ?? "not opened", "served:", std.map { endpoint(for: $0) != nil } ?? false)
+		let stdWindow = std?.text.views.first?.window?.delegate as? DocumentWindow
+		let before = editor.caret
+		editor.setSelections(SelectionSet(caret: 0))
+		stdWindow?.navigateBack(nil)
+		print("back from the standard library:", stdWindow != nil && editor.caret == before,
+		      "tab in front:", editor.window.map { $0.tabGroup?.selectedWindow === $0 } ?? false)
 		editor.undo(nil)
 		for line in log.suffix(8) { print("  ", line) }
 	}

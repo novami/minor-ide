@@ -103,6 +103,8 @@ final class NavigationController {
 	/// False without a server that knows definitions: the click places the caret as usual.
 	private func click(at offset: Int) -> Bool {
 		guard let editor, let end = endpoint(), end.server.supports(.definition) else { return false }
+		// The caret goes to the clicked symbol first: Back returns there.
+		editor.setSelections(SelectionSet(caret: offset))
 		let rope = editor.rope, version = editor.document.version, encoding = end.server.positionEncoding
 		generation += 1
 		let gen = generation
@@ -176,6 +178,7 @@ final class NavigationController {
 
 	private func open(_ target: NavigationTarget) {
 		let caret = target.range.lowerBound..<target.range.lowerBound
+		(editor?.window?.delegate as? DocumentWindow)?.recordJump()
 		if let editor, editor.document === FileDocument.document(for: target.url)?.text {
 			editor.reveal(caret)
 		} else {

@@ -187,10 +187,11 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	@objc private func rowOpened(_ sender: Any?) { openSelected(focusEditor: true) }
 
 	func outlineViewSelectionDidChange(_ notification: Notification) {
-		if NSApp.currentEvent?.type == .keyDown { openSelected(focusEditor: false) }
+		// Browsing with the arrow keys is not a jump of its own (Back returns to where it began).
+		if NSApp.currentEvent?.type == .keyDown { openSelected(focusEditor: false, record: false) }
 	}
 
-	private func openSelected(focusEditor: Bool) {
+	private func openSelected(focusEditor: Bool, record: Bool = true) {
 		let line: LineItem
 		switch outline.item(atRow: outline.selectedRow) {
 		case let l as LineItem: line = l
@@ -200,6 +201,7 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		default: return
 		}
 		guard let app = NSApp.delegate as? AppDelegate else { return }
+		if record { (view.window?.delegate as? DocumentWindow)?.recordJump() }
 		let url = line.file.url
 		app.open(url, from: project)
 		let wasTracked = line.file.doc != nil

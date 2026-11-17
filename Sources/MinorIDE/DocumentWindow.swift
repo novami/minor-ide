@@ -462,6 +462,21 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	@objc func jumpToTypeDefinition(_ sender: Any?) { focusedPane.navigation?.jump(.typeDefinition) }
 	@objc func findUsages(_ sender: Any?) { focusedPane.navigation?.findUsages() }
 
+	/// Before a jump away from the focused place (Back returns there).
+	func recordJump() { project?.jumps.record(from: self) }
+
+	@objc func navigateBack(_ sender: Any?) { project?.jumps.goBack(in: self) }
+	@objc func navigateForward(_ sender: Any?) { project?.jumps.goForward(in: self) }
+
+	/// Navigate › Recent Files… (⌃⌘E): Open Quickly over the files opened lately.
+	@objc func showRecentFiles(_ sender: Any?) {
+		guard let project else { return }
+		quickOpen?.close()
+		let panel = QuickOpenPanel(project: project, owner: self, recentOnly: true)
+		quickOpen = panel
+		panel.show(over: window)
+	}
+
 	/// The Usages section of the bottom panel with a new search.
 	func showUsages(_ name: String, _ search: @escaping @MainActor () async -> [NavigationTarget]?) {
 		guard let project, let bottomPanel, let item = panels?.bottom else { return }
@@ -510,6 +525,9 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		case #selector(jumpToImplementation(_:)): return focusedPane.navigation?.supports(.implementation) ?? false
 		case #selector(jumpToTypeDefinition(_:)): return focusedPane.navigation?.supports(.typeDefinition) ?? false
 		case #selector(findUsages(_:)): return focusedPane.navigation?.supports(.references) ?? false
+		case #selector(navigateBack(_:)): return project?.jumps.canGoBack ?? false
+		case #selector(navigateForward(_:)): return project?.jumps.canGoForward ?? false
+		case #selector(showRecentFiles(_:)): return project != nil
 		case #selector(showLocalHistory(_:)):
 			return document.url != nil && FileDocument.history != nil
 		case #selector(openQuickly(_:)), #selector(findInProject(_:)), #selector(newTerminalTab(_:)):
@@ -531,7 +549,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	/// File › Open Quickly… (⇧⌘O): a project file by name.
 	@objc func openQuickly(_ sender: Any?) {
 		guard let project else { return }
-		if let quickOpen { return quickOpen.makeKeyAndOrderFront(nil) }
+		if let quickOpen, !quickOpen.recentOnly { return quickOpen.makeKeyAndOrderFront(nil) }
+		quickOpen?.close()
 		let panel = QuickOpenPanel(project: project, owner: self)
 		quickOpen = panel
 		panel.show(over: window)
