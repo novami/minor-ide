@@ -99,6 +99,15 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 	public var onWillTypeText: ((String) -> Void)?
 	/// Called after text was typed (not pasted or replaced), with that text.
 	public var onTypedText: ((String) -> Void)?
+	/// ⌘+click or a middle click at a byte offset (jump to definition); false or nil: a plain click.
+	public var onNavigate: ((Int) -> Bool)?
+	/// The word under the mouse while ⌘ is held, nil when it is released or the mouse leaves it.
+	public var onLinkHover: ((Range<Int>?) -> Void)?
+	/// Underlined as a link with a pointing hand (set by the hover handler); edits clear it.
+	public var linkRange: Range<Int>? {
+		didSet { if oldValue != linkRange { linkChanged(oldValue) } }
+	}
+	public internal(set) var hoveredWord: Range<Int>?
 	/// Tab stops of the inserted snippet while Tab visits them (framed in the text).
 	var snippetSession: SnippetSession? {
 		didSet {
@@ -271,6 +280,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			drawText(ctx, rows: rows(inY: dirtyRect.minY, dirtyRect.maxY), highlighter: highlighter, textColor: textColor,
 			         xRange: dirtyRect.minX...dirtyRect.maxX)
 			if !foldedHeaders.isEmpty { drawFoldPlaceholders(ctx, lines: shown) }
+			if linkRange != nil { drawLink(ctx, lines: first...last) }
 		}
 		if !markedText.isEmpty, visible.contains(selections.primary) { drawMarkedText(ctx, at: caret) }
 		let keep = (first - 300)...(max(first, last) + 300)
@@ -398,7 +408,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 
 	private func x(of offset: Int) -> CGFloat { x(of: offset, line: rope.line(containing: offset)) }
 
-	private func lineRect(_ line: Int) -> NSRect {
+	func lineRect(_ line: Int) -> NSRect {
 		NSRect(x: 0, y: y(ofLine: line), width: bounds.width, height: CGFloat(display.rows(ofLine: line)) * lineHeight)
 	}
 
@@ -575,6 +585,8 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			onTextChange?()
 		}
 		let firstLine = edit.firstLine, lastLine = edit.lastLine, oldLines = edit.oldLines, sameLines = edit.sameLines
+		hoveredWord = nil
+		if linkRange != nil { linkRange = nil }
 		if !findMatches.isEmpty { findMatches = changes.mapUntouched(findMatches) }
 		snippetSession?.map(through: changes)
 		var foldsChanged = false
@@ -674,6 +686,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			return
 		}
 		let offset = offset(at: point)
+		if navigatesOnClick(clicks: clicks, modifiers: modifiers), onNavigate!(offset) { return }
 		let unit: DragUnit = clicks >= 3 ? .line : clicks == 2 ? .word : .character
 		var others: [Selection] = []
 		var origin = range(of: unit, at: offset)

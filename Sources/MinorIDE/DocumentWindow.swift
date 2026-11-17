@@ -287,6 +287,11 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			menu.item(L("Look Up “%@”", word), #selector(EditorView.lookUpSelection(_:)))
 			menu.addItem(.separator())
 		}
+		if (editor.window?.delegate as? DocumentWindow)?.project != nil {
+			menu.item(L("Jump to Definition"), #selector(DocumentWindow.jumpToDefinition(_:)))
+			menu.item(L("Find Usages"), #selector(DocumentWindow.findUsages(_:)))
+			menu.addItem(.separator())
+		}
 		menu.item(L("Cut"), #selector(NSText.cut(_:)))
 		menu.item(L("Copy"), #selector(NSText.copy(_:)))
 		menu.item(L("Paste"), #selector(NSText.paste(_:)))
@@ -407,7 +412,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		guard showing else { return } // still collapsed while it slides in
 		switch bottomPanel?.selected {
 		case PanelView.searchSection: project?.findInFiles.focus(query: nil)
-		case PanelView.languageServersSection: break
+		case PanelView.languageServersSection, PanelView.usagesSection: break
 		default: focusTerminal(evenIfCollapsed: true)
 		}
 	}
@@ -446,7 +451,24 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		guard let project, let bottomPanel else { return }
 		bottomPanel.setContent(project.makeTerminal().view, at: PanelView.terminalSection)
 		bottomPanel.setContent(project.findInFiles.view, at: PanelView.searchSection)
+		bottomPanel.setContent(project.usages.view, at: PanelView.usagesSection)
 		bottomPanel.setContent(project.languageServersPanel.view, at: PanelView.languageServersSection)
+	}
+
+	// MARK: Navigation
+
+	@objc func jumpToDefinition(_ sender: Any?) { focusedPane.navigation?.jump(.definition) }
+	@objc func jumpToImplementation(_ sender: Any?) { focusedPane.navigation?.jump(.implementation) }
+	@objc func jumpToTypeDefinition(_ sender: Any?) { focusedPane.navigation?.jump(.typeDefinition) }
+	@objc func findUsages(_ sender: Any?) { focusedPane.navigation?.findUsages() }
+
+	/// The Usages section of the bottom panel with a new search.
+	func showUsages(_ name: String, _ search: @escaping @MainActor () async -> [NavigationTarget]?) {
+		guard let project, let bottomPanel, let item = panels?.bottom else { return }
+		attachTerminal()
+		bottomPanel.select(PanelView.usagesSection)
+		if item.isCollapsed { togglePanel(item) }
+		project.usages.show(name, search)
 	}
 
 	private func focusTerminal(evenIfCollapsed: Bool = false) {
@@ -484,6 +506,10 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			item.title = bottom.isCollapsed ? L("Show Bottom Panel") : L("Hide Bottom Panel")
 		case #selector(closeEditorSplit(_:)):
 			return splitEditor != nil
+		case #selector(jumpToDefinition(_:)): return focusedPane.navigation?.supports(.definition) ?? false
+		case #selector(jumpToImplementation(_:)): return focusedPane.navigation?.supports(.implementation) ?? false
+		case #selector(jumpToTypeDefinition(_:)): return focusedPane.navigation?.supports(.typeDefinition) ?? false
+		case #selector(findUsages(_:)): return focusedPane.navigation?.supports(.references) ?? false
 		case #selector(showLocalHistory(_:)):
 			return document.url != nil && FileDocument.history != nil
 		case #selector(openQuickly(_:)), #selector(findInProject(_:)), #selector(newTerminalTab(_:)):

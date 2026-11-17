@@ -35,6 +35,22 @@
 			<string>in %d files</string>
 		</dict>
 	</dict>
+	<key>Show All %d Usages</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Show %d Usage</string>
+			<key>other</key>
+			<string>Show All %d Usages</string>
+		</dict>
+	</dict>
 	<key>%d spaces</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -81,6 +97,22 @@
 			<string>%d character selected</string>
 			<key>other</key>
 			<string>%d characters selected</string>
+		</dict>
+	</dict>
+	<key>%d usages</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d usage</string>
+			<key>other</key>
+			<string>%d usages</string>
 		</dict>
 	</dict>
 	<key>MinorIDE recovered unsaved changes in %d files.</key>

@@ -133,6 +133,8 @@
 "Look Up “%@”" = "Look Up “%@”";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Jump to Definition" = "Jump to Definition";
+"Find Usages" = "Find Usages";
 "Cut" = "Cut";
 "Copy" = "Copy";
 "Paste" = "Paste";
@@ -236,6 +238,8 @@
 "Replace %@ with “%@”?" = "Replace %@ with “%@”?";
 "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History.";
 "Some files could not be changed." = "Some files could not be changed.";
+
+/* MinorIDE/FindInFiles.swift, MinorIDE/UsagesPanel.swift */
 "in %d files|one" = "in %d file";
 "in %d files|other" = "in %d files";
 
@@ -362,6 +366,9 @@
 "Fold All" = "Fold All";
 "Unfold All" = "Unfold All";
 "Enter Full Screen" = "Enter Full Screen";
+"Navigate" = "Navigate";
+"Jump to Implementation" = "Jump to Implementation";
+"Jump to Type Definition" = "Jump to Type Definition";
 "Window" = "Window";
 "Minimize" = "Minimize";
 "Zoom" = "Zoom";
@@ -376,6 +383,10 @@
 "Report an Issue…" = "Report an Issue…";
 "Support MinorIDE…" = "Support MinorIDE…";
 "Clear Menu" = "Clear Menu";
+
+/* MinorIDE/Navigation.swift */
+"Show All %d Usages|one" = "Show %d Usage";
+"Show All %d Usages|other" = "Show All %d Usages";
 
 /* MinorIDE/PanelView.swift */
 "Database" = "Database";
@@ -398,6 +409,13 @@
 "Search" = "Search";
 "No Search" = "No Search";
 "Results of Find in Project will appear here." = "Results of Find in Project will appear here.";
+
+/* MinorIDE/PanelView.swift, MinorIDE/UsagesPanel.swift */
+"Usages" = "Usages";
+
+/* MinorIDE/PanelView.swift */
+"No Usages" = "No Usages";
+"Usages of a symbol found with Navigate › Find Usages will appear here." = "Usages of a symbol found with Navigate › Find Usages will appear here.";
 "Language Servers" = "Language Servers";
 "No Language Servers" = "No Language Servers";
 "The state and log of gopls will appear here." = "The state and log of gopls will appear here.";
@@ -574,6 +592,15 @@
 "Tools are found with the PATH of your login shell. A missing tool only turns off what needs it." = "Tools are found with the PATH of your login shell. A missing tool only turns off what needs it.";
 "Installed" = "Installed";
 "%@ (needs %@)" = "%@ (needs %@)";
+
+/* MinorIDE/UsagesPanel.swift */
+"Usages of a symbol appear here. Use Navigate › Find Usages in an editor." = "Usages of a symbol appear here. Use Navigate › Find Usages in an editor.";
+"Finding usages of “%@”…" = "Finding usages of “%@”…";
+"The language server did not answer." = "The language server did not answer.";
+"No usages of “%@”." = "No usages of “%@”.";
+"Usages of “%@”: %@" = "Usages of “%@”: %@";
+"%d usages|one" = "%d usage";
+"%d usages|other" = "%d usages";
 
 /* MinorIDE/WelcomeWindow.swift */
 "Version %@" = "Version %@";

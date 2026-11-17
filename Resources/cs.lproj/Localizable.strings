@@ -134,6 +134,8 @@
 "Look Up “%@”" = "Vyhledat „%@“";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Jump to Definition" = "Přejít na definici";
+"Find Usages" = "Najít použití";
 "Cut" = "Vyjmout";
 "Copy" = "Kopírovat";
 "Paste" = "Vložit";
@@ -238,6 +240,8 @@
 "Replace %@ with “%@”?" = "Nahradit %@ textem „%@“?";
 "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Otevřené soubory se změní v editoru a jde to tam vrátit. Ostatní soubory se hned uloží; jejich předchozí verze zůstanou v Místní historii.";
 "Some files could not be changed." = "Některé soubory nešlo změnit.";
+
+/* MinorIDE/FindInFiles.swift, MinorIDE/UsagesPanel.swift */
 "in %d files|one" = "v %d souboru";
 "in %d files|few" = "v %d souborech";
 "in %d files|other" = "v %d souborech";
@@ -365,6 +369,9 @@
 "Fold All" = "Sbalit vše";
 "Unfold All" = "Rozbalit vše";
 "Enter Full Screen" = "Zapnout režim celé obrazovky";
+"Navigate" = "Navigace";
+"Jump to Implementation" = "Přejít na implementaci";
+"Jump to Type Definition" = "Přejít na definici typu";
 "Window" = "Okno";
 "Minimize" = "Minimalizovat";
 "Zoom" = "Zvětšit";
@@ -379,6 +386,11 @@
 "Report an Issue…" = "Nahlásit problém…";
 "Support MinorIDE…" = "Podpořit MinorIDE…";
 "Clear Menu" = "Vymazat nabídku";
+
+/* MinorIDE/Navigation.swift */
+"Show All %d Usages|one" = "Zobrazit %d použití";
+"Show All %d Usages|few" = "Zobrazit všechna %d použití";
+"Show All %d Usages|other" = "Zobrazit všech %d použití";
 
 /* MinorIDE/PanelView.swift */
 "Database" = "Databáze";
@@ -401,6 +413,13 @@
 "Search" = "Hledat";
 "No Search" = "Žádné hledání";
 "Results of Find in Project will appear here." = "Zde se zobrazí výsledky hledání v projektu.";
+
+/* MinorIDE/PanelView.swift, MinorIDE/UsagesPanel.swift */
+"Usages" = "Použití";
+
+/* MinorIDE/PanelView.swift */
+"No Usages" = "Žádná použití";
+"Usages of a symbol found with Navigate › Find Usages will appear here." = "Zde se zobrazí použití symbolu nalezená přes Navigace › Najít použití.";
 "Language Servers" = "Jazykové servery";
 "No Language Servers" = "Žádné jazykové servery";
 "The state and log of gopls will appear here." = "Zde se zobrazí stav a log gopls.";
@@ -580,6 +599,16 @@
 "Tools are found with the PATH of your login shell. A missing tool only turns off what needs it." = "Nástroje se hledají podle PATH z vašeho přihlašovacího shellu. Chybějící nástroj vypne jen to, co ho potřebuje.";
 "Installed" = "Nainstalováno";
 "%@ (needs %@)" = "%@ (potřeba %@)";
+
+/* MinorIDE/UsagesPanel.swift */
+"Usages of a symbol appear here. Use Navigate › Find Usages in an editor." = "Zde se zobrazují použití symbolu. V editoru zvolte Navigace › Najít použití.";
+"Finding usages of “%@”…" = "Hledám použití „%@“…";
+"The language server did not answer." = "Jazykový server neodpověděl.";
+"No usages of “%@”." = "„%@“ nemá žádná použití.";
+"Usages of “%@”: %@" = "Použití „%@“: %@";
+"%d usages|one" = "%d použití";
+"%d usages|few" = "%d použití";
+"%d usages|other" = "%d použití";
 
 /* MinorIDE/WelcomeWindow.swift */
 "Version %@" = "Verze %@";

@@ -126,7 +126,8 @@ final class LanguageServices {
 
 	/// Snapshot check: waits for gopls to settle, edits `editor` in memory and asks for its
 	/// symbols; prints the state, the symbols and the end of the log.
-	func checkForSnapshot(_ editor: EditorView, url: URL, completion: CompletionController?) {
+	func checkForSnapshot(_ editor: EditorView, url: URL, completion: CompletionController?,
+	                      navigation: NavigationController?, usages: UsagesPanel) {
 		let deadline = Date().addingTimeInterval(30)
 		func wait(_ done: () -> Bool) {
 			while !done() && Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
@@ -174,6 +175,23 @@ final class LanguageServices {
 		RunLoop.main.run(until: Date().addingTimeInterval(1))
 		print("in comment:", completion?.isShowing == true)
 		for _ in 0..<3 { editor.undo(nil) }
+		// Jumps: the call to its declaration, the declaration (⌘+click) to its only usage, usages to the panel.
+		let e4 = editor.rope.byteCount
+		editor.replace([(e4..<e4, "\nfunc minorideTarget() {}\n\nfunc minorideNav() { minorideTarget() }\n")])
+		let declaration = e4 + "\nfunc ".utf8.count
+		let call = e4 + "\nfunc minorideTarget() {}\n\nfunc minorideNav() { ".utf8.count
+		editor.setSelections(SelectionSet(caret: call + 3))
+		navigation?.jump(.definition)
+		wait { editor.caret == declaration }
+		print("definition:", editor.caret == declaration)
+		_ = editor.onNavigate?(declaration + 2)
+		wait { editor.caret == call }
+		print("declaration click → usage:", editor.caret == call)
+		navigation?.findUsages()
+		RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+		wait { !usages.isSearching }
+		print("usages:", usages.statusText, usages.rowsForSnapshot)
+		editor.undo(nil)
 		for line in log.suffix(8) { print("  ", line) }
 	}
 

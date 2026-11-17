@@ -475,7 +475,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		return cell
 	}
 
-	private static func cell(_ id: NSUserInterfaceItemIdentifier, icon: Bool) -> NSTableCellView {
+	static func cell(_ id: NSUserInterfaceItemIdentifier, icon: Bool) -> NSTableCellView {
 		let cell = NSTableCellView()
 		cell.identifier = id
 		let text = NSTextField(labelWithString: "")
@@ -535,7 +535,7 @@ private final class ResultSink: Sendable {
 }
 
 /// Return opens the selected result, Delete drops it.
-private final class ResultsOutline: NSOutlineView {
+final class ResultsOutline: NSOutlineView {
 	var onReturn: (() -> Void)?
 	var onDelete: (() -> Void)?
 

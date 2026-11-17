@@ -21,6 +21,8 @@ final class EditorPane {
 	let banner = DiskBanner()
 	/// Completion from the project's language server (nil outside a project).
 	var completion: CompletionController?
+	/// Jumps to definitions and usages (nil outside a project).
+	var navigation: NavigationController?
 	/// Notice the banner shows, so repeated state changes do not rebuild it.
 	var shownNotice: FileDocument.DiskNotice?
 	let view: NSStackView
@@ -175,6 +177,12 @@ extension DocumentWindow {
 			editor.commandInterceptor = { [weak completion] in completion?.handle($0) ?? false }
 			editor.onTypedText = { [weak completion] in completion?.typed($0) }
 			editor.onWillTypeText = { [weak completion] in completion?.willType($0) }
+			let navigation = NavigationController(editor: editor) { [weak services, weak doc = pane.document] in
+				guard let services, let doc else { return nil }
+				return services.endpoint(for: doc)
+			}
+			navigation.showUsages = { [weak self] name, search in self?.showUsages(name, search) }
+			pane.navigation = navigation
 		}
 		let completion = pane.completion
 		editor.onFocus = { [weak self] focused in

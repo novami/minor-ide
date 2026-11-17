@@ -39,6 +39,24 @@
 			<string>v %d souborech</string>
 		</dict>
 	</dict>
+	<key>Show All %d Usages</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Zobrazit %d použití</string>
+			<key>few</key>
+			<string>Zobrazit všechna %d použití</string>
+			<key>other</key>
+			<string>Zobrazit všech %d použití</string>
+		</dict>
+	</dict>
 	<key>%d spaces</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -91,6 +109,24 @@
 			<string>vybrány %d znaky</string>
 			<key>other</key>
 			<string>vybráno %d znaků</string>
+		</dict>
+	</dict>
+	<key>%d usages</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d použití</string>
+			<key>few</key>
+			<string>%d použití</string>
+			<key>other</key>
+			<string>%d použití</string>
 		</dict>
 	</dict>
 	<key>MinorIDE recovered unsaved changes in %d files.</key>

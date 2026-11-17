@@ -119,6 +119,13 @@ enum MainMenu {
 			m.item(L("Enter Full Screen"), #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control])
 		}
 
+		main.add(submenu: L("Navigate")) { m in
+			m.item(L("Jump to Definition"), #selector(DocumentWindow.jumpToDefinition(_:)), "b")
+			m.item(L("Jump to Implementation"), #selector(DocumentWindow.jumpToImplementation(_:)), "b", [.command, .option])
+			m.item(L("Jump to Type Definition"), #selector(DocumentWindow.jumpToTypeDefinition(_:)), "b", [.command, .shift])
+			m.item(L("Find Usages"), #selector(DocumentWindow.findUsages(_:)), String(UnicodeScalar(NSF7FunctionKey)!), .option)
+		}
+
 		main.add(submenu: L("Window")) { m in
 			m.item(L("Minimize"), #selector(NSWindow.performMiniaturize(_:)), "m")
 			m.item(L("Zoom"), #selector(NSWindow.performZoom(_:)))

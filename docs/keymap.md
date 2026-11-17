@@ -27,6 +27,9 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Najít další / předchozí | ⌘G / ⇧⌘G | Úpravy › Najít |
 | Použít výběr pro hledání / nahrazení | ⌘E / ⇧⌘E | Úpravy › Najít |
 | Přejít na výběr | ⌘J | Úpravy › Najít |
+| Přejít na definici (také ⌘+klik a klik kolečkem; na deklaraci → použití) | ⌘B | Navigace |
+| Přejít na implementaci / na definici typu | ⌥⌘B / ⇧⌘B | Navigace |
+| Najít použití (spodní panel Použití) | ⌥F7 | Navigace |
 | Sbalit / Rozbalit | ⌥⌘← / ⌥⌘→ | Zobrazení › Sbalování kódu |
 | Sbalit vše / Rozbalit vše | ⌥⇧⌘← / ⌥⇧⌘→ | Zobrazení › Sbalování kódu |
 | Nový panel terminálu (víc shellů ve spodním panelu) | ⌃⇧` | Zobrazení |

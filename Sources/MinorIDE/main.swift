@@ -391,7 +391,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			}
 			if ProcessInfo.processInfo.environment["MINORIDE_BOTTOM_CHECK"] != nil { documents.last?.checkBottomPanelButton() }
 			if ProcessInfo.processInfo.environment["MINORIDE_LSP_CHECK"] != nil, let doc = documents.last, let project = doc.project, let url = doc.url {
-				project.languageServers.checkForSnapshot(doc.editor, url: url, completion: doc.focusedPane.completion)
+				project.languageServers.checkForSnapshot(doc.editor, url: url, completion: doc.focusedPane.completion,
+				                                             navigation: doc.focusedPane.navigation, usages: project.usages)
 				print("status bar after:", doc.statusBar.summary)
 			}
 			if let query = ProcessInfo.processInfo.environment["MINORIDE_FIND_IN_PROJECT"], let doc = documents.last, let project = doc.project {

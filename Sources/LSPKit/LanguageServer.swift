@@ -506,6 +506,10 @@ public final class LanguageServer: @unchecked Sendable {
 				],
 				"completionList": ["itemDefaults": ["editRange", "insertTextFormat", "commitCharacters"]],
 			],
+			"definition": ["linkSupport": true],
+			"implementation": ["linkSupport": true],
+			"typeDefinition": ["linkSupport": true],
+			"references": [:],
 		],
 		"window": ["workDoneProgress": true],
 	]

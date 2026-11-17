@@ -146,6 +146,7 @@ final class Project {
 
 	/// Find in Project, shared by the project's tabs like the terminal.
 	private(set) lazy var findInFiles = FindInFiles(project: self)
+	private(set) lazy var usages = UsagesPanel(project: self)
 
 	/// gopls and later other language servers of the project.
 	private(set) lazy var languageServers = LanguageServices(project: self)

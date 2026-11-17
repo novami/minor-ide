@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-17 (fáze 3 krok 3: napovídání; fáze 2 odložena na Apple Developer účet)
+**Poslední aktualizace:** 2026-11-17 (fáze 3 krok 4: proklik; fáze 2 odložena na Apple Developer účet)
 
 ## Kde jsme
 
@@ -183,7 +183,11 @@ Opravy po kroku 3 (2026-11-17, na přání uživatele): víc kurzorů (stejné n
 
 Známé mezery 3/3: ⌃Space může zabrat systémová zkratka přepnutí vstupního zdroje (kód s tím nic nenadělá, nápověda odkazuje na ⌥Esc); ruční kontrola v aplikaci zbývá (dluh níže).
 
-**Další krok: fáze 3, krok 4** — 3.5 Proklik: ⌘+klik a klik kolečkem → `definition`, podtržení symbolu při držení ⌘, víc cílů → popup, klik na deklaraci → použití; ⌘B, ⌥⌘B (implementace), ⇧⌘B (typ), ⌥F7 (použití do panelu).
+**Fáze 3, krok 4 hotový** (2026-11-17): 3.5 Proklik. `LSPKit/Navigation.swift` (`Location` z `Location`/pole/`LocationLink` — bere `targetSelectionRange`, `NavigationKind` s metodou a schopností serveru, `LanguageServer.supports(_:)`, `locations(_:uri:offset:in:)`; klient hlásí `linkSupport`). `EditorKit/Links.swift`: ⌘+klik (jen ⌘, jeden klik; kurzor se nehne) a klik kolečkem → `onNavigate` (vrátí false = obyčejný klik, třeba bez serveru), tracking area: při držení ⌘ slovo pod myší → `onLinkHover`, `linkRange` se podtrhne barvou odkazu a ukazatel je ruka; editace podtržení zruší. `MinorIDE/Navigation.swift` (`NavigationController` na část editoru): hover se po 50 ms zeptá na `definition` a podtrhne jen symbol, který někam vede (výsledek se pamatuje pro klik); klik na samotnou deklaraci → `references`; 0 cílů pípnutí, 1 skok, víc → `NSMenu` u symbolu (text řádku + cesta:řádek, max 30, u použití „Zobrazit všech N použití“ do panelu); cíle z otevřených souborů z jejich textu, ostatní z disku mimo hlavní vlákno (`NavigationTarget.resolve`); skok ve stejném souboru v téže části, jinak `AppDelegate.open(url, range:)`; generace zahodí pozdní odpovědi. Menu **Navigace** (⌘B definice, ⌥⌘B implementace, ⇧⌘B typ, ⌥F7 Najít použití) s validací podle schopností serveru, totéž v kontextovém menu editoru (definice, použití). Spodní panel: nová sekce **Použití** (`UsagesPanel.swift`, soubory → řádky, výběr ukáže, Return/dvojklik přesune fokus; buňky a `ResultsOutline` sdílené s Najít v projektu). Nápověda (Jazykový server Go, Zkratky) a `docs/keymap.md` doplněny. Testy `NavigationTests`, `LinkTests`. Naostro proti gopls (`MINORIDE_LSP_CHECK=1`, `~/MinorDLNA/internal/store/store.go`): ⌘B z volání na deklaraci, ⌘+klik na deklaraci → jediné použití, ⌥F7 → „2 usages in 1 file“. Bench BUDGET OK (psaní p99 0,24 ms, Go 0,42 ms).
+
+Známé mezery 3/4: soubor mimo projekt (stdlib, modulová cache) se otevře jako samostatné okno bez jazykového serveru (z něj už proklik nejde); podtržení se při scrollu s drženým ⌘ nepřepočítá, dokud se myš nepohne; ⌘+klik uvnitř výběru výběr nezruší; panel Použití se po editacích neaktualizuje (pozice v něm můžou ujet); zpět po skoku chybí (3.6); ruční kontrola (podtržení, ukazatel, menu cílů, kolečko, panel) zbývá.
+
+**Další krok: fáze 3, krok 5** — 3.6 Historie navigace: zpět/vpřed (zkratky z keymapy), boční tlačítka myši 3/4, Recent files (⇧⌘E; ⌘E je systémové „Použít výběr pro hledání“). Skoky z 3.5 (`NavigationController.open`, panel Použití) do historie zapisovat.
 
 **Dluh — ruční kontrola (odložena uživatelem 2026-11-16 znovu, udělat až po dokončení fáze 3):** 2b s uživatelem (spustit z Finderu: ⇧⌘O, ⇧⌘F včetně Nahradit vše, gutter a Vrátit, klonování, víc terminálů, zabezpečené zadávání) a zbylé ruční kontroly U2–U8.
 

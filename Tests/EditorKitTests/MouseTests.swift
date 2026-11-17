@@ -58,3 +58,36 @@ struct MouseTests {
 		#expect(r.wordRange(at: 8) == 8..<8) // empty line
 	}
 }
+
+@MainActor
+struct LinkTests {
+	let e = EditorView(text: "foo bar_1(x)\n  baz\n")
+
+	func at(_ column: Int, line: Int) -> NSPoint {
+		let width = ("0" as NSString).size(withAttributes: [.font: e.font]).width
+		return NSPoint(x: e.textInset + (CGFloat(column) + 0.4) * width, y: (CGFloat(line) + 0.5) * e.lineHeight)
+	}
+
+	@Test func commandClickNavigatesWithoutMovingTheCaret() {
+		var clicked: [Int] = []
+		e.mouseDown(at: at(1, line: 0), clicks: 1, modifiers: [.command, .shift])
+		#expect(clicked.isEmpty) // no handler: an ordinary click
+		e.onNavigate = { clicked.append($0); return true }
+		e.setSelections(SelectionSet(caret: 0))
+		e.mouseDown(at: at(5, line: 0), clicks: 1, modifiers: .command)
+		#expect(clicked == [5])
+		#expect(e.selections.primary == Selection(caret: 0))
+		e.mouseDown(at: at(5, line: 0), clicks: 1, modifiers: [.command, .option])
+		#expect(clicked == [5] && e.selections.all.count == 2) // ⌘⌥: not a jump
+	}
+
+	@Test func linkWordIsAnIdentifierUnderTheMouse() {
+		#expect(e.linkWord(at: at(5, line: 0)) == 4..<9) // "bar_1"
+		#expect(e.linkWord(at: at(9, line: 0)) == nil) // "("
+		#expect(e.linkWord(at: at(0, line: 1)) == nil) // indentation
+		#expect(e.linkWord(at: at(9, line: 1)) == nil) // past the end of the line
+		e.linkRange = 4..<9
+		e.replace(0..<0, with: "x")
+		#expect(e.linkRange == nil) // edits drop the link
+	}
+}
