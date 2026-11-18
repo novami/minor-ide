@@ -21,9 +21,12 @@
 "To the open source projects MinorIDE is built with: Swift, Go and SQLite." = "Open source projektům, na kterých MinorIDE stojí: Swift, Go a SQLite.";
 "Terminal: " = "Terminál: ";
 "MIT License" = "Licence MIT";
+
+/* MinorIDE/About.swift, MinorIDE/WelcomeWindow.swift */
+"Version %@" = "Verze %@";
+
+/* MinorIDE/About.swift */
 "Support MinorIDE" = "Podpořit MinorIDE";
-"GitHub Sponsors" = "GitHub Sponsors";
-"Bitcoin:" = "Bitcoin:";
 "Enjoying MinorIDE?" = "Líbí se vám MinorIDE?";
 "MinorIDE is free and open source, made by one person in spare time. A small contribution helps keep it fast, native and growing. Thank you!" = "MinorIDE je zdarma a s otevřeným kódem, vyvíjí ho jeden člověk ve volném čase. I malý příspěvek pomůže, aby zůstal rychlý, nativní a dál rostl. Děkuji!";
 "Sponsor on GitHub" = "Podpořit přes GitHub";
@@ -689,7 +692,6 @@
 "%d usages|other" = "%d použití";
 
 /* MinorIDE/WelcomeWindow.swift */
-"Version %@" = "Verze %@";
 "Open Folder or File…" = "Otevřít složku nebo soubor…";
 "New File" = "Nový soubor";
 "Recent Projects and Files" = "Nedávné projekty a soubory";

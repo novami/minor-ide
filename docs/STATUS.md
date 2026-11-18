@@ -159,6 +159,8 @@ Známé mezery po systémových funkcích: přesun mezi dvěma editory (i split 
 
 **Všechny úpravy U1–U9 hotové.**
 
+**O aplikaci a Podpořit** (2026-11-18, přání uživatele): O aplikaci je vlastní okno `AboutWindow` (520 bodů, standardní panel nejde rozšířit), copyright jako patička pod oddělovačem, sekce Podpořit odebrána (jen Nápověda › Podpořit MinorIDE…). Okno Podpořit rozšířeno na 480. Ruční kontrola zbývá. Aktualizace: zatím nic, čeká na fázi 2 (rozhodnutí uživatele).
+
 **Fáze 2 odložena** (rozhodnutí uživatele 2026-11-16): čeká na Apple Developer účet. Podepisovací nástroj release bude Swift skript `tools/signrelease.swift` (CryptoKit + Klíčenka), ne Go: Go bez cgo umí Klíčenku jen přes příkaz `security`, který by dostal klíč v argumentech (rozhodnutí uživatele; plán zatím neupraven).
 
 **Fáze 2b je hotová v kódu** (2026-11-16), ruční kontrola zbývá:

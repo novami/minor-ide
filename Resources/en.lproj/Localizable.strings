@@ -20,9 +20,12 @@
 "To the open source projects MinorIDE is built with: Swift, Go and SQLite." = "To the open source projects MinorIDE is built with: Swift, Go and SQLite.";
 "Terminal: " = "Terminal: ";
 "MIT License" = "MIT License";
+
+/* MinorIDE/About.swift, MinorIDE/WelcomeWindow.swift */
+"Version %@" = "Version %@";
+
+/* MinorIDE/About.swift */
 "Support MinorIDE" = "Support MinorIDE";
-"GitHub Sponsors" = "GitHub Sponsors";
-"Bitcoin:" = "Bitcoin:";
 "Enjoying MinorIDE?" = "Enjoying MinorIDE?";
 "MinorIDE is free and open source, made by one person in spare time. A small contribution helps keep it fast, native and growing. Thank you!" = "MinorIDE is free and open source, made by one person in spare time. A small contribution helps keep it fast, native and growing. Thank you!";
 "Sponsor on GitHub" = "Sponsor on GitHub";
@@ -677,7 +680,6 @@
 "%d usages|other" = "%d usages";
 
 /* MinorIDE/WelcomeWindow.swift */
-"Version %@" = "Version %@";
 "Open Folder or File…" = "Open Folder or File…";
 "New File" = "New File";
 "Recent Projects and Files" = "Recent Projects and Files";

@@ -1,7 +1,7 @@
 import AppKit
 import CoreImage
 
-/// Author, project and donation links (About panel, Help menu, Support window).
+/// Author, project and donation links (About window, Help menu, Support window).
 enum Links {
 	static let author = "Michal Novák"
 	static let website = URL(string: "https://www.novami.cz")!
@@ -12,10 +12,7 @@ enum Links {
 }
 
 extension AppDelegate {
-	/// Standard About panel (HIG) with author, thanks and support in its credits.
-	@objc func showAbout(_ sender: Any?) {
-		NSApp.orderFrontStandardAboutPanel(options: [.credits: Self.aboutCredits()])
-	}
+	@objc func showAbout(_ sender: Any?) { AboutWindow.shared.show() }
 
 	@objc func reportIssue(_ sender: Any?) { NSWorkspace.shared.open(Links.newIssue) }
 
@@ -48,12 +45,70 @@ extension AppDelegate {
 		} else {
 			add(L("MIT License"))
 		}
-		add("\n\n")
-
-		add(L("Support MinorIDE") + "\n", bold)
-		link(L("GitHub Sponsors"), Links.sponsors); add(" · " + L("Bitcoin:") + " ")
-		add(Links.bitcoin, [.font: NSFont.monospacedSystemFont(ofSize: NSFont.smallSystemFontSize - 1, weight: .regular)])
 		return text
+	}
+}
+
+/// MinorIDE › About MinorIDE: like the standard About panel, but wide enough for the credits,
+/// with the copyright as the footer.
+@MainActor
+final class AboutWindow: NSObject {
+	static let shared = AboutWindow()
+	private var window: NSWindow?
+
+	func show() {
+		if window == nil { window = makeWindow() }
+		window?.makeKeyAndOrderFront(nil)
+	}
+
+	private func makeWindow() -> NSWindow {
+		let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 10),
+		                      styleMask: [.titled, .closable], backing: .buffered, defer: false)
+		window.title = ""
+		window.titlebarAppearsTransparent = true
+		window.isReleasedWhenClosed = false
+		let info = Bundle.main.infoDictionary ?? [:]
+
+		let icon = NSImageView(image: NSApp.applicationIconImage)
+		NSLayoutConstraint.activate([icon.widthAnchor.constraint(equalToConstant: 96), icon.heightAnchor.constraint(equalToConstant: 96)])
+		let name = NSTextField(labelWithString: "MinorIDE")
+		name.font = .boldSystemFont(ofSize: 20)
+		let short = info["CFBundleShortVersionString"] as? String ?? "0.0.0"
+		let build = info["CFBundleVersion"] as? String
+		let version = NSTextField(labelWithString: String(format: L("Version %@"), short) + (build.map { $0 == short ? "" : " (\($0))" } ?? ""))
+		version.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+		version.textColor = .secondaryLabelColor
+		version.isSelectable = true
+
+		let credits = NSTextField(labelWithAttributedString: AppDelegate.aboutCredits())
+		credits.isSelectable = true
+		credits.allowsEditingTextAttributes = true // makes the links clickable
+		credits.maximumNumberOfLines = 0
+		credits.preferredMaxLayoutWidth = 460
+
+		let separator = NSBox()
+		separator.boxType = .separator
+		let copyright = NSTextField(labelWithString: info["NSHumanReadableCopyright"] as? String ?? "© \(Links.author)")
+		copyright.font = .systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+		copyright.textColor = .tertiaryLabelColor
+
+		let stack = NSStackView(views: [icon, name, version, credits, separator, copyright])
+		stack.orientation = .vertical
+		stack.alignment = .centerX
+		stack.spacing = 6
+		stack.setCustomSpacing(10, after: icon)
+		stack.setCustomSpacing(18, after: version)
+		stack.setCustomSpacing(18, after: credits)
+		stack.setCustomSpacing(10, after: separator)
+		stack.edgeInsets = NSEdgeInsets(top: 8, left: 30, bottom: 16, right: 30)
+		NSLayoutConstraint.activate([
+			stack.widthAnchor.constraint(equalToConstant: 520),
+			separator.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -60),
+		])
+		window.contentView = stack
+		window.setContentSize(stack.fittingSize)
+		window.center()
+		return window
 	}
 }
 
@@ -70,7 +125,7 @@ final class SupportWindow: NSObject, NSWindowDelegate {
 	}
 
 	private func makeWindow() -> NSWindow {
-		let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 380, height: 10),
+		let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 10),
 		                      styleMask: [.titled, .closable], backing: .buffered, defer: false)
 		window.title = L("Support MinorIDE")
 		window.isReleasedWhenClosed = false
@@ -79,7 +134,7 @@ final class SupportWindow: NSObject, NSWindowDelegate {
 		title.font = .boldSystemFont(ofSize: 15)
 		let intro = NSTextField(wrappingLabelWithString: L("MinorIDE is free and open source, made by one person in spare time. A small contribution helps keep it fast, native and growing. Thank you!"))
 		intro.alignment = .center
-		intro.preferredMaxLayoutWidth = 320
+		intro.preferredMaxLayoutWidth = 420
 
 		let sponsor = NSButton(title: L("Sponsor on GitHub"), target: self, action: #selector(openSponsors(_:)))
 		sponsor.image = NSImage(systemSymbolName: "heart.fill", accessibilityDescription: nil)
@@ -115,7 +170,10 @@ final class SupportWindow: NSObject, NSWindowDelegate {
 		stack.setCustomSpacing(16, after: sponsor)
 		stack.setCustomSpacing(16, after: separator)
 		stack.edgeInsets = NSEdgeInsets(top: 22, left: 24, bottom: 22, right: 24)
-		separator.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -48).isActive = true
+		NSLayoutConstraint.activate([
+			stack.widthAnchor.constraint(equalToConstant: 480),
+			separator.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -48),
+		])
 		window.contentView = stack
 		window.setContentSize(stack.fittingSize)
 		window.center()
