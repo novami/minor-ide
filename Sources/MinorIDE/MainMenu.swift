@@ -138,6 +138,11 @@ enum MainMenu {
 			m.item(L("Show Problems"), #selector(DocumentWindow.showProblems(_:)))
 		}
 
+		main.add(submenu: L("Refactor")) { m in
+			m.item(L("Quick Actions…"), #selector(DocumentWindow.showQuickActions(_:)), "\r", .option)
+			m.item(L("Rename…"), #selector(DocumentWindow.renameSymbol(_:)), String(UnicodeScalar(NSF6FunctionKey)!), .shift)
+		}
+
 		main.add(submenu: L("Window")) { m in
 			m.item(L("Minimize"), #selector(NSWindow.performMiniaturize(_:)), "m")
 			m.item(L("Zoom"), #selector(NSWindow.performZoom(_:)))

@@ -2,7 +2,7 @@
 
 Aktualizuje se po každém dokončeném bloku práce. Nová session začíná přečtením tohoto souboru.
 
-**Poslední aktualizace:** 2026-11-17 (fáze 3 krok 6b: diagnostiky; fáze 2 odložena na Apple Developer účet)
+**Poslední aktualizace:** 2026-11-18 (fáze 3 krok 6c: quick-fixy a přejmenování; fáze 2 odložena na Apple Developer účet)
 
 ## Kde jsme
 
@@ -203,7 +203,11 @@ Opravy po kroku 6b (2026-11-17, na přání uživatele): pruh značek má vlastn
 
 Známé mezery 3/6b: související místa a odkaz jsou jen v popupu (panel Problémy je nemá); panel se po každé editaci souboru s problémy přestaví (po 0,2 s); ruční kontrola (vzhled vlnovek a teček, tmavý režim, popisky, kliky na pruh, panel) zbývá.
 
-**Další krok: fáze 3, krok 6c** — 3.7 quick-fixy ⌥Enter (`codeAction` s diagnostikami z `Diagnostic.json`) + rename ⇧F6 s náhledem. Potom 6d formátování ⌥⌘L a při uložení, 6e semantic tokens přes lexer.
+**Fáze 3, krok 6c hotový** (2026-11-18): 3.7 quick-fixy a přejmenování. `LSPKit/CodeActions.swift`: `WorkspaceEdit` (`changes` i `documentChanges` s verzí, záznamy jednoho souboru sloučené, operace se soubory jen označené), `Rope.replacements` (seřazené, vložení před nahrazením na stejném místě, překryv = nil), `Rope.previewLines` (řádek po změně s vyznačeným novým textem, dlouhé oříznuté), `CodeAction` (i holý `Command`, `disabled.reason`, `isPreferred`), `codeActions` / `resolve` (`codeAction/resolve` bez editu) / `execute` (`workspace/executeCommand`), `prepareRename` (rozsah, placeholder, `defaultBehavior`; bez podpory slovo u kurzoru), `rename`; schopnosti klienta `codeAction` (literály, druhy, resolve editu), `rename.prepareSupport`, `window.showDocument`. `EditorDiagnostic.data` nese původní JSON diagnostiky (do `codeAction` jde s rozsahem v aktuálním textu). Aplikace (`MinorIDE/CodeActions.swift`): `WorkspaceEditor.apply` (nejdřív kontrola verzí všech otevřených souborů, pak `FileDocument.replace`: otevřené soubory v editoru jako krok Zpět, ostatní hned uložené s Místní historií; operace se soubory odmítne), `workspace/applyEdit` (příkazy gopls) a `window/showDocument` (soubor do editoru na řádek, http(s) do prohlížeče). Nové menu **Refaktorovat**: Rychlé akce… ⌥↩ (menu u kurzoru: opravy problémů u kurzoru/ve výběru, doporučená nahoře, pak refaktoringy, pak akce celého souboru; nedostupné šedě s důvodem v popisku; „Žádné akce nejsou k dispozici“), Přejmenovat… ⇧F6 (sheet: nový název, při psaní po 250 ms náhled každého změněného řádku „soubor:řádek text“ s novým názvem, „2 změny v 1 souboru“, chyba serveru červeně; Přejmenovat jen s hotovým náhledem; změna textu mezitím → zpráva). Obojí i v kontextovém menu editoru. Nápověda, zkratky, `docs/keymap.md`. Testy `CodeActionTests`. Naostro proti gopls (`MINORIDE_LSP_CHECK=1`, `~/MinorDLNA/internal/store/store.go`): u nedefinovaného volání „Create function minorideCreated“ jako první oprava → přidaná funkce `minorideCreated(i int)`; přejmenování funkce → náhled 2 řádků, obě místa přepsaná, sheet zavřený; Zpět vše vrátí.
+
+Známé mezery 3/6c: přejmenování přes víc souborů = krok Zpět v každém otevřeném souboru zvlášť a neotevřené soubory se hned uloží (jako Nahradit v projektu); selhání zápisu jednoho souboru nevrátí už změněné; operace se soubory (přejmenování balíčku) nepodporované; žádná žárovka u řádku (akce jen přes ⌥↩ a menu); ⌥↩ jde přes menu i při psaní v liště hledání; `window/showDocument` z „Browse …“ akcí gopls otevře jeho stránku na localhostu v prohlížeči (vyzkoušeno jen, že se menu nabídne); ruční kontrola menu a sheetu zbývá.
+
+**Další krok: fáze 3, krok 6d** — 3.7 formátování ⌥⌘L (`textDocument/formatting`, výběr `rangeFormatting`) a při uložení (nastavení). Potom 6e semantic tokens přes lexer.
 
 **Dluh — ruční kontrola (odložena uživatelem 2026-11-16 znovu, udělat až po dokončení fáze 3):** 2b s uživatelem (spustit z Finderu: ⇧⌘O, ⇧⌘F včetně Nahradit vše, gutter a Vrátit, klonování, víc terminálů, zabezpečené zadávání) a zbylé ruční kontroly U2–U8.
 

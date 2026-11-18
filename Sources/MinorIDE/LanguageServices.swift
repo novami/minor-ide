@@ -174,7 +174,7 @@ final class LanguageServices {
 		}
 		let link = d.href.flatMap(URL.init(string:)).flatMap { ["http", "https"].contains($0.scheme?.lowercased()) ? $0 : nil }
 		return EditorDiagnostic(range: range, severity: EditorDiagnostic.Severity(rawValue: d.severity.rawValue) ?? .error,
-		                        message: d.message, source: d.source, code: d.code, link: link, related: related, unnecessary: d.unnecessary)
+		                        message: d.message, source: d.source, code: d.code, link: link, related: related, unnecessary: d.unnecessary, data: d.json)
 	}
 
 	private func clearProblems() {
@@ -342,6 +342,43 @@ final class LanguageServices {
 		editor.undo(nil)
 		wait { !doc.diagnostics.contains { $0.message.contains("minorideMissing") } }
 		print("diagnostic gone after undo:", !doc.diagnostics.contains { $0.message.contains("minorideMissing") }, "text restored:", editor.rope.byteCount == e7)
+		// Quick actions on an undefined call, then renaming a function and its call.
+		let e8 = editor.rope.byteCount
+		editor.replace([(e8..<e8, "\nfunc minorideFixMe() { minorideCreated(1) }\n")])
+		let missing = e8 + "\nfunc minorideFixMe() { ".utf8.count
+		wait { doc.diagnostics.contains { $0.message.contains("minorideCreated") } }
+		editor.setSelections(SelectionSet(caret: missing + 2))
+		var found: (actions: [CodeAction], offset: Int, version: Int)?
+		var asked = false
+		Task { found = await pane.codeActions?.actionsAtCaret(); asked = true }
+		wait { asked }
+		print("quick actions:", found?.actions.map { ($0.isQuickFix ? "fix: " : "") + $0.title } ?? ["none"])
+		if let found, let fix = found.actions.first(where: \.isQuickFix) {
+			pane.codeActions?.perform(fix, version: found.version)
+			wait { editor.rope.byteCount > e8 + 60 }
+			print("after fix:", editor.rope.string(in: e8..<editor.rope.byteCount).replacingOccurrences(of: "\n", with: " | ").prefix(160))
+			editor.undo(nil)
+		}
+		editor.undo(nil)
+		let e9 = editor.rope.byteCount
+		editor.replace([(e9..<e9, "\nfunc minorideOld() {}\n\nfunc minorideUser() { minorideOld() }\n")])
+		editor.setSelections(SelectionSet(caret: e9 + "\nfunc minorideO".utf8.count))
+		RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+		pane.codeActions?.rename()
+		wait { pane.codeActions?.renameSheet != nil }
+		if let sheet = pane.codeActions?.renameSheet {
+			sheet.type("minorideNew")
+			wait { sheet.isReady }
+			print("rename preview:", sheet.statusText, sheet.rowsForSnapshot)
+			sheet.confirm()
+			print("renamed:", editor.rope.string(in: e9..<editor.rope.byteCount).replacingOccurrences(of: "\n", with: " | "),
+			      "sheet closed:", pane.codeActions?.renameSheet == nil)
+			editor.undo(nil)
+		} else {
+			print("rename: no sheet")
+		}
+		editor.undo(nil)
+		print("text restored:", editor.rope.byteCount == e8)
 		for line in log.suffix(8) { print("  ", line) }
 	}
 
@@ -409,6 +446,31 @@ final class LanguageServices {
 			Self.main {
 				guard let self, gen == self.generation, self.server != nil else { return }
 				self.received(report)
+			}
+		}
+		handlers.applyEdit = { [weak self] json in
+			guard let edit = WorkspaceEdit(json) else { return false }
+			return await MainActor.run {
+				guard let self, gen == self.generation, let server = self.server else { return false }
+				if let problem = WorkspaceEditor.apply(edit, encoding: server.positionEncoding) {
+					self.append(problem)
+					return false
+				}
+				return true
+			}
+		}
+		handlers.showDocument = { [weak self] url, line in
+			await MainActor.run {
+				guard let self, gen == self.generation else { return false }
+				switch url.scheme?.lowercased() {
+				case "file":
+					(NSApp.delegate as? AppDelegate)?.open(url.standardizedFileURL, line: line, from: self.project)
+					return true
+				case "http", "https":
+					return NSWorkspace.shared.open(url)
+				default:
+					return false
+				}
 			}
 		}
 		handlers.notification = { [weak self] method, params in

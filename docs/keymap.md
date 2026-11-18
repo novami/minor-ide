@@ -33,6 +33,8 @@ klávesa vpravo od tečky. Ruční ověření na české klávesnici zbývá.
 | Přejít na implementaci / na definici typu | ⌥⌘B / ⇧⌘B | Navigace |
 | Najít použití (spodní panel Použití) | ⌥F7 | Navigace |
 | Další / předchozí problém (se zprávou pod ním; spodní panel Problémy přes Navigace › Zobrazit problémy) | F2 / ⇧F2 | Navigace |
+| Rychlé akce (opravy problémů u kurzoru a refaktoringy jako menu u kurzoru) | ⌥↩ | Refaktorovat |
+| Přejmenovat… (sheet s náhledem změn ve všech souborech) | ⇧F6 | Refaktorovat |
 | Zpět / Vpřed po skocích (také boční tlačítka myši 3/4) | ⌃⌘← / ⌃⌘→ | Navigace |
 | Nedávné soubory… | ⌃⌘E | Navigace |
 | Sbalit / Rozbalit | ⌥⌘← / ⌥⌘→ | Zobrazení › Sbalování kódu |

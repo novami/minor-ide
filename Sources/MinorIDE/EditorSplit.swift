@@ -34,6 +34,7 @@ final class EditorPane {
 	var hover: HoverController?
 	/// Jumps to definitions and usages (nil outside a project).
 	var navigation: NavigationController?
+	var codeActions: CodeActionController?
 	/// Notice the banner shows, so repeated state changes do not rebuild it.
 	var shownNotice: FileDocument.DiskNotice?
 	let view: NSStackView
@@ -211,6 +212,10 @@ extension DocumentWindow {
 			}
 			navigation.showUsages = { [weak self] name, search in self?.showUsages(name, search) }
 			pane.navigation = navigation
+			pane.codeActions = CodeActionController(editor: editor) { [weak services, weak doc = pane.document] in
+				guard let services, let doc else { return nil }
+				return services.endpoint(for: doc)
+			}
 		}
 		let completion = pane.completion, signatureHelp = pane.signatureHelp, hover = pane.hover
 		editor.onFocus = { [weak self] focused in

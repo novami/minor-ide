@@ -290,6 +290,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		if (editor.window?.delegate as? DocumentWindow)?.project != nil {
 			menu.item(L("Jump to Definition"), #selector(DocumentWindow.jumpToDefinition(_:)))
 			menu.item(L("Find Usages"), #selector(DocumentWindow.findUsages(_:)))
+			menu.item(L("Quick Actions…"), #selector(DocumentWindow.showQuickActions(_:)))
+			menu.item(L("Rename…"), #selector(DocumentWindow.renameSymbol(_:)))
 			menu.addItem(.separator())
 		}
 		menu.item(L("Cut"), #selector(NSText.cut(_:)))
@@ -464,6 +466,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	@objc func findUsages(_ sender: Any?) { focusedPane.navigation?.findUsages() }
 	@objc func showDocumentation(_ sender: Any?) { focusedPane.hover?.invoke() }
 	@objc func showParameterInfo(_ sender: Any?) { focusedPane.signatureHelp?.invoke() }
+	@objc func showQuickActions(_ sender: Any?) { focusedPane.codeActions?.showActions() }
+	@objc func renameSymbol(_ sender: Any?) { focusedPane.codeActions?.rename() }
 
 	/// Navigate › Next Problem (F2) / Previous Problem (⇧F2) in the focused file, with its message.
 	@objc func nextProblem(_ sender: Any?) { goToProblem(forward: true) }
@@ -548,6 +552,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		case #selector(findUsages(_:)): return focusedPane.navigation?.supports(.references) ?? false
 		case #selector(showDocumentation(_:)): return focusedPane.hover?.isAvailable ?? false
 		case #selector(showParameterInfo(_:)): return focusedPane.signatureHelp?.isAvailable ?? false
+		case #selector(showQuickActions(_:)): return focusedPane.codeActions?.canShowActions ?? false
+		case #selector(renameSymbol(_:)): return focusedPane.codeActions?.canRename ?? false
 		case #selector(navigateBack(_:)): return project?.jumps.canGoBack ?? false
 		case #selector(nextProblem(_:)), #selector(previousProblem(_:)): return focusedPane.editor.document.hasDiagnostics
 		case #selector(showProblems(_:)): return project != nil

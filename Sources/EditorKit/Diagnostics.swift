@@ -1,4 +1,5 @@
 import AppKit
+import MinorCore
 import TextEngine
 
 /// A problem in the text (a language server's diagnostic): a wavy underline, a dot in the
@@ -35,9 +36,11 @@ public struct EditorDiagnostic: Sendable, Equatable {
 	public var related: [Related]
 	/// Unused code: the text is drawn faded.
 	public var unnecessary: Bool
+	/// What the reporter needs back (the language server's diagnostic for quick fixes).
+	public var data: JSONValue
 
 	public init(range: Range<Int>, severity: Severity, message: String, source: String? = nil, code: String? = nil,
-	            link: URL? = nil, related: [Related] = [], unnecessary: Bool = false) {
+	            link: URL? = nil, related: [Related] = [], unnecessary: Bool = false, data: JSONValue = .null) {
 		self.range = range
 		self.severity = severity
 		self.message = message
@@ -46,6 +49,7 @@ public struct EditorDiagnostic: Sendable, Equatable {
 		self.link = link
 		self.related = related
 		self.unnecessary = unnecessary
+		self.data = data
 	}
 
 	public var color: NSColor {

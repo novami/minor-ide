@@ -38,7 +38,7 @@
 "Clone into" = "Klonovat do";
 "Clone" = "Klonovat";
 
-/* MinorIDE/CloneSheet.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/LanguageServersPanel.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+/* MinorIDE/CloneSheet.swift, MinorIDE/CodeActions.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/LanguageServersPanel.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Zrušit";
 
 /* MinorIDE/CloneSheet.swift */
@@ -53,6 +53,44 @@
 "Git could not be started." = "Git nešlo spustit.";
 "The clone was cancelled." = "Klonování bylo zrušeno.";
 "The clone failed." = "Klonování selhalo.";
+
+/* MinorIDE/CodeActions.swift */
+"The change creates, renames or deletes files, which MinorIDE does not do yet." = "Změna vytváří, přejmenovává nebo maže soubory, což MinorIDE zatím neumí.";
+"The change edits a file that is not on this Mac." = "Změna upravuje soubor, který není na tomto Macu.";
+"“%@” changed in the meantime. Try again." = "Soubor „%@“ se mezitím změnil. Zkuste to znovu.";
+
+/* MinorIDE/CodeActions.swift, MinorIDE/FindInFiles.swift */
+"Some files could not be changed." = "Některé soubory nešlo změnit.";
+
+/* MinorIDE/CodeActions.swift */
+"No Actions Available" = "Žádné akce nejsou k dispozici";
+"This element cannot be renamed." = "Tento prvek nejde přejmenovat.";
+"The file changed in the meantime. Try again." = "Soubor se mezitím změnil. Zkuste to znovu.";
+"Rename “%@”" = "Přejmenovat „%@“";
+"New name" = "Nový název";
+
+/* MinorIDE/CodeActions.swift, MinorIDE/SidebarMenu.swift */
+"New name:" = "Nový název:";
+
+/* MinorIDE/CodeActions.swift */
+"Changes" = "Změny";
+
+/* MinorIDE/CodeActions.swift, MinorIDE/FindInFiles.swift */
+"Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Otevřené soubory se změní v editoru a jde to tam vrátit. Ostatní soubory se hned uloží; jejich předchozí verze zůstanou v Místní historii.";
+
+/* MinorIDE/CodeActions.swift */
+"Rename" = "Přejmenovat";
+"Type the new name." = "Napište nový název.";
+"Looking for changes…" = "Hledají se změny…";
+"Nothing to change." = "Není co změnit.";
+"%d changes|one" = "%d změna";
+"%d changes|few" = "%d změny";
+"%d changes|other" = "%d změn";
+
+/* MinorIDE/CodeActions.swift, MinorIDE/FindInFiles.swift, MinorIDE/ProblemsPanel.swift, MinorIDE/UsagesPanel.swift */
+"in %d files|one" = "v %d souboru";
+"in %d files|few" = "v %d souborech";
+"in %d files|other" = "v %d souborech";
 
 /* MinorIDE/CompareWindow.swift, MinorIDE/LocalHistoryWindow.swift */
 "Comparison" = "Porovnání";
@@ -136,6 +174,12 @@
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Jump to Definition" = "Přejít na definici";
 "Find Usages" = "Najít použití";
+"Quick Actions…" = "Rychlé akce…";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift, MinorIDE/SidebarMenu.swift */
+"Rename…" = "Přejmenovat…";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Cut" = "Vyjmout";
 "Copy" = "Kopírovat";
 "Paste" = "Vložit";
@@ -238,13 +282,6 @@
 "No results" = "Nic nenalezeno";
 "(stopped, too many matches)" = "(zastaveno, příliš mnoho výskytů)";
 "Replace %@ with “%@”?" = "Nahradit %@ textem „%@“?";
-"Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Otevřené soubory se změní v editoru a jde to tam vrátit. Ostatní soubory se hned uloží; jejich předchozí verze zůstanou v Místní historii.";
-"Some files could not be changed." = "Některé soubory nešlo změnit.";
-
-/* MinorIDE/FindInFiles.swift, MinorIDE/ProblemsPanel.swift, MinorIDE/UsagesPanel.swift */
-"in %d files|one" = "v %d souboru";
-"in %d files|few" = "v %d souborech";
-"in %d files|other" = "v %d souborech";
 
 /* MinorIDE/HexWindow.swift */
 "Showing the first 1 MB of %@." = "Zobrazen je první 1 MB z %@.";
@@ -389,6 +426,7 @@
 "Next Problem" = "Další problém";
 "Previous Problem" = "Předchozí problém";
 "Show Problems" = "Zobrazit problémy";
+"Refactor" = "Refaktorovat";
 "Window" = "Okno";
 "Minimize" = "Minimalizovat";
 "Zoom" = "Zvětšit";
@@ -575,7 +613,6 @@
 "Open in Split Editor" = "Otevřít v rozděleném editoru";
 "New File…" = "Nový soubor…";
 "New Folder…" = "Nová složka…";
-"Rename…" = "Přejmenovat…";
 "Move to Trash" = "Přesunout do koše";
 
 /* MinorIDE/SidebarMenu.swift, MinorIDE/WelcomeWindow.swift, MinorIDE/main.swift */
@@ -589,7 +626,6 @@
 "New file name:" = "Název nového souboru:";
 "The file could not be created." = "Soubor se nepodařilo vytvořit.";
 "New folder name:" = "Název nové složky:";
-"New name:" = "Nový název:";
 
 /* MinorIDE/StatusBar.swift */
 "Read Only" = "Jen pro čtení";

@@ -37,7 +37,7 @@
 "Clone into" = "Clone into";
 "Clone" = "Clone";
 
-/* MinorIDE/CloneSheet.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/LanguageServersPanel.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
+/* MinorIDE/CloneSheet.swift, MinorIDE/CodeActions.swift, MinorIDE/DatabaseSheet.swift, MinorIDE/DocumentWindow.swift, MinorIDE/FindInFiles.swift, MinorIDE/LanguageServersPanel.swift, MinorIDE/SavedListView.swift, MinorIDE/ServerSheet.swift, MinorIDE/SidebarMenu.swift, MinorIDE/main.swift */
 "Cancel" = "Cancel";
 
 /* MinorIDE/CloneSheet.swift */
@@ -52,6 +52,42 @@
 "Git could not be started." = "Git could not be started.";
 "The clone was cancelled." = "The clone was cancelled.";
 "The clone failed." = "The clone failed.";
+
+/* MinorIDE/CodeActions.swift */
+"The change creates, renames or deletes files, which MinorIDE does not do yet." = "The change creates, renames or deletes files, which MinorIDE does not do yet.";
+"The change edits a file that is not on this Mac." = "The change edits a file that is not on this Mac.";
+"“%@” changed in the meantime. Try again." = "“%@” changed in the meantime. Try again.";
+
+/* MinorIDE/CodeActions.swift, MinorIDE/FindInFiles.swift */
+"Some files could not be changed." = "Some files could not be changed.";
+
+/* MinorIDE/CodeActions.swift */
+"No Actions Available" = "No Actions Available";
+"This element cannot be renamed." = "This element cannot be renamed.";
+"The file changed in the meantime. Try again." = "The file changed in the meantime. Try again.";
+"Rename “%@”" = "Rename “%@”";
+"New name" = "New name";
+
+/* MinorIDE/CodeActions.swift, MinorIDE/SidebarMenu.swift */
+"New name:" = "New name:";
+
+/* MinorIDE/CodeActions.swift */
+"Changes" = "Changes";
+
+/* MinorIDE/CodeActions.swift, MinorIDE/FindInFiles.swift */
+"Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History.";
+
+/* MinorIDE/CodeActions.swift */
+"Rename" = "Rename";
+"Type the new name." = "Type the new name.";
+"Looking for changes…" = "Looking for changes…";
+"Nothing to change." = "Nothing to change.";
+"%d changes|one" = "%d change";
+"%d changes|other" = "%d changes";
+
+/* MinorIDE/CodeActions.swift, MinorIDE/FindInFiles.swift, MinorIDE/ProblemsPanel.swift, MinorIDE/UsagesPanel.swift */
+"in %d files|one" = "in %d file";
+"in %d files|other" = "in %d files";
 
 /* MinorIDE/CompareWindow.swift, MinorIDE/LocalHistoryWindow.swift */
 "Comparison" = "Comparison";
@@ -135,6 +171,12 @@
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Jump to Definition" = "Jump to Definition";
 "Find Usages" = "Find Usages";
+"Quick Actions…" = "Quick Actions…";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift, MinorIDE/SidebarMenu.swift */
+"Rename…" = "Rename…";
+
+/* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
 "Cut" = "Cut";
 "Copy" = "Copy";
 "Paste" = "Paste";
@@ -236,12 +278,6 @@
 "No results" = "No results";
 "(stopped, too many matches)" = "(stopped, too many matches)";
 "Replace %@ with “%@”?" = "Replace %@ with “%@”?";
-"Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History." = "Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History.";
-"Some files could not be changed." = "Some files could not be changed.";
-
-/* MinorIDE/FindInFiles.swift, MinorIDE/ProblemsPanel.swift, MinorIDE/UsagesPanel.swift */
-"in %d files|one" = "in %d file";
-"in %d files|other" = "in %d files";
 
 /* MinorIDE/HexWindow.swift */
 "Showing the first 1 MB of %@." = "Showing the first 1 MB of %@.";
@@ -386,6 +422,7 @@
 "Next Problem" = "Next Problem";
 "Previous Problem" = "Previous Problem";
 "Show Problems" = "Show Problems";
+"Refactor" = "Refactor";
 "Window" = "Window";
 "Minimize" = "Minimize";
 "Zoom" = "Zoom";
@@ -568,7 +605,6 @@
 "Open in Split Editor" = "Open in Split Editor";
 "New File…" = "New File…";
 "New Folder…" = "New Folder…";
-"Rename…" = "Rename…";
 "Move to Trash" = "Move to Trash";
 
 /* MinorIDE/SidebarMenu.swift, MinorIDE/WelcomeWindow.swift, MinorIDE/main.swift */
@@ -582,7 +618,6 @@
 "New file name:" = "New file name:";
 "The file could not be created." = "The file could not be created.";
 "New folder name:" = "New folder name:";
-"New name:" = "New name:";
 
 /* MinorIDE/StatusBar.swift */
 "Read Only" = "Read Only";

@@ -61,6 +61,8 @@ public struct LanguageServerHandlers: Sendable {
 	public var applyEdit: @Sendable (JSONValue) async -> Bool = { _ in false }
 	/// `window/showMessageRequest`: type, message, action titles; returns the chosen title.
 	public var showMessageRequest: @Sendable (Int, String, [String]) async -> String? = { _, _, _ in nil }
+	/// `window/showDocument`: a file (with the line to show) or a web page; returns whether it was shown.
+	public var showDocument: @Sendable (URL, _ line: Int?) async -> Bool = { _, _ in false }
 
 	public init() {}
 }
@@ -474,6 +476,10 @@ public final class LanguageServer: @unchecked Sendable {
 			let type = params["type"]?.doubleValue.map { Int($0) } ?? 4
 			let chosen = await handlers.showMessageRequest(type, params["message"]?.stringValue ?? "", titles)
 			return chosen.map { ["title": .string($0)] } ?? .null
+		case "window/showDocument":
+			guard let url = params["uri"]?.stringValue.flatMap(URL.init(string:)) else { return ["success": false] }
+			let line = Position(params["selection"]?["start"]).map(\.line)
+			return ["success": .bool(await handlers.showDocument(url, line))]
 		case "window/workDoneProgress/create":
 			return .null
 		default:
@@ -534,6 +540,17 @@ public final class LanguageServer: @unchecked Sendable {
 			"implementation": ["linkSupport": true],
 			"typeDefinition": ["linkSupport": true],
 			"references": [:],
+			"codeAction": [
+				"codeActionLiteralSupport": ["codeActionKind": ["valueSet": [
+					"", "quickfix", "refactor", "refactor.extract", "refactor.inline", "refactor.rewrite",
+					"source", "source.organizeImports", "source.fixAll",
+				]]],
+				"isPreferredSupport": true,
+				"disabledSupport": true,
+				"dataSupport": true,
+				"resolveSupport": ["properties": ["edit"]],
+			],
+			"rename": ["prepareSupport": true],
 			"publishDiagnostics": ["relatedInformation": true, "versionSupport": true, "tagSupport": ["valueSet": [1, 2]], "codeDescriptionSupport": true],
 			"hover": ["contentFormat": ["markdown", "plaintext"]],
 			"signatureHelp": [
@@ -545,6 +562,6 @@ public final class LanguageServer: @unchecked Sendable {
 				],
 			],
 		],
-		"window": ["workDoneProgress": true],
+		"window": ["workDoneProgress": true, "showDocument": ["support": true]],
 	]
 }
