@@ -18,7 +18,7 @@ Goal: as few third-party libraries as possible. macOS system frameworks (AppKit,
 | LSP and DAP types, JSON-RPC | own, only the used subset | |
 | Updater | own (GitHub Releases, Ed25519 through CryptoKit, code signature) | |
 | Find in Files, fuzzy matcher, Myers diff, `.gitignore` matcher | own | ADR-11 |
-| MySQL and PostgreSQL protocols | own over Network.framework | ADR-7; TLS upgrade per spike S2 |
+| MySQL and PostgreSQL protocols | own over Network.framework | ADR-7; TLS upgrade per spike S2 (passed) |
 | SQLite | system library through the `SQLite3` module | |
 | Localization engine and plural rules | own | ADR-9 |
 | Markdown for release notes | `AttributedString(markdown:)` | system |

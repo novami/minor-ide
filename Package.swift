@@ -23,6 +23,8 @@ let package = Package(
 		.target(name: "PHPKit"),
 		// Spike S1 benchmark (docs/spike-php-swift.md).
 		.executableTarget(name: "PHPScan", dependencies: ["PHPKit"], path: "Sources/PHPScan"),
+		// Spike S2: TLS upgrade inside a database connection (docs/spike-tls.md).
+		.executableTarget(name: "TLSSpike", path: "Sources/TLSSpike"),
 		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit", "Highlight", "SecretsKit", "DBKit", "RemoteKit", "LSPKit",
 		                                                .product(name: "SwiftTerm", package: "SwiftTerm")]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),

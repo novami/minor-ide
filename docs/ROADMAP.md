@@ -18,7 +18,7 @@ Postponed: **phase 2, release and updater**. It waits for an Apple Developer acc
 ## R0 Architecture and spikes (≈ 2 weeks)
 - New document set: PRD, ARCHITECTURE, DECISIONS, SECURITY, PERFORMANCE, LOCALIZATION, ROADMAP, STATUS (done).
 - **S1 PHP parser in Swift** (done 2026-11-22, [spike-php-swift.md](spike-php-swift.md)): lexer and declaration scanner on flat arrays in `PHPKit`; 30 000 files in 0.33 s (budget 10 s), Laravel with `vendor/` in 94 ms, no trap, 0.6–1.5 KB of results per file.
-- **S2 TLS upgrade**: a Network.framework framer below TLS performs the PostgreSQL `SSLRequest` and the MySQL SSL handshake start. Done when TLS 1.3 is established against PostgreSQL 16 and MariaDB 11 in Docker with certificate verification, or the failure is documented and ADR-7 falls back.
+- **S2 TLS upgrade** (done 2026-11-22, [spike-tls.md](spike-tls.md)): a Network.framework framer below TLS performs the PostgreSQL `SSLRequest` and the MySQL SSL handshake start. Done when TLS 1.3 is established against PostgreSQL 16 and MariaDB 11 in Docker with certificate verification, or the failure is documented and ADR-7 falls back.
 - **S3 Startup and memory**: `--bench-startup` (cold, warm, Dashboard) and an idle `phys_footprint` sample. Done when the numbers are in PERFORMANCE.md and the 100 MB idle target is confirmed or revised with the owner.
 
 ## R1 Finish Go LSP (≈ 1 week)
@@ -111,7 +111,7 @@ Remote servers (SSH, SFTP, FTPS, rsync, deployment), Redis, Node.js tooling, Xde
 | R4 | Swift parser speed (ARC, `String`) | high | flat arrays over `[UInt8]`, spike S1 before R5 |
 | R5 | In-process analysis can crash or bloat the app | high | no traps, time and memory limits, cache eviction, tests on large projects |
 | R6 | False inspections when inference is unsure | high | unknown is `mixed`, inspections only when certain, real-project corpus must be clean |
-| R7 | TLS upgrade not possible without a library | medium | spike S2; accepted fallback options |
+| R7 | TLS upgrade not possible without a library | closed | spike S2 passed |
 | R8 | Performance regressions | high | benchmarks in CI fail on budget breaches |
 | R9 | Docker CLI output changes between versions | medium | tests against recorded output of several versions; tolerant decoding |
 | R10 | Varied PHP installations on macOS | medium | detection from several sources, manual path override |

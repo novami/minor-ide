@@ -141,7 +141,7 @@ Each language also registers: a lexer (`Highlight`), format settings, a test ada
 
 - Own wire protocol clients: MySQL and MariaDB (`mysql_native_password`, `caching_sha2_password` with RSA through the Security framework) and PostgreSQL v3 (SCRAM-SHA-256 through CryptoKit and CommonCrypto PBKDF2). SQLite through the system `SQLite3` module.
 - Transport is a `ByteStream` protocol with two implementations: `NWConnection` (TCP, optional TLS) and the pipes of an `ssh -W host:port` process (SSH tunnel without a local port).
-- TLS: TLS that starts after the protocol's own opening exchange is attempted with a Network.framework framer placed below TLS (spike S2). If that fails, the supported options are direct TLS (PostgreSQL 17+), SSH tunnel, and unencrypted local connections.
+- TLS: TLS that starts after the protocol's own opening exchange uses a Network.framework framer that sends the TLS request and then prepends TLS above itself (`prependApplicationProtocol`, spike S2, [spike-tls.md](spike-tls.md)). No plaintext fallback. Also supported: direct TLS (PostgreSQL 17+), SSH tunnel, and unencrypted local connections as an explicit setting.
 - Queries stream in pages; cancellation uses the protocol's cancel mechanism; values are lossless (NULL, binary, big numbers, ISO 8601 dates).
 
 ## Git (`GitKit`)

@@ -2,7 +2,7 @@
 
 Working position. Updated after every finished block of work; a new session starts here. The detailed log until 2026-11-18 is in [archive/status-v1.md](archive/status-v1.md) (Czech).
 
-**Last update:** 2026-11-22 (spike S1 done: PHP scanning in Swift is as fast as the Go spike)
+**Last update:** 2026-11-22 (spike S2 done: TLS upgrade for PostgreSQL and MariaDB with Network.framework only)
 
 ## Where we are
 
@@ -14,14 +14,9 @@ Working position. Updated after every finished block of work; a new session star
 
 ## Next step
 
-1. **Spike S1 is done** ([spike-php-swift.md](spike-php-swift.md)): `Sources/PHPKit` (lexer, declaration scanner), benchmark `Sources/PHPScan`. 30 000 files in 0.33 s, as fast as or faster than Go, so ADR-4 holds.
-2. **Next: spike S2** (TLS upgrade without a library, ADR-7). Plan:
-   - Start MariaDB 11 and PostgreSQL 16 with TLS in Docker (self-signed CA in the scratchpad; trust it only in the test, never in the system).
-   - In a new test-only target or a spike executable, build an `NWConnection` whose protocol stack has a custom `NWProtocolFramer` **below** TLS. The framer sends PostgreSQL `SSLRequest` (8 bytes: length 8, code 80877103) and waits for `S`; for MySQL it reads the server handshake and sends an SSLRequest packet with `CLIENT_SSL`. Then it passes bytes through, so TLS starts on the same TCP connection.
-   - Verify the server certificate against the test CA through `sec_protocol_options_set_verify_block`, and check that the negotiated version is TLS 1.3 (or 1.2 for MariaDB, if 1.3 is off).
-   - Done when both servers answer a query over TLS, or the failure is documented in `docs/spike-tls.md` and ADR-7 falls back (direct TLS for PostgreSQL 17+, SSH tunnel, local unencrypted).
-3. **Then spike S3**: `--bench-startup` (cold, warm, Dashboard time) and an idle `phys_footprint` sample; results go to PERFORMANCE.md.
-4. **R1**: phase 3 step 6d (formatting ⌥⌘L, selection, on save), then 6e (semantic tokens over the lexer).
+1. Spikes S1 ([spike-php-swift.md](spike-php-swift.md)) and S2 ([spike-tls.md](spike-tls.md)) are done; ADR-4 and ADR-7 hold. S2 code: `Sources/TLSSpike` (framer that sends the TLS request, then `prependApplicationProtocol` with TLS). TLS 1.3 with a test CA against PostgreSQL 17 and MariaDB 11; system trust and servers without TLS are rejected.
+2. **Next: spike S3**: `--bench-startup` (cold, warm, Dashboard time) and an idle `phys_footprint` sample; results go to PERFORMANCE.md.
+3. **R1**: phase 3 step 6d (formatting ⌥⌘L, selection, on save), then 6e (semantic tokens over the lexer).
 
 ## Open items
 
@@ -29,7 +24,7 @@ Working position. Updated after every finished block of work; a new session star
 - **Unpushed local commits**: push only when the owner asks, then check the CI run.
 - **CI**: the benchmark uses the `ci` profile (p99 only); confirm on the next run.
 - **Documents still in Czech**: `ANALYSIS.md`, `editor-behaviors.md`, `format-settings.md`, `keymap.md`, `spike-*.md`, `sponsors.md`, `translations.md`. Translate them when they are next touched. `ANALYSIS.md` names other products and must be removed or rewritten (ADR-13, branding rule).
-- **Xcode** must be installed for SwiftUI macros (ADR-2).
+- **Xcode**: `xcode-select -p` now points to Xcode.app; check whether SwiftUI macros build and update the environment notes (ADR-2).
 - **Apple Developer account** for phase 2.
 
 ## Environment notes

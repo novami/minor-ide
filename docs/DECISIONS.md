@@ -33,7 +33,7 @@ Each record: context, decision, consequences. Status is "accepted" unless stated
 
 ## ADR-7 Own database protocols, TLS without a library
 - **Context**: MySQL and PostgreSQL (before 17) start TLS inside an open connection; Network.framework has no direct API for that. The only full library option (SwiftNIO with BoringSSL) is very large.
-- **Decision**: own MySQL and PostgreSQL clients over `NWConnection` or `ssh -W` pipes; SQLite through the system library. Spike S2 tests a Network.framework framer below TLS for the in-connection upgrade. If S2 fails, supported options are direct TLS (PostgreSQL 17+), SSH tunnel and unencrypted local connections (accepted by the owner).
+- **Decision**: own MySQL and PostgreSQL clients over `NWConnection` or `ssh -W` pipes; SQLite through the system library. The in-connection upgrade uses a Network.framework framer that sends the TLS request and then prepends TLS above itself; spike S2 confirmed TLS 1.3 against PostgreSQL 17 and MariaDB 11 ([spike-tls.md](spike-tls.md)). Direct TLS (PostgreSQL 17+), SSH tunnel and unencrypted local connections remain additional options.
 - **Consequences**: about one extra week compared with existing drivers; protocol fuzz-style tests and integration tests against MariaDB 11 and PostgreSQL 17 in Docker.
 
 ## ADR-8 Docker through the CLI
