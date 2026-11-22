@@ -245,7 +245,7 @@ enum Bench {
 	static var p99: [String: Double] = [:]
 	static var worst: [String: Double] = [:]
 
-	/// Budgets from docs/PLAN.md. Local (default): 99 % of frames under 8 ms, none over 16 ms,
+	/// Budgets from docs/PERFORMANCE.md. Local (default): 99 % of frames under 8 ms, none over 16 ms,
 	/// open under 300 ms, 1M rope edits under 2 s. MINORIDE_BENCH_PROFILE=ci is for shared
 	/// virtual machines without a GPU: one-off stalls of the VM are not the editor's, so only
 	/// p99 (8 ms) and rope throughput (4 s) are checked there.

@@ -1,7 +1,7 @@
 # MinorIDE
 Native **IDE** for *Go* and `PHP`.
 
-- [Plan](docs/PLAN.md) item
+- [Roadmap](docs/ROADMAP.md) item
 1. second
 > quote
 ```go

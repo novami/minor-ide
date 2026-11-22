@@ -1,25 +1,28 @@
 # MinorIDE
 
-Nativní IDE pro Go a PHP na macOS (Apple Silicon). Plán: `docs/PLAN.md`, závislosti: `docs/DEPENDENCIES.md`.
+Nativní IDE pro PHP a Go na macOS (Apple Silicon), celé ve Swiftu. Dokumenty (anglicky): `docs/PRD.md` (rozsah), `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` (ADR), `docs/ROADMAP.md` (fáze), `docs/SECURITY.md`, `docs/PERFORMANCE.md`, `docs/LOCALIZATION.md`, `docs/UI-GUIDELINES.md`, `docs/DEPENDENCIES.md`.
 
-**Pracovní pozice: `docs/STATUS.md`.** Na začátku session ho přečti a pokračuj „Dalším krokem“. Po každém dokončeném bloku práce ho aktualizuj (co je hotové, další krok, otevřené věci), commitni a řekni uživateli, že může vyčistit kontext.
+**Pracovní pozice: `docs/STATUS.md`.** Na začátku session ho přečti a pokračuj „Next step“. Po každém dokončeném bloku práce ho aktualizuj (co je hotové, další krok, otevřené věci), commitni a řekni uživateli, že může vyčistit kontext.
 
 ## Příkazy
-- `make test` – Go vet + testy, Swift testy (vždy přes make: SwiftPM s Command Line Tools potřebuje native build system a cesty k Swift Testing)
+- `make test` – Swift testy (+ zatím Go testy dočasného `server/`); vždy přes make: SwiftPM s Command Line Tools potřebuje native build system a cesty k Swift Testing
 - `make bench` – výkonový benchmark editoru (release)
 - `make bundle` / `make run` – sestaví a spustí `build/MinorIDE.app`
-- `make server` – Go helper `server/bin/minoride-server`
-- `make l10n` – vygeneruje angličtinu z `L("…")` a doplní nové texty do překladů; `make l10n-new LANG=de` přidá jazyk
+- `make server` – dočasný Go helper (hledání) do jeho portu do Swiftu ve fázi R3
+- `make l10n` – do fáze R2 současný postup s `L("…")` (`docs/translations.md`), potom nový engine (`docs/LOCALIZATION.md`)
 
 ## Pravidla
-- Pracuj po úkolech v pořadí fází z `docs/PLAN.md`. Úkol končí splněním „Hotovo když“, testem hlavní cesty a commitem.
+- Pracuj po úkolech v pořadí fází z `docs/ROADMAP.md`. Úkol končí splněním „Done when“, testem hlavní cesty a commitem.
 - Commity malé, jen vlastní soubory (`git commit -- <soubory>`), bez AI podpisů. Nikdy `git push` bez vyžádání.
-- **Žádná nová závislost bez souhlasu uživatele.** Povolené: SwiftTerm, `go-sql-driver/mysql`, `jackc/pgx/v5` (+ jejich závislosti), `golang.org/x/*`, oficiální stuby PHP ze zdrojů PHP a PECL rozšíření (data, D25 v plánu). Systémové frameworky macOS a stdlib Go jsou volné.
+- **Jen Swift** (ADR-1). Nový Go kód nepsat; `server/` se portuje do Swiftu a pak smaže.
+- **Žádná nová závislost bez souhlasu uživatele.** Povolené: SwiftTerm, oficiální stuby PHP ze zdrojů PHP a PECL rozšíření (data). Systémové frameworky macOS jsou volné.
+- **PHP inteligence přímo v aplikaci, bez LSP** (ADR-4). LSP jen pro gopls (ADR-5). PHP nástroje (PHPStan, Psalm, fixery, Composer, testy) jen přes CLI.
 - **Žádná vazba na konkurenční IDE**: nejmenovat je v UI, kódu, dokumentaci ani commitech a nepodporovat jejich vlastní formáty souborů ani jejich data.
-- Na hlavním vlákně jen UI. Změna v editační cestě musí projít `make bench` v rozpočtu z plánu.
-- `TextEngine`, `Highlight`, `LSPKit`, `MinorCore` nesmí importovat AppKit.
-- phpls: každá nová schopnost začíná markerovým testem; každá opravená chyba parseru dostane fixture.
-- **UI podle Apple HIG** (sekce „Standardy macOS“ v `docs/PLAN.md`): standardní lišta menu a zkratky, sheety místo modálních dialogů, okno Nastavení (⌘,), systémové barvy a tmavý režim. Každý text v UI přes `L("…")` (anglický US text jako klíč), texty s počtem přes `LP("%d files", one: "%d file", n)` (správné skloňování), pak `make l10n` a přeložit české `TODO translate` v `Resources/cs.lproj/Localizable.strings` ve stejném commitu. Čeština musí být vždy kompletní (`make l10n-check` je součást `make test`). Postup a pravidla textů: `docs/translations.md`.
-- **Bezpečnost** (sekce Bezpečnost v `docs/PLAN.md`): hesla jen v Klíčence; nikdy v argumentech procesů, proměnných prostředí, logu ani souborech. Procesy spouštět s polem argumentů, nikdy přes shell se složeným řetězcem. Neznámý projekt = Omezený režim (nespouštět jeho nástroje ani příkazy z jeho nastavení, ani Git, gopls a debugger; důvěra se ukládá mimo projekt). SSH jen se ověřeným klíčem serveru. Helpery jen přes stdin/stdout, nikdy síťový port; výjimky jen podle D24 v plánu (ladění na `127.0.0.1`, askpass přes unixový socket).
-- Když se rozhodnutí z plánu ukáže jako špatné, zastav a popiš varianty. Technologii neměň sám.
-- Swift: taby, Swift 6 strict concurrency. Go: `gofmt`, jen stdlib + povolené závislosti, cgo jen pro SQLite.
+- Na hlavním vlákně jen UI. Změna v editační cestě musí projít `make bench` v rozpočtu z `docs/PERFORMANCE.md`.
+- Moduly pod UI (`TextEngine`, `Highlight`, `LanguageKit`, `PHPKit`, `LSPKit`, `ProjectKit`, `ToolKit`, `MinorCore`, `Localization` …) nesmí importovat AppKit.
+- PHP: každá nová schopnost začíná markerovým testem; každá opravená chyba parseru dostane fixture. Parser nikdy nesmí spadnout (žádné `!`, kontrolované indexy, časový limit).
+- **UI podle Apple HIG** (`docs/UI-GUIDELINES.md`): standardní lišta menu a zkratky, sheety místo modálních dialogů, okno Nastavení (⌘,), systémové barvy a tmavý režim. Pracovní okno v AppKitu, SwiftUI pro nastavení, Dashboard, formuláře a panely. Každý text v UI lokalizovaný (do R2 přes `L("…")`/`LP`, `make l10n` a české `TODO translate` ve stejném commitu); čeština musí být vždy kompletní (kontrola je součást `make test`).
+- **Kód, komentáře a dokumentace anglicky** (jednoduchá US angličtina); čeština jen v překladech. Tento soubor a odpovědi uživateli česky.
+- **Bezpečnost** (`docs/SECURITY.md`): hesla jen v Klíčence; nikdy v argumentech procesů, proměnných prostředí, logu ani souborech. Procesy spouštět s polem argumentů, nikdy přes shell se složeným řetězcem. Neznámý projekt = Omezený režim (nespouštět jeho nástroje ani příkazy z jeho nastavení, ani Git, gopls, `go` s cizím toolchainem, Composer, Docker a debugger; důvěra se ukládá mimo projekt). SSH jen se ověřeným klíčem serveru. Žádné síťové porty; výjimky: Delve na `127.0.0.1` během ladění, askpass přes unixový socket.
+- Když se rozhodnutí z ADR ukáže jako špatné, zastav a popiš varianty. Technologii neměň sám.
+- Swift: taby, Swift 6 strict concurrency.
