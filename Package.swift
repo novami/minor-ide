@@ -20,6 +20,9 @@ let package = Package(
 		.target(name: "SecretsKit"),
 		.target(name: "RemoteKit", dependencies: ["MinorCore"]),
 		.target(name: "LSPKit", dependencies: ["MinorCore", "TextEngine"]),
+		.target(name: "PHPKit"),
+		// Spike S1 benchmark (docs/spike-php-swift.md).
+		.executableTarget(name: "PHPScan", dependencies: ["PHPKit"], path: "Sources/PHPScan"),
 		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit", "Highlight", "SecretsKit", "DBKit", "RemoteKit", "LSPKit",
 		                                                .product(name: "SwiftTerm", package: "SwiftTerm")]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
@@ -29,6 +32,7 @@ let package = Package(
 		.testTarget(name: "RemoteKitTests", dependencies: ["RemoteKit"]),
 		.testTarget(name: "LSPKitTests", dependencies: ["LSPKit", "MinorCore", "TextEngine"]),
 		.testTarget(name: "EditorKitTests", dependencies: ["EditorKit", "MinorCore"]),
+		.testTarget(name: "PHPKitTests", dependencies: ["PHPKit"]),
 		.testTarget(name: "HighlightTests", dependencies: ["Highlight", "TextEngine"], exclude: ["Golden"]),
 	]
 )

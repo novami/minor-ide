@@ -17,7 +17,7 @@ Postponed: **phase 2, release and updater**. It waits for an Apple Developer acc
 
 ## R0 Architecture and spikes (≈ 2 weeks)
 - New document set: PRD, ARCHITECTURE, DECISIONS, SECURITY, PERFORMANCE, LOCALIZATION, ROADMAP, STATUS (done).
-- **S1 PHP parser in Swift**: lexer and declaration parser on flat arrays, run over `vendor/` of a Nette and a large framework project. Done when 30 000 files parse in < 10 s with no trap, and memory per file is reported. If it misses the budget, stop and present options.
+- **S1 PHP parser in Swift** (done 2026-11-22, [spike-php-swift.md](spike-php-swift.md)): lexer and declaration scanner on flat arrays in `PHPKit`; 30 000 files in 0.33 s (budget 10 s), Laravel with `vendor/` in 94 ms, no trap, 0.6–1.5 KB of results per file.
 - **S2 TLS upgrade**: a Network.framework framer below TLS performs the PostgreSQL `SSLRequest` and the MySQL SSL handshake start. Done when TLS 1.3 is established against PostgreSQL 16 and MariaDB 11 in Docker with certificate verification, or the failure is documented and ADR-7 falls back.
 - **S3 Startup and memory**: `--bench-startup` (cold, warm, Dashboard) and an idle `phys_footprint` sample. Done when the numbers are in PERFORMANCE.md and the 100 MB idle target is confirmed or revised with the owner.
 
