@@ -24,7 +24,7 @@ A budget counts as met only with a benchmark result, measured on the reference h
 | Open file by name (20 000 files) | < 50 ms per keystroke | `make bench` |
 | Find in Files first results | < 100 ms | search benchmark |
 | Go to Symbol / Search Everywhere | < 100 ms | search benchmark |
-| Idle memory, core app without a large project being indexed | target < 100 MB (to be confirmed by spike S3) | `phys_footprint` sample |
+| Idle memory, core app without a large project being indexed | target < 100 MB (spike S3: 33–37 MB, see Measurements) | `phys_footprint` sample |
 | Idle CPU (window in background) | ~0 %: timers and caret blinking stop, App Nap allowed | Activity Monitor and sample |
 
 ## Rules
@@ -35,3 +35,24 @@ A budget counts as met only with a benchmark result, measured on the reference h
 - Lists and tables are virtualized (view-based `NSTableView` and `NSOutlineView`).
 - UI updates from background work are coalesced to at most one per frame. Progress updates are throttled to 4 per second.
 - A change in the editing path must pass `make bench`. CI fails when a budget is exceeded (the CI profile checks p99 only, because virtual machines have one-off spikes).
+
+## Measurements
+
+### Spike S3: startup and idle memory (2026-11-23)
+
+`make bench-startup` on the reference hardware (M2, 16 GB, macOS 27.2), bundle from `make bundle`, no session and no project. The Dashboard does not exist yet; the welcome window stands in for it.
+
+| Metric | Result | Budget |
+|---|---|---|
+| Process start to `applicationDidFinishLaunching` (dyld, AppKit), warm | 91–126 ms | – |
+| App setup (menu, settings, watchers) | ~8 ms | – |
+| Warm start to window | 174–225 ms, typical ~180 ms | < 200 ms: at the limit |
+| Welcome window render (Dashboard stand-in) | 75–93 ms | < 300 ms: met |
+| Empty editor window open + draw | 94–124 ms | – (navigation budget is 100 ms) |
+| First run after a rebuild | 769 ms | – |
+| Idle `phys_footprint` (welcome + empty editor, after 5 s) | 33–37 MB | < 100 MB: met |
+
+Notes:
+- A real cold start (file cache purged with `sudo purge`) was not measured: it needs passwordless sudo. The first run after a rebuild also includes the first signature check of the new binary, so it is not a cold-start number.
+- Most of the warm start is before `applicationDidFinishLaunching` (about 90 ms) and the first window's layout and draw (about 80 ms). The app's own setup is small.
+- Creating a window costs about 100 ms. This counts against warm start and opening files; check it before the Dashboard is built.

@@ -6,6 +6,7 @@ import MinorCore
 //        MinorIDE --dump-menu   prints the menu bar (add -AppleLanguages "(cs)" to check Czech)
 //        MinorIDE --l10n-sample prints plural forms for several counts (same -AppleLanguages trick)
 //        MinorIDE --bench       runs the editor spike benchmark and prints results
+//        MinorIDE --bench-startup   prints launch time, welcome window time and idle memory (spike S3)
 //        MinorIDE --snapshot <png> [file]   renders the editor to a PNG (visual check)
 //        MINORIDE_FONT_SIZE=40 enlarges the font, useful with --snapshot
 //        MINORIDE_FIND=<query> with --snapshot opens Find and Replace and saves the bar too
@@ -29,12 +30,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	private var documents: [DocumentWindow] = []
 	/// Benchmark/snapshot runs ignore files AppKit passes from the command line. Set at init:
 	/// AppKit delivers files to open before applicationDidFinishLaunching.
-	private let utilityMode = ["--bench", "--snapshot", "--dump-menu", "--l10n-sample"].contains(CommandLine.arguments.dropFirst().first ?? "")
+	private let utilityMode = ["--bench", "--bench-startup", "--snapshot", "--dump-menu", "--l10n-sample"].contains(CommandLine.arguments.dropFirst().first ?? "")
 
 	/// Editor of the most recently opened window (benchmark and snapshot use it).
 	var editor: EditorView! { documents.last?.editor }
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
+		StartupBench.markFinishedLaunching()
 		NSApp.mainMenu = MainMenu.build(target: self)
 		let args = CommandLine.arguments.dropFirst()
 		WindowFrameKeeper.enabled = !utilityMode
@@ -96,6 +98,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			let history = LocalHistory()
 			FileDocument.history = history
 			Task.detached(priority: .utility) { history.prune() }
+		}
+		if args.first == "--bench-startup" { // after the normal setup, without session and crash recovery
+			StartupBench.markSetupDone()
+			StartupBench.run(self)
+			return
 		}
 		let backups = BackupStore()
 		let session = Session.take() // read once even when not restored

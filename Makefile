@@ -1,4 +1,4 @@
-.PHONY: build test server bench bundle run clean l10n l10n-new l10n-check
+.PHONY: build test server bench bench-startup bundle run clean l10n l10n-new l10n-check
 
 # SwiftPM's default build system cannot load the Swift Testing macros with Command Line Tools
 # only (no Xcode). The native build system plus explicit paths works with both setups.
@@ -37,6 +37,12 @@ l10n-check:
 bench:
 	swift build -c release $(SWIFT_BUILD)
 	.build/release/MinorIDE --bench
+
+# First run after purging the file cache (needs passwordless sudo, else it is only the first run), then 5 warm runs.
+bench-startup: bundle
+	@sudo -n purge 2>/dev/null && echo "# cold (file cache purged)" || echo "# first run (file cache not purged)"
+	@build/MinorIDE.app/Contents/MacOS/MinorIDE --bench-startup
+	@for i in 1 2 3 4 5; do echo "# warm $$i"; MINORIDE_IDLE_SECONDS=0 build/MinorIDE.app/Contents/MacOS/MinorIDE --bench-startup; done
 
 bundle: server
 	tools/bundle.sh
