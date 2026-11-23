@@ -12,6 +12,7 @@ Estimates are rough (one developer with AI). Remaining phases R0–R14 sum to ab
 | 1a–1f | Custom editor: rope, selections, anchors, undo, Core Text rendering, input methods, mouse, line commands, find and replace, folding, lexers (Go, PHP, Latte, NEON, SQL, JSON, JS/TS, CSS/SCSS and more), project window, split editor, settings, safe save, Local History, backups, session restore, status bar, line wrapping, sticky headers, accessibility, system text features |
 | 2b | Daily use: open file by name, Find in Files (currently through the Go helper), Git change gutter, terminal (manual check pending) |
 | 3, R1 | LSP client and gopls: completion, go to definition, navigation history, hover, signature help, diagnostics, quick fixes, rename, formatting, semantic tokens, restart after a crash |
+| R2 | Localization engine: JSON language files, CLDR plurals, typed `Strings` accessors, validator in `make test`, language setting with restart |
 
 Postponed: **phase 2, release and updater**. It waits for an Apple Developer account, starts with a self-signed certificate (see the archive), and can be pulled forward at any time.
 
@@ -26,7 +27,7 @@ Postponed: **phase 2, release and updater**. It waits for an Apple Developer acc
 - Remove 3.8 (generic external language servers, ADR-5). (done 2026-11-23: it was never built; no code or settings exist)
 - Done when a real Go project has all of 3.4–3.7, key latency is unchanged, and the app survives a gopls crash.
 
-## R2 Localization engine and migration (≈ 2 weeks)
+## R2 Localization engine and migration (done 2026-11-23)
 - Engine, plural evaluator, generator, validator, migration as in [LOCALIZATION.md](LOCALIZATION.md); language setting with restart; generated `InfoPlist.strings`.
 - Done when `.strings` and the Go l10n tool are gone, `make test` runs the validator, and Czech is 100 %.
 
