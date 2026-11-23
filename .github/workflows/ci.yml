@@ -24,6 +24,13 @@ jobs:
           go-version-file: server/go.mod
           cache: false # no third-party Go modules yet
 
+      # Dependencies and compiled modules; the key follows the manifest, older caches are a fallback.
+      - uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: ${{ runner.os }}-spm-
+
       - name: Toolchain versions
         run: |
           sw_vers
