@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import MinorCore
 
@@ -13,7 +14,7 @@ final class LocalHistoryWindow: NSObject, NSWindowDelegate, NSTableViewDataSourc
 	private let table = NSTableView()
 	private let diffView: NSTextView
 	private let restoreButton = NSButton()
-	private let emptyLabel = NSTextField(wrappingLabelWithString: L("No saved versions yet. A copy of the file is kept each time you save it, for 14 days."))
+	private let emptyLabel = NSTextField(wrappingLabelWithString: Strings.localHistory.empty)
 
 	private static let dateFormat: DateFormatter = {
 		let f = DateFormatter()
@@ -32,7 +33,7 @@ final class LocalHistoryWindow: NSObject, NSWindowDelegate, NSTableViewDataSourc
 		super.init()
 		diffView.isEditable = false
 		diffView.textContainerInset = NSSize(width: 6, height: 8)
-		diffView.setAccessibilityLabel(L("Comparison"))
+		diffView.setAccessibilityLabel(Strings.compare.comparison)
 
 		let column = NSTableColumn(identifier: .init("version"))
 		table.addTableColumn(column)
@@ -41,7 +42,7 @@ final class LocalHistoryWindow: NSObject, NSWindowDelegate, NSTableViewDataSourc
 		table.rowHeight = 36
 		table.dataSource = self
 		table.delegate = self
-		table.setAccessibilityLabel(L("Saved Versions"))
+		table.setAccessibilityLabel(Strings.localHistory.savedVersions)
 		let list = NSScrollView()
 		list.documentView = table
 		list.hasVerticalScroller = true
@@ -56,7 +57,7 @@ final class LocalHistoryWindow: NSObject, NSWindowDelegate, NSTableViewDataSourc
 		split.setHoldingPriority(.defaultHigh, forSubviewAt: 0)
 		list.widthAnchor.constraint(greaterThanOrEqualToConstant: 200).isActive = true
 
-		restoreButton.title = L("Restore This Version")
+		restoreButton.title = Strings.localHistory.restoreThisVersion
 		restoreButton.bezelStyle = .push
 		restoreButton.target = self
 		restoreButton.action = #selector(restore(_:))
@@ -82,7 +83,7 @@ final class LocalHistoryWindow: NSObject, NSWindowDelegate, NSTableViewDataSourc
 		window.contentView = content
 		split.setPosition(240, ofDividerAt: 0)
 		window.title = document.url?.lastPathComponent ?? ""
-		window.subtitle = L("Local History")
+		window.subtitle = Strings.menu.localHistory
 		window.isReleasedWhenClosed = false
 		window.delegate = self
 		window.center()
@@ -114,7 +115,7 @@ final class LocalHistoryWindow: NSObject, NSWindowDelegate, NSTableViewDataSourc
 		let name = document.url?.lastPathComponent ?? ""
 		diffView.textStorage?.setAttributedString(CompareWindow.diff(
 			old: old, new: document.text.rope.string,
-			oldLabel: "\(name) (\(Self.dateFormat.string(from: version.date)))", newLabel: L("%@ (in the editor)", name)))
+			oldLabel: "\(name) (\(Self.dateFormat.string(from: version.date)))", newLabel: Strings.common.inEditor(name: name)))
 		diffView.scrollToBeginningOfDocument(nil)
 	}
 

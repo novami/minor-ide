@@ -44,6 +44,46 @@ case "validate":
 		print("\(c.language): \(percent) %, \(c.done)/\(c.total)")
 	}
 	if !errors.isEmpty { fail(errors) }
+case "bundle":
+	// Copies the language files into the app's Resources and writes one <lang>.lproj per language
+	// (system UI follows it) with InfoPlist.strings from the infoPlist namespace. Prints the lproj names.
+	guard arguments.count == 2, let target = arguments.last.map(URL.init(fileURLWithPath:)) else { fail(["usage: minoride-l10n bundle <app Resources folder>"]) }
+	do { try bundle(into: target) } catch { fail(["\(error)"]) }
 default:
-	fail(["usage: minoride-l10n generate | validate [--require <locale>…]"])
+	fail(["usage: minoride-l10n generate | validate [--require <locale>…] | bundle <folder>"])
+}
+
+func bundle(into target: URL) throws {
+	let fm = FileManager.default
+	let files = try fm.contentsOfDirectory(at: resources, includingPropertiesForKeys: nil).filter { $0.pathExtension == "json" }
+	let catalogs = try files.map { try Catalog(data: Data(contentsOf: $0)) }
+	let english = catalogs.first { $0.meta.locale == "en-US" }
+	let folder = target.appendingPathComponent("Localization")
+	try fm.createDirectory(at: folder, withIntermediateDirectories: true)
+	for file in files {
+		let destination = folder.appendingPathComponent(file.lastPathComponent)
+		try? fm.removeItem(at: destination)
+		try fm.copyItem(at: file, to: destination)
+	}
+	let languages = catalogs.map { String($0.meta.locale.split(separator: "-").first ?? "") }
+	var names: [String] = []
+	for catalog in catalogs {
+		let language = String(catalog.meta.locale.split(separator: "-").first ?? "")
+		let name = languages.filter { $0 == language }.count > 1 ? catalog.meta.locale : language
+		names.append(name)
+		let lproj = target.appendingPathComponent(name + ".lproj")
+		try fm.createDirectory(at: lproj, withIntermediateDirectories: true)
+		var lines: [String] = []
+		let keys = Set((english?.messages.keys ?? catalog.messages.keys).filter { $0.hasPrefix("infoPlist.") })
+		for key in keys.sorted() {
+			guard let template = (catalog.messages[key] ?? english?.messages[key])?.text else { continue }
+			let text = template.segments.map { if case .literal(let s) = $0 { s } else { "" } }.joined()
+			let quoted = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+			lines.append("\"\(key.dropFirst("infoPlist.".count))\" = \"\(quoted)\";")
+		}
+		if !lines.isEmpty {
+			try (lines.joined(separator: "\n") + "\n").write(to: lproj.appendingPathComponent("InfoPlist.strings"), atomically: true, encoding: .utf8)
+		}
+	}
+	print(names.sorted().joined(separator: " "))
 }

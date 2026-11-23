@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 
 /// Window › Welcome to MinorIDE (⇧⌘1), shown at launch with nothing to open: actions on the
 /// left, recent projects and files on the right. Opening anything closes it.
@@ -38,7 +39,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 	private func makeWindow() -> NSWindow {
 		let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 440),
 		                      styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
-		window.title = L("Welcome to MinorIDE")
+		window.title = Strings.menu.welcomeMinoride
 		window.titleVisibility = .hidden
 		window.titlebarAppearsTransparent = true
 		window.isMovableByWindowBackground = true
@@ -75,14 +76,14 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 		let views: [NSView] = [icon, name]
 		let stack = NSStackView(views: views)
 		if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-			let label = NSTextField(labelWithString: L("Version %@", version))
+			let label = NSTextField(labelWithString: Strings.common.version(version: version))
 			label.textColor = .secondaryLabelColor
 			stack.addArrangedSubview(label)
 		}
 		let buttons = NSStackView(views: [
-			actionButton(L("Open Folder or File…"), "folder", #selector(AppDelegate.openDocument(_:))),
-			actionButton(L("New File"), "doc.badge.plus", #selector(AppDelegate.newDocument(_:))),
-			actionButton(L("Clone Git Repository…"), "arrow.down.circle", #selector(AppDelegate.cloneRepository(_:))),
+			actionButton(Strings.welcome.openFolderOrFile, "folder", #selector(AppDelegate.openDocument(_:))),
+			actionButton(Strings.welcome.newFile, "doc.badge.plus", #selector(AppDelegate.newDocument(_:))),
+			actionButton(Strings.menu.cloneGitRepository, "arrow.down.circle", #selector(AppDelegate.cloneRepository(_:))),
 		])
 		buttons.orientation = .vertical
 		buttons.alignment = .leading
@@ -146,7 +147,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 		table.target = self
 		table.doubleAction = #selector(openClicked(_:))
 		table.onReturn = { [weak self] in self?.openSelected() }
-		table.setAccessibilityLabel(L("Recent Projects and Files"))
+		table.setAccessibilityLabel(Strings.welcome.recentTitle)
 		let menu = NSMenu()
 		menu.delegate = self
 		table.menu = menu
@@ -160,7 +161,7 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 		scroll.automaticallyAdjustsContentInsets = false
 		scroll.contentInsets = NSEdgeInsets(top: 34, left: 0, bottom: 10, right: 0) // below the close button
 
-		let empty = NSTextField(labelWithString: L("No Recent Projects"))
+		let empty = NSTextField(labelWithString: Strings.welcome.noRecentProjects)
 		empty.textColor = .secondaryLabelColor
 		empty.font = .systemFont(ofSize: 15)
 		emptyLabel = empty
@@ -228,8 +229,8 @@ final class WelcomeWindow: NSObject, NSWindowDelegate, NSTableViewDataSource, NS
 		menu.removeAllItems()
 		guard let row = table?.clickedRow, recent.indices.contains(row) else { return }
 		let url = recent[row]
-		menu.item(L("Open"), #selector(openFromMenu(_:)), target: self).representedObject = url
-		menu.item(L("Show in Finder"), #selector(showInFinder(_:)), target: self).representedObject = url
+		menu.item(Strings.welcome.open, #selector(openFromMenu(_:)), target: self).representedObject = url
+		menu.item(Strings.common.showInFinder, #selector(showInFinder(_:)), target: self).representedObject = url
 	}
 
 	// MARK: Table

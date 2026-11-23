@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import MinorCore
 
 /// Right-click menu of the file tree: create, rename, trash, reveal, copy paths.
@@ -24,20 +25,20 @@ extension ProjectSidebar: NSMenuDelegate {
 			menu.addItem(item)
 		}
 		if !node.isDirectory {
-			add(L("Open in Split Editor"), #selector(openInSplit(_:)))
+			add(Strings.sidebar.openInSplitEditor, #selector(openInSplit(_:)))
 			menu.addItem(.separator())
 		}
-		add(L("New File…"), #selector(newFile(_:)))
-		add(L("New Folder…"), #selector(newFolder(_:)))
+		add(Strings.sidebar.newFile, #selector(newFile(_:)))
+		add(Strings.sidebar.newFolder, #selector(newFolder(_:)))
 		if node !== project.root {
 			menu.addItem(.separator())
-			add(L("Rename…"), #selector(rename(_:)))
-			add(L("Move to Trash"), #selector(moveToTrash(_:)))
+			add(Strings.common.rename, #selector(rename(_:)))
+			add(Strings.sidebar.moveToTrash, #selector(moveToTrash(_:)))
 		}
 		menu.addItem(.separator())
-		add(L("Show in Finder"), #selector(showInFinder(_:)))
-		add(L("Copy Path"), #selector(copyPath(_:)))
-		add(L("Copy Relative Path"), #selector(copyRelativePath(_:)))
+		add(Strings.common.showInFinder, #selector(showInFinder(_:)))
+		add(Strings.sidebar.copyPath, #selector(copyPath(_:)))
+		add(Strings.sidebar.copyRelativePath, #selector(copyRelativePath(_:)))
 	}
 
 	private func node(_ sender: Any?) -> FileNode? { (sender as? NSMenuItem)?.representedObject as? FileNode }
@@ -52,8 +53,8 @@ extension ProjectSidebar: NSMenuDelegate {
 		let field = NSTextField(string: initial)
 		field.frame = NSRect(x: 0, y: 0, width: 260, height: 24)
 		alert.accessoryView = field
-		alert.addButton(withTitle: L("OK"))
-		alert.addButton(withTitle: L("Cancel"))
+		alert.addButton(withTitle: Strings.common.ok)
+		alert.addButton(withTitle: Strings.common.cancel)
 		alert.window.initialFirstResponder = field
 		guard let window = self.window else { return }
 		alert.beginSheetModal(for: window) { response in
@@ -61,10 +62,10 @@ extension ProjectSidebar: NSMenuDelegate {
 				guard response == .alertFirstButtonReturn else { return }
 				let name = field.stringValue.trimmingCharacters(in: .whitespaces)
 				if name.isEmpty || name.contains("/") || name == "." || name == ".." {
-					return self.fail(L("“%@” is not a valid file name.", name))
+					return self.fail(Strings.sidebar.invalidFileName(name: name))
 				}
 				if name != initial, FileManager.default.fileExists(atPath: folder.appendingPathComponent(name).path) {
-					return self.fail(L("“%@” already exists.", name))
+					return self.fail(Strings.sidebar.alreadyExists(name: name))
 				}
 				done(name)
 			}
@@ -85,9 +86,9 @@ extension ProjectSidebar: NSMenuDelegate {
 	@objc private func newFile(_ sender: Any?) {
 		guard let node = node(sender) else { return }
 		let folder = folder(of: node)
-		askName(L("New file name:"), initial: "", in: folder.url) { name in
+		askName(Strings.sidebar.newFileName, initial: "", in: folder.url) { name in
 			let url = folder.url.appendingPathComponent(name)
-			guard FileManager.default.createFile(atPath: url.path, contents: Data()) else { return self.fail(L("The file could not be created.")) }
+			guard FileManager.default.createFile(atPath: url.path, contents: Data()) else { return self.fail(Strings.sidebar.fileNotCreated) }
 			self.refresh(folder)
 			self.onOpen?(url)
 		}
@@ -96,7 +97,7 @@ extension ProjectSidebar: NSMenuDelegate {
 	@objc private func newFolder(_ sender: Any?) {
 		guard let node = node(sender) else { return }
 		let folder = folder(of: node)
-		askName(L("New folder name:"), initial: "", in: folder.url) { name in
+		askName(Strings.sidebar.newFolderName, initial: "", in: folder.url) { name in
 			do {
 				try FileManager.default.createDirectory(at: folder.url.appendingPathComponent(name), withIntermediateDirectories: false)
 				self.refresh(folder)
@@ -108,7 +109,7 @@ extension ProjectSidebar: NSMenuDelegate {
 
 	@objc private func rename(_ sender: Any?) {
 		guard let node = node(sender), let parent = node.parent else { return }
-		askName(L("New name:"), initial: node.name, in: parent.url) { name in
+		askName(Strings.common.newName, initial: node.name, in: parent.url) { name in
 			guard name != node.name else { return }
 			let target = parent.url.appendingPathComponent(name)
 			do {

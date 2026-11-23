@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import LSPKit
 import MinorCore
@@ -10,12 +11,12 @@ import TextEngine
 enum WorkspaceEditor {
 	/// Nil when applied, else what went wrong.
 	static func apply(_ edit: WorkspaceEdit, encoding: PositionEncoding) -> String? {
-		if edit.hasFileOperations { return L("The change creates, renames or deletes files, which MinorIDE does not do yet.") }
+		if edit.hasFileOperations { return Strings.codeActions.fileOperationsUnsupported }
 		// All or nothing: a file edited since the server computed the change stops it.
 		for f in edit.files {
-			guard let url = f.url else { return L("The change edits a file that is not on this Mac.") }
+			guard let url = f.url else { return Strings.codeActions.remoteFileUnsupported }
 			if let version = f.version, let doc = FileDocument.document(for: url), doc.text.version != version {
-				return L("“%@” changed in the meantime. Try again.", url.lastPathComponent)
+				return Strings.codeActions.fileChangedNamed(name: url.lastPathComponent)
 			}
 		}
 		var failed: [String] = []
@@ -30,7 +31,7 @@ enum WorkspaceEditor {
 				failed.append(url.lastPathComponent)
 			}
 		}
-		return failed.isEmpty ? nil : L("Some files could not be changed.") + "\n" + failed.prefix(10).joined(separator: "\n")
+		return failed.isEmpty ? nil : Strings.refactor.someFilesFailed + "\n" + failed.prefix(10).joined(separator: "\n")
 	}
 
 	static func report(_ message: String, in window: NSWindow?) {
@@ -117,7 +118,7 @@ final class CodeActionController {
 			menu.addItem(item)
 		}
 		if actions.isEmpty {
-			let item = NSMenuItem(title: L("No Actions Available"), action: nil, keyEquivalent: "")
+			let item = NSMenuItem(title: Strings.codeActions.noActionsAvailable, action: nil, keyEquivalent: "")
 			item.isEnabled = false
 			menu.addItem(item)
 		}
@@ -190,7 +191,7 @@ final class CodeActionController {
 			result = try await request()
 		}
 		guard case .some(let list) = result else { return } // timed out
-		guard let list else { throw RPCError(code: 0, message: L("The formatter returned overlapping changes.")) }
+		guard let list else { throw RPCError(code: 0, message: Strings.codeActions.formatterReturnedOverlappingChanges) }
 		guard let editor = self.editor, editor.document.version == version else { return }
 		editor.replace(list)
 	}
@@ -215,7 +216,7 @@ final class CodeActionController {
 			guard let self, gen == generation, let editor = self.editor, let window = editor.window,
 			      editor.document.version == version else { return }
 			guard let symbol else {
-				return WorkspaceEditor.report(L("This element cannot be renamed."), in: window)
+				return WorkspaceEditor.report(Strings.codeActions.cannotRename, in: window)
 			}
 			let root = (window.delegate as? DocumentWindow)?.project?.url
 			let sheet = RenameSheet(name: symbol.name, root: root) { name in
@@ -225,7 +226,7 @@ final class CodeActionController {
 			sheet.onApply = { [weak self] edit in
 				guard let editor = self?.editor else { return false }
 				guard editor.document.version == version else {
-					WorkspaceEditor.report(L("The file changed in the meantime. Try again."), in: editor.window)
+					WorkspaceEditor.report(Strings.codeActions.fileChanged, in: editor.window)
 					return false
 				}
 				if let problem = WorkspaceEditor.apply(edit, encoding: sheet.encoding) {
@@ -272,14 +273,14 @@ final class RenameSheet: NSObject, NSTextFieldDelegate, NSTableViewDataSource, N
 		panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 600, height: 380), styleMask: [.titled, .resizable], backing: .buffered, defer: true)
 		super.init()
 		panel.minSize = NSSize(width: 440, height: 280)
-		let title = NSTextField(labelWithString: L("Rename “%@”", name))
+		let title = NSTextField(labelWithString: Strings.codeActions.renameSymbol(name: name))
 		title.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
 		title.lineBreakMode = .byTruncatingMiddle
 		field.stringValue = name
 		field.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
 		field.delegate = self
-		field.setAccessibilityLabel(L("New name"))
-		let grid = NSGridView(views: [[NSTextField(labelWithString: L("New name:")), field]])
+		field.setAccessibilityLabel(Strings.codeActions.newName)
+		let grid = NSGridView(views: [[NSTextField(labelWithString: Strings.common.newName), field]])
 		grid.rowAlignment = .firstBaseline
 
 		let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Change"))
@@ -290,7 +291,7 @@ final class RenameSheet: NSObject, NSTextFieldDelegate, NSTableViewDataSource, N
 		table.style = .plain
 		table.dataSource = self
 		table.delegate = self
-		table.setAccessibilityLabel(L("Changes"))
+		table.setAccessibilityLabel(Strings.codeActions.changes)
 		let scroll = NSScrollView()
 		scroll.documentView = table
 		scroll.hasVerticalScroller = true
@@ -300,18 +301,18 @@ final class RenameSheet: NSObject, NSTextFieldDelegate, NSTableViewDataSource, N
 		status.textColor = .secondaryLabelColor
 		status.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		status.lineBreakMode = .byTruncatingTail
-		let note = NSTextField(wrappingLabelWithString: L("Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History."))
+		let note = NSTextField(wrappingLabelWithString: Strings.refactor.changesInfo)
 		note.textColor = .secondaryLabelColor
 		note.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		note.setContentCompressionResistancePriority(.required, for: .vertical)
 
-		renameButton.title = L("Rename")
+		renameButton.title = Strings.codeActions.rename
 		renameButton.bezelStyle = .rounded
 		renameButton.keyEquivalent = "\r"
 		renameButton.target = self
 		renameButton.action = #selector(apply(_:))
 		renameButton.isEnabled = false
-		let cancelButton = NSButton(title: L("Cancel"), target: self, action: #selector(cancel(_:)))
+		let cancelButton = NSButton(title: Strings.common.cancel, target: self, action: #selector(cancel(_:)))
 		cancelButton.keyEquivalent = "\u{1b}"
 		let buttons = NSStackView(views: [status, NSView(), cancelButton, renameButton])
 		status.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -332,7 +333,7 @@ final class RenameSheet: NSObject, NSTextFieldDelegate, NSTableViewDataSource, N
 		window.beginSheet(panel)
 		panel.makeFirstResponder(field)
 		field.currentEditor()?.selectAll(nil)
-		status.stringValue = L("Type the new name.")
+		status.stringValue = Strings.codeActions.typeNewName
 	}
 
 	// MARK: Preview
@@ -355,23 +356,23 @@ final class RenameSheet: NSObject, NSTextFieldDelegate, NSTableViewDataSource, N
 		renameButton.isEnabled = false
 		let name = field.stringValue.trimmingCharacters(in: .whitespaces)
 		guard !name.isEmpty, name != original else {
-			show([], status: L("Type the new name."))
+			show([], status: Strings.codeActions.typeNewName)
 			return
 		}
-		status.stringValue = L("Looking for changes…")
+		status.stringValue = Strings.codeActions.lookingForChanges
 		task = Task { [weak self] in
 			try? await Task.sleep(for: .milliseconds(250)) // not a request per keystroke
 			guard let self, !Task.isCancelled else { return }
 			do {
 				let edit = try await compute(name)
 				guard !Task.isCancelled else { return }
-				guard let edit, !edit.isEmpty else { return show([], status: L("Nothing to change.")) }
+				guard let edit, !edit.isEmpty else { return show([], status: Strings.codeActions.nothingToChange) }
 				let rows = await Self.rows(edit, encoding: encoding)
 				guard !Task.isCancelled else { return }
 				self.edit = edit
-				show(rows, status: LP("%d changes", one: "%d change", edit.editCount) + " " + LP("in %d files", one: "in %d file", edit.files.count))
+				show(rows, status: Strings.codeActions.changeCount(count: edit.editCount) + " " + Strings.common.inFiles(count: edit.files.count))
 				renameButton.isEnabled = !edit.hasFileOperations
-				if edit.hasFileOperations { status.stringValue = L("The change creates, renames or deletes files, which MinorIDE does not do yet.") }
+				if edit.hasFileOperations { status.stringValue = Strings.codeActions.fileOperationsUnsupported }
 			} catch is CancellationError {
 			} catch {
 				guard !Task.isCancelled else { return }

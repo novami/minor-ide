@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import LSPKit
 import MinorCore
@@ -206,7 +207,7 @@ final class NavigationController {
 		}
 		if let name, showUsages != nil, targets.count > Self.menuLimit {
 			menu.addItem(.separator())
-			menu.addItem(MenuAction(LP("Show All %d Usages", one: "Show %d Usage", targets.count)) { [weak self] in
+			menu.addItem(MenuAction(Strings.navigation.showAllUsages(count: targets.count)) { [weak self] in
 				self?.showUsages?(name) { targets }
 			})
 		}

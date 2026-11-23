@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import MinorCore
 import SwiftUI
@@ -29,9 +30,9 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
 			item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
 			tabs.addTabViewItem(item)
 		}
-		add(GeneralSettingsView(store: store), L("General"), "gearshape")
-		add(FormatSettingsView(store: store), L("Formatting"), "text.alignleft")
-		add(ToolsSettingsView(model: ToolsModel.shared), L("Tools"), "hammer")
+		add(GeneralSettingsView(store: store), Strings.settings.general, "gearshape")
+		add(FormatSettingsView(store: store), Strings.settings.formatting, "text.alignleft")
+		add(ToolsSettingsView(model: ToolsModel.shared), Strings.settings.tools, "hammer")
 		tabs.title = tabs.tabViewItems.first?.label
 		let window = NSWindow(contentViewController: tabs) // its title follows tabs.title
 		window.styleMask = [.titled, .closable]
@@ -136,57 +137,57 @@ struct GeneralSettingsView: View {
 	var body: some View {
 		Form {
 			Section {
-				Picker(L("Font"), selection: Binding(
+				Picker(Strings.settings.font, selection: Binding(
 					get: { store.file.fontFamily ?? "" },
 					set: { store.set(nil, "font_family", $0.isEmpty ? nil : .string($0)); applyFont() })) {
-					Text(L("Automatic")).tag("")
+					Text(Strings.settings.automatic).tag("")
 					Divider()
 					ForEach(families, id: \.self) { Text($0).tag($0) }
 				}
-				Picker(L("Size"), selection: Binding(
+				Picker(Strings.settings.size, selection: Binding(
 					get: { Int(store.file.fontSize ?? Double(EditorView.defaultFontSize)) },
 					set: { store.set(nil, "font_size", $0 == Int(EditorView.defaultFontSize) ? nil : .number(Double($0))); applyFont() })) {
 					ForEach(sizes, id: \.self) { Text("\($0)").tag($0) }
 				}
-				Text(L("Automatic uses Menlo when a display without Retina is connected, because it keeps accents and other thin strokes sharp, and the system monospaced font otherwise."))
+				Text(Strings.settings.automaticFontInfo)
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)
 			Section {
-				Toggle(L("Detect indentation from the file"), isOn: Binding(
+				Toggle(Strings.settings.detectIndentationFile, isOn: Binding(
 					get: { store.file.detectIndent ?? true },
 					set: { store.set(nil, "detect_indent", .bool($0)) }))
-				Text(L("An existing file keeps the indentation it uses, unless .editorconfig or project settings say otherwise."))
+				Text(Strings.settings.detectIndentationInfo)
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)
 			Section {
-				Toggle(L("Save files automatically"), isOn: Binding(
+				Toggle(Strings.settings.saveFilesAutomatically, isOn: Binding(
 					get: { store.file.autoSave ?? false },
 					set: { store.set(nil, "auto_save", .bool($0)) }))
-				Text(L("Edited files are saved when you switch to another tab, window or app. Files changed on disk meanwhile are not saved. Every save is kept in Local History."))
+				Text(Strings.settings.autosaveInfo)
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)
 			Section {
-				Toggle(L("Wrap lines"), isOn: Binding(
+				Toggle(Strings.settings.wrapLines, isOn: Binding(
 					get: { store.file.wrapLines ?? false },
 					set: { on in
 						store.set(nil, "wrap_lines", .bool(on))
 						EditorView.wrapsLines = on
 					}))
-				Text(L("Long lines continue on the next row at the line length from Format (120 when not set). Large and minified files are not wrapped."))
+				Text(Strings.settings.wrapLinesInfo)
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)
 			Section {
-				Toggle(L("Pin enclosing lines"), isOn: Binding(
+				Toggle(Strings.settings.pinEnclosingLines, isOn: Binding(
 					get: { store.file.stickyLines ?? true },
 					set: { on in
 						store.set(nil, "sticky_lines", .bool(on))
 						EditorView.showsStickyLines = on
 					}))
-				Text(L("While you scroll, the lines that open the class, function and blocks around the top of the editor stay pinned above the text. Click one to go to it."))
+				Text(Strings.settings.pinEnclosingLinesInfo)
 					.font(.callout).foregroundStyle(.secondary)
 			}
 			.disabled(store.unreadable)
@@ -205,15 +206,15 @@ struct SettingsFileSection: View {
 	var body: some View {
 		Section {
 			if store.unreadable {
-				Label(L("settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here."),
+				Label(Strings.settings.invalidSettingsFile,
 				      systemImage: "exclamationmark.triangle.fill")
 					.foregroundStyle(.orange)
 			}
 			HStack {
-				Text(L("Settings are stored in settings.json. A project can override them in .minoride/settings.json."))
+				Text(Strings.settings.settingsFileInfo)
 					.font(.callout).foregroundStyle(.secondary)
 				Spacer()
-				Button(L("Open settings.json")) { NSApp.sendAction(#selector(AppDelegate.openUserSettings(_:)), to: nil, from: nil) }
+				Button(Strings.settings.openSettingsJson) { NSApp.sendAction(#selector(AppDelegate.openUserSettings(_:)), to: nil, from: nil) }
 			}
 		}
 	}
@@ -235,35 +236,35 @@ struct FormatSettingsView: View {
 	var body: some View {
 		Form {
 			Section {
-				Picker(L("Language"), selection: Binding(get: { store.section }, set: { store.section = $0 })) {
-					Text(L("All Languages")).tag("*")
+				Picker(Strings.settings.language, selection: Binding(get: { store.section }, set: { store.section = $0 })) {
+					Text(Strings.settings.allLanguages).tag("*")
 					Divider()
 					ForEach(Self.languages, id: \.0) { Text($0.1).tag($0.0) }
 					Divider()
-					Text(L("Plain Text")).tag("text")
+					Text(Strings.format.plainText).tag("text")
 				}
 			} footer: {
 				Text(section == "*"
-					? L("Applies to every language unless the language sets its own value.")
-					: L("Overrides All Languages for this language."))
+					? Strings.settings.allLanguagesInfo
+					: Strings.settings.languageOverrideInfo)
 			}
 			.disabled(store.unreadable)
 			Section {
 				if section == "php" {
-					row(L("Coding standard"), "preset", [("psr12", "PSR-12"), ("nette", "Nette")])
+					row(Strings.settings.codingStandard, "preset", [("psr12", "PSR-12"), ("nette", "Nette")])
 				}
-				row(L("Indent with"), "indent_style", [("tab", L("Tabs")), ("space", L("Spaces"))])
-				row(L("Indent size"), "indent_size", numbers(1...8), number: true)
-				row(L("Tab width"), "tab_width", numbers(1...8), number: true)
-				row(L("Line length"), "max_line_length", [80, 100, 120, 160].map { ("\($0)", "\($0)") } + [("off", L("Not set"))], number: true)
-				row(L("Line endings"), "end_of_line", [("lf", L("LF (macOS, Unix)")), ("crlf", L("CRLF (Windows)")), ("cr", L("CR (Classic Mac)"))])
-				row(L("Encoding"), "charset", Charset.allCases.map { ($0.rawValue, $0.rawValue.uppercased()) })
-				row(L("Newline at end of file"), "insert_final_newline", [("true", L("Add")), ("false", L("Don’t add"))])
-				row(L("Trailing spaces"), "trim_trailing_whitespace",
-				    [("modified", L("Remove from edited lines")), ("true", L("Remove from all lines")), ("false", L("Keep"))])
-				row(L("Format on save"), "format_on_save", [("true", L("Format the file")), ("false", L("Don’t format"))])
+				row(Strings.settings.indentWith, "indent_style", [("tab", Strings.format.tabs), ("space", Strings.settings.spaces)])
+				row(Strings.settings.indentSize, "indent_size", numbers(1...8), number: true)
+				row(Strings.settings.tabWidth, "tab_width", numbers(1...8), number: true)
+				row(Strings.settings.lineLength, "max_line_length", [80, 100, 120, 160].map { ("\($0)", "\($0)") } + [("off", Strings.settings.notSet)], number: true)
+				row(Strings.settings.lineEndings, "end_of_line", [("lf", Strings.format.lineEndingLF), ("crlf", Strings.format.lineEndingCRLF), ("cr", Strings.format.lineEndingCR)])
+				row(Strings.format.encoding, "charset", Charset.allCases.map { ($0.rawValue, $0.rawValue.uppercased()) })
+				row(Strings.settings.finalNewline, "insert_final_newline", [("true", Strings.common.add), ("false", Strings.settings.dontAdd)])
+				row(Strings.settings.trailingSpaces, "trim_trailing_whitespace",
+				    [("modified", Strings.settings.removeEditedLines), ("true", Strings.settings.removeAllLines), ("false", Strings.settings.keep)])
+				row(Strings.settings.formatOnSave, "format_on_save", [("true", Strings.settings.formatTheFile), ("false", Strings.settings.dontFormat)])
 			} footer: {
-				Text(L("Default follows the language’s standard, such as PSR-12 for PHP and gofmt for Go. A file’s own line endings, .editorconfig and project settings take precedence."))
+				Text(Strings.settings.codingStandardInfo)
 			}
 			.disabled(store.unreadable) // the file section stays usable: it opens the file to fix
 			SettingsFileSection(store: store)
@@ -284,7 +285,7 @@ struct FormatSettingsView: View {
 		return Picker(title, selection: Binding(
 			get: { current ?? "" },
 			set: { raw in store.set(section, key, raw.isEmpty ? nil : Self.json(raw, key: key)) })) {
-			Text(L("Default")).tag("")
+			Text(Strings.settings.default).tag("")
 			Divider()
 			ForEach(choices, id: \.0) { Text($0.1).tag($0.0) }
 		}

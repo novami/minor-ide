@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import CoreImage
 
 /// Author, project and donation links (About window, Help menu, Support window).
@@ -31,19 +32,19 @@ extension AppDelegate {
 		func link(_ s: String, _ url: URL) { add(s, [.link: url]) }
 		let bold = [NSAttributedString.Key.font: NSFont.boldSystemFont(ofSize: NSFont.smallSystemFontSize)]
 
-		add(L("Author: ")); add(Links.author, bold); add(" · "); link("www.novami.cz", Links.website); add("\n")
-		add(L("Free and open source under the MIT License.") + " "); link(L("Source code on GitHub"), Links.repository); add("\n\n")
+		add(Strings.about.author); add(Links.author, bold); add(" · "); link("www.novami.cz", Links.website); add("\n")
+		add(Strings.about.license + " "); link(Strings.about.sourceCodeGithub, Links.repository); add("\n\n")
 
-		add(L("Thanks") + "\n", bold)
-		add(L("To everyone who tests MinorIDE: please report bugs and ideas as ")); link(L("issues on GitHub"), Links.newIssue); add(".\n")
-		add(L("To developers: pull requests from your fork are welcome.") + "\n")
-		add(L("To the open source projects MinorIDE is built with: Swift, Go and SQLite.") + "\n")
-		add(L("Terminal: ")); link("SwiftTerm", URL(string: "https://github.com/migueldeicaza/SwiftTerm")!)
+		add(Strings.about.thanks + "\n", bold)
+		add(Strings.about.thanksTesters); link(Strings.about.issuesLink, Links.newIssue); add(".\n")
+		add(Strings.about.thanksDevelopers + "\n")
+		add(Strings.about.thanksProjects + "\n")
+		add(Strings.about.terminal); link("SwiftTerm", URL(string: "https://github.com/migueldeicaza/SwiftTerm")!)
 		add(" © Miguel de Icaza · ")
 		if let license = Bundle.main.url(forResource: "SwiftTerm", withExtension: "txt", subdirectory: "Licenses") {
-			link(L("MIT License"), license)
+			link(Strings.about.mitLicense, license)
 		} else {
-			add(L("MIT License"))
+			add(Strings.about.mitLicense)
 		}
 		return text
 	}
@@ -75,7 +76,7 @@ final class AboutWindow: NSObject {
 		name.font = .boldSystemFont(ofSize: 20)
 		let short = info["CFBundleShortVersionString"] as? String ?? "0.0.0"
 		let build = info["CFBundleVersion"] as? String
-		let version = NSTextField(labelWithString: String(format: L("Version %@"), short) + (build.map { $0 == short ? "" : " (\($0))" } ?? ""))
+		let version = NSTextField(labelWithString: Strings.common.version(version: short) + (build.map { $0 == short ? "" : " (\($0))" } ?? ""))
 		version.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		version.textColor = .secondaryLabelColor
 		version.isSelectable = true
@@ -127,16 +128,16 @@ final class SupportWindow: NSObject, NSWindowDelegate {
 	private func makeWindow() -> NSWindow {
 		let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 10),
 		                      styleMask: [.titled, .closable], backing: .buffered, defer: false)
-		window.title = L("Support MinorIDE")
+		window.title = Strings.about.supportMinoride
 		window.isReleasedWhenClosed = false
 
-		let title = NSTextField(labelWithString: L("Enjoying MinorIDE?"))
+		let title = NSTextField(labelWithString: Strings.about.enjoyingMinoride)
 		title.font = .boldSystemFont(ofSize: 15)
-		let intro = NSTextField(wrappingLabelWithString: L("MinorIDE is free and open source, made by one person in spare time. A small contribution helps keep it fast, native and growing. Thank you!"))
+		let intro = NSTextField(wrappingLabelWithString: Strings.about.supportText)
 		intro.alignment = .center
 		intro.preferredMaxLayoutWidth = 420
 
-		let sponsor = NSButton(title: L("Sponsor on GitHub"), target: self, action: #selector(openSponsors(_:)))
+		let sponsor = NSButton(title: Strings.about.sponsorGithub, target: self, action: #selector(openSponsors(_:)))
 		sponsor.image = NSImage(systemSymbolName: "heart.fill", accessibilityDescription: nil)
 		sponsor.imagePosition = .imageLeading
 		sponsor.contentTintColor = .systemPink
@@ -147,18 +148,18 @@ final class SupportWindow: NSObject, NSWindowDelegate {
 		let separator = NSBox()
 		separator.boxType = .separator
 
-		let btcTitle = NSTextField(labelWithString: L("Or send Bitcoin"))
+		let btcTitle = NSTextField(labelWithString: Strings.about.sendBitcoin)
 		btcTitle.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
 		let qr = NSImageView(image: Self.qrCode("bitcoin:" + Links.bitcoin, size: 150))
 		qr.wantsLayer = true
 		qr.layer?.backgroundColor = NSColor.white.cgColor // dark mode: scanners need a light quiet zone
 		qr.layer?.cornerRadius = 8
-		qr.setAccessibilityLabel(L("QR code of the Bitcoin address"))
+		qr.setAccessibilityLabel(Strings.about.bitcoinQRCode)
 		NSLayoutConstraint.activate([qr.widthAnchor.constraint(equalToConstant: 170), qr.heightAnchor.constraint(equalToConstant: 170)])
 		let address = NSTextField(labelWithString: Links.bitcoin)
 		address.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
 		address.isSelectable = true
-		let copy = NSButton(title: L("Copy Address"), target: self, action: #selector(copyAddress(_:)))
+		let copy = NSButton(title: Strings.about.copyAddress, target: self, action: #selector(copyAddress(_:)))
 		copy.bezelStyle = .push
 		copyButton = copy
 
@@ -186,10 +187,10 @@ final class SupportWindow: NSObject, NSWindowDelegate {
 	@objc private func copyAddress(_ sender: Any?) {
 		NSPasteboard.general.clearContents()
 		NSPasteboard.general.setString(Links.bitcoin, forType: .string)
-		copyButton?.title = L("Copied")
+		copyButton?.title = Strings.about.copied
 	}
 
-	func windowWillClose(_ notification: Notification) { copyButton?.title = L("Copy Address") }
+	func windowWillClose(_ notification: Notification) { copyButton?.title = Strings.about.copyAddress }
 
 	/// Black-on-white QR code scaled with whole pixels (sharp at any size).
 	static func qrCode(_ text: String, size: CGFloat) -> NSImage {

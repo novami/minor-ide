@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import MinorCore
 import TextEngine
@@ -11,10 +12,10 @@ final class StatusBar: NSView {
 	weak var owner: DocumentWindow?
 	private let position = NSTextField(labelWithString: "")
 	private let language = NSTextField(labelWithString: "")
-	private let readOnly = NSTextField(labelWithString: L("Read Only"))
-	private let lineEnding = StatusBar.popUp(L("Line Endings"))
-	private let indentation = StatusBar.popUp(L("Indentation"))
-	private let encoding = StatusBar.popUp(L("Encoding"))
+	private let readOnly = NSTextField(labelWithString: Strings.statusBar.readOnly)
+	private let lineEnding = StatusBar.popUp(Strings.format.lineEndings)
+	private let indentation = StatusBar.popUp(Strings.format.indentation)
+	private let encoding = StatusBar.popUp(Strings.format.encoding)
 	private let restricted = NSButton()
 	/// gopls progress, start, crash or a missing install (hidden while it runs idle).
 	private let languageServer = NSButton()
@@ -36,7 +37,7 @@ final class StatusBar: NSView {
 			label.lineBreakMode = .byTruncatingTail
 		}
 		position.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-		restricted.title = L("Restricted Mode")
+		restricted.title = Strings.statusBar.restrictedMode
 		restricted.image = NSImage(systemSymbolName: "shield.lefthalf.filled", accessibilityDescription: nil)
 		restricted.imagePosition = .imageLeading
 		restricted.isBordered = false
@@ -45,9 +46,9 @@ final class StatusBar: NSView {
 		restricted.contentTintColor = .secondaryLabelColor
 		restricted.target = self
 		restricted.action = #selector(trustProject(_:))
-		restricted.toolTip = L("MinorIDE doesn’t run Git, tools or commands from this project. Click to trust it.")
+		restricted.toolTip = Strings.statusBar.restrictedModeHint
 
-		bottomPanel.image = NSImage(systemSymbolName: "rectangle.bottomthird.inset.filled", accessibilityDescription: L("Bottom Panel"))
+		bottomPanel.image = NSImage(systemSymbolName: "rectangle.bottomthird.inset.filled", accessibilityDescription: Strings.panel.bottomPanel)
 		bottomPanel.setButtonType(.toggle)
 		bottomPanel.isBordered = false
 		bottomPanel.controlSize = .small
@@ -75,7 +76,7 @@ final class StatusBar: NSView {
 		languageServer.action = #selector(languageServerClicked(_:))
 		languageServer.isHidden = true
 
-		readOnly.toolTip = L("Files larger than 256 MB open read-only.")
+		readOnly.toolTip = Strings.statusBar.largeFileReadOnly
 		let right = NSStackView(views: [languageServer, restricted, readOnly, language, lineEnding, indentation, encoding])
 		right.spacing = 10
 		let row = NSStackView(views: [bottomPanel, branchView, position, right])
@@ -99,7 +100,7 @@ final class StatusBar: NSView {
 		setContentHuggingPriority(.required, for: .vertical)
 		setAccessibilityElement(true)
 		setAccessibilityRole(.group)
-		setAccessibilityLabel(L("Status Bar"))
+		setAccessibilityLabel(Strings.statusBar.statusBar)
 	}
 
 	@available(*, unavailable)
@@ -145,31 +146,31 @@ final class StatusBar: NSView {
 		guard let owner else { return }
 		let pane = owner.focusedPane, doc = pane.document, format = doc.format
 		updatePosition()
-		language.stringValue = doc.text.language?.name ?? L("Plain Text")
+		language.stringValue = doc.text.language?.name ?? Strings.format.plainText
 		restricted.isHidden = owner.project.map { $0.isTrusted } ?? true
 		updateGitHead()
 		readOnly.isHidden = !doc.text.isReadOnly
 		lineEnding.isEnabled = !doc.text.isReadOnly
 		encoding.isEnabled = !doc.text.isReadOnly
 
-		let eol = doc.mixedLineEndings ? L("Mixed → %@", format.lineEnding.label) : format.lineEnding.label
-		fill(lineEnding, title: eol, [(L("LF (macOS, Unix)"), "lf"), (L("CRLF (Windows)"), "crlf"), (L("CR (Classic Mac)"), "cr")]
+		let eol = doc.mixedLineEndings ? Strings.statusBar.mixedLineEndings(lineEnding: format.lineEnding.label) : format.lineEnding.label
+		fill(lineEnding, title: eol, [(Strings.format.lineEndingLF, "lf"), (Strings.format.lineEndingCRLF, "crlf"), (Strings.format.lineEndingCR, "cr")]
 			.map { ($0.0, $0.1 == format.lineEnding.rawValue && !doc.mixedLineEndings, #selector(setLineEnding(_:)), $0.1 as Any) })
 
 		let tabs = format.indentStyle == .tab
-		var indent: [(String, Bool, Selector, Any)] = [(L("Tabs"), tabs, #selector(setIndent(_:)), 0)]
-		indent += [2, 4].map { (L("%d Spaces", $0), !tabs && format.indentSize == $0, #selector(setIndent(_:)), $0 as Any) }
-		indent += [2, 4, 8].map { (L("Tab Width: %d", $0), format.tabWidth == $0, #selector(setTabWidth(_:)), $0 as Any) }
-		fill(indentation, title: tabs ? L("Tabs (%d)", format.tabWidth) : LP("%d spaces", one: "%d space", format.indentSize), indent)
+		var indent: [(String, Bool, Selector, Any)] = [(Strings.format.tabs, tabs, #selector(setIndent(_:)), 0)]
+		indent += [2, 4].map { (Strings.statusBar.indentSpaces(size: $0), !tabs && format.indentSize == $0, #selector(setIndent(_:)), $0 as Any) }
+		indent += [2, 4, 8].map { (Strings.statusBar.tabWidthValue(width: $0), format.tabWidth == $0, #selector(setTabWidth(_:)), $0 as Any) }
+		fill(indentation, title: tabs ? Strings.statusBar.tabsWithWidth(width: format.tabWidth) : Strings.format.spaceCount(count: format.indentSize), indent)
 		indentation.menu?.insertItem(.separator(), at: 4)
 		indentation.menu?.addItem(.separator())
-		indentation.menu?.addItem(withTitle: L("Convert Indentation"), action: #selector(EditorView.convertIndentation(_:)), keyEquivalent: "")
+		indentation.menu?.addItem(withTitle: Strings.format.convertIndentation, action: #selector(EditorView.convertIndentation(_:)), keyEquivalent: "")
 			.target = pane.editor
 
 		fill(encoding, title: format.charset.rawValue.uppercased(), Charset.allCases.map {
 			($0.rawValue.uppercased(), $0 == format.charset, #selector(setCharset(_:)), $0.rawValue as Any)
 		})
-		encoding.toolTip = L("Encoding used when saving")
+		encoding.toolTip = Strings.statusBar.encodingHint
 	}
 
 	private func fill(_ button: NSPopUpButton, title: String, _ items: [(String, Bool, Selector, Any)]) {
@@ -190,12 +191,12 @@ final class StatusBar: NSView {
 		let primary = selections.primary
 		let line = rope.line(containing: primary.head)
 		let column = rope.utf16Offset(ofByte: primary.head) - rope.utf16Offset(ofByte: rope.offset(ofLine: line)) + 1
-		var text = L("Line %d, Column %d", line + 1, column)
+		var text = Strings.statusBar.lineColumn(line: line + 1, column: column)
 		if selections.count > 1 {
-			text += " · " + LP("%d cursors", one: "%d cursor", selections.count)
+			text += " · " + Strings.statusBar.cursorCount(count: selections.count)
 		} else if !primary.isEmpty {
 			let length = rope.utf16Offset(ofByte: primary.range.upperBound) - rope.utf16Offset(ofByte: primary.range.lowerBound)
-			text += " · " + LP("%d characters selected", one: "%d character selected", length)
+			text += " · " + Strings.statusBar.selectedCharacters(count: length)
 		}
 		return text
 	}
@@ -231,11 +232,11 @@ final class StatusBar: NSView {
 		branchView.isHidden = false
 		switch head {
 		case .branch(let name):
-			branchView.toolTip = L("Git branch: %@", name)
-			branchView.setAccessibilityLabel(L("Git branch: %@", name))
+			branchView.toolTip = Strings.statusBar.gitBranch(branch: name)
+			branchView.setAccessibilityLabel(Strings.statusBar.gitBranch(branch: name))
 		case .detached(let hash):
-			branchView.toolTip = L("Detached HEAD at %@", hash)
-			branchView.setAccessibilityLabel(L("Detached HEAD at %@", head.label))
+			branchView.toolTip = Strings.statusBar.detachedHead(commit: hash)
+			branchView.setAccessibilityLabel(Strings.statusBar.detachedHead(commit: head.label))
 		}
 	}
 
@@ -244,7 +245,7 @@ final class StatusBar: NSView {
 		bottomPanel.isHidden = owner?.project == nil
 		bottomPanel.state = shown ? .on : .off
 		bottomPanel.contentTintColor = shown ? .controlAccentColor : .secondaryLabelColor
-		bottomPanel.toolTip = shown ? L("Hide Bottom Panel") : L("Show Bottom Panel")
+		bottomPanel.toolTip = shown ? Strings.panel.hideBottomPanel : Strings.panel.showBottomPanel
 	}
 
 	/// The bottom panel button in window coordinates, nil when hidden (snapshot checks).
@@ -267,17 +268,17 @@ final class StatusBar: NSView {
 		case .idle, .locating, .server(.stopped):
 			break
 		case .missing(let goInstalled):
-			title = goInstalled ? L("Install gopls…") : L("gopls not installed")
+			title = goInstalled ? Strings.menu.installGopls : Strings.statusBar.goplsNotInstalled
 			symbol = "exclamationmark.triangle"
 			tint = .systemOrange
 		case .installing:
-			title = L("Installing gopls…")
+			title = Strings.statusBar.installingGopls
 		case .server(.starting), .server(.restarting):
-			title = L("Starting gopls…")
+			title = Strings.statusBar.startingGopls
 		case .server(.running):
 			title = services.progress.text.map { "gopls: " + $0 }
 		case .server(.failed):
-			title = L("gopls stopped")
+			title = Strings.statusBar.goplsStopped
 			symbol = "exclamationmark.triangle"
 			tint = .systemOrange
 		}

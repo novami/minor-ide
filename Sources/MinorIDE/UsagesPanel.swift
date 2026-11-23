@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import MinorCore
 import TextEngine
@@ -48,7 +49,7 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		self.project = project
 		super.init()
 		build()
-		status.stringValue = L("Usages of a symbol appear here. Use Navigate › Find Usages in an editor.")
+		status.stringValue = Strings.usages.emptyHint
 		observer = NotificationCenter.default.addObserver(forName: FileDocument.textDidChange, object: nil, queue: .main) { [weak self] note in
 			guard let doc = note.object as? FileDocument else { return }
 			let id = ObjectIdentifier(doc)
@@ -107,7 +108,7 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		outline.action = #selector(rowClicked(_:))
 		outline.doubleAction = #selector(rowOpened(_:))
 		outline.onReturn = { [weak self] in self?.openSelected(focusEditor: true) }
-		outline.setAccessibilityLabel(L("Usages"))
+		outline.setAccessibilityLabel(Strings.panel.usages)
 		let scroll = NSScrollView()
 		scroll.documentView = outline
 		scroll.hasVerticalScroller = true
@@ -137,13 +138,13 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		files = []
 		self.name = name
 		outline.reloadData()
-		status.stringValue = L("Finding usages of “%@”…", name)
+		status.stringValue = Strings.usages.findingUsages(name: name)
 		Task { [weak self] in
 			let found = await search()
 			guard let self, gen == generation else { return }
 			isSearching = false
 			guard let found else {
-				status.stringValue = L("The language server did not answer.")
+				status.stringValue = Strings.usages.noAnswer
 				return
 			}
 			var byURL: [URL: FileItem] = [:]
@@ -159,8 +160,8 @@ final class UsagesPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 			files.forEach(track)
 			outline.reloadData()
 			outline.expandItem(nil, expandChildren: true)
-			status.stringValue = found.isEmpty ? L("No usages of “%@”.", name)
-				: L("Usages of “%@”: %@", name, LP("%d usages", one: "%d usage", found.count) + " " + LP("in %d files", one: "in %d file", files.count))
+			status.stringValue = found.isEmpty ? Strings.usages.noUsagesOf(name: name)
+				: Strings.usages.title(name: name, summary: Strings.usages.usageCount(count: found.count) + " " + Strings.common.inFiles(count: files.count))
 			NSAccessibility.post(element: status, notification: .valueChanged)
 		}
 	}

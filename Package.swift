@@ -19,7 +19,7 @@ let package = Package(
 		.executableTarget(name: "L10nTool", dependencies: ["L10nTooling", "Localization"]),
 		.target(name: "TextEngine"),
 		.target(name: "Highlight", dependencies: ["TextEngine"]),
-		.target(name: "EditorKit", dependencies: ["TextEngine", "MinorCore", "Highlight"]),
+		.target(name: "EditorKit", dependencies: ["TextEngine", "MinorCore", "Highlight", "Localization"]),
 		.target(name: "DBKit", dependencies: ["MinorCore"]),
 		.target(name: "SecretsKit"),
 		.target(name: "RemoteKit", dependencies: ["MinorCore"]),
@@ -29,7 +29,7 @@ let package = Package(
 		.executableTarget(name: "PHPScan", dependencies: ["PHPKit"], path: "Sources/PHPScan"),
 		// Spike S2: TLS upgrade inside a database connection (docs/spike-tls.md).
 		.executableTarget(name: "TLSSpike", path: "Sources/TLSSpike"),
-		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "TextEngine", "EditorKit", "Highlight", "SecretsKit", "DBKit", "RemoteKit", "LSPKit",
+		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "Localization", "TextEngine", "EditorKit", "Highlight", "SecretsKit", "DBKit", "RemoteKit", "LSPKit",
 		                                                .product(name: "SwiftTerm", package: "SwiftTerm")]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
 		.testTarget(name: "MinorCoreTests", dependencies: ["MinorCore"]),

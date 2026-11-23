@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 
 /// Window whose File › Close (⌘W) closes the focused split pane before the window.
@@ -179,7 +180,7 @@ extension DocumentWindow {
 		let editor = pane.editor
 		project?.loadGitBase(pane.document)
 		project?.languageServers.scheduleSync()
-		editor.setAccessibilityLabel(L("Editor"))
+		editor.setAccessibilityLabel(Strings.split.editor)
 		editor.contextMenuProvider = { DocumentWindow.contextMenu(for: $0) }
 		if let services = project?.languageServers {
 			let completion = CompletionController(editor: editor) { [weak services, weak doc = pane.document] in

@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import Highlight
 import MinorCore
@@ -186,10 +187,10 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			trustBanner.isHidden = true
 			return
 		}
-		trustBanner.show(L("Restricted Mode: MinorIDE doesn’t run Git, tools or commands from this project."), [
-			(L("Trust Project…"), { [weak self] in self?.toggleProjectTrust(nil) }, false),
-			(L("Learn More"), { Self.openHelp(anchor: "restricted-mode") }, false),
-			(L("Hide"), { [weak self] in self?.trustBannerDismissed = true }, true),
+		trustBanner.show(Strings.window.restrictedModeBanner, [
+			(Strings.menu.trustProject, { [weak self] in self?.toggleProjectTrust(nil) }, false),
+			(Strings.window.learnMore, { Self.openHelp(anchor: "restricted-mode") }, false),
+			(Strings.window.hide, { [weak self] in self?.trustBannerDismissed = true }, true),
 		])
 	}
 
@@ -206,10 +207,10 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			return
 		}
 		let alert = NSAlert()
-		alert.messageText = L("Trust the project “%@”?", project.name)
-		alert.informativeText = L("A trusted project can run code when MinorIDE uses Git, language servers, tools, run configurations or the debugger on it. Trust only projects from authors you trust.")
-		alert.addButton(withTitle: L("Trust"))
-		alert.addButton(withTitle: L("Cancel"))
+		alert.messageText = Strings.window.trustQuestion(project: project.name)
+		alert.informativeText = Strings.window.trustInfo
+		alert.addButton(withTitle: Strings.window.trust)
+		alert.addButton(withTitle: Strings.common.cancel)
 		alert.beginSheetModal(for: window) { [weak self] response in
 			guard response == .alertFirstButtonReturn else { return }
 			self?.setTrust(true, project)
@@ -284,28 +285,28 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		let menu = NSMenu()
 		let word = editor.rope.string(in: editor.lookUpRange).trimmingCharacters(in: .whitespacesAndNewlines)
 		if !word.isEmpty, word.count <= 40, !word.contains("\n") {
-			menu.item(L("Look Up “%@”", word), #selector(EditorView.lookUpSelection(_:)))
+			menu.item(Strings.window.lookUp(word: word), #selector(EditorView.lookUpSelection(_:)))
 			menu.addItem(.separator())
 		}
 		if (editor.window?.delegate as? DocumentWindow)?.project != nil {
-			menu.item(L("Jump to Definition"), #selector(DocumentWindow.jumpToDefinition(_:)))
-			menu.item(L("Find Usages"), #selector(DocumentWindow.findUsages(_:)))
-			menu.item(L("Quick Actions…"), #selector(DocumentWindow.showQuickActions(_:)))
-			menu.item(L("Rename…"), #selector(DocumentWindow.renameSymbol(_:)))
-			menu.item(L("Format Code"), #selector(DocumentWindow.formatCode(_:)))
+			menu.item(Strings.menu.jumpToDefinition, #selector(DocumentWindow.jumpToDefinition(_:)))
+			menu.item(Strings.menu.findUsages, #selector(DocumentWindow.findUsages(_:)))
+			menu.item(Strings.menu.quickActions, #selector(DocumentWindow.showQuickActions(_:)))
+			menu.item(Strings.common.rename, #selector(DocumentWindow.renameSymbol(_:)))
+			menu.item(Strings.menu.formatCode, #selector(DocumentWindow.formatCode(_:)))
 			menu.addItem(.separator())
 		}
-		menu.item(L("Cut"), #selector(NSText.cut(_:)))
-		menu.item(L("Copy"), #selector(NSText.copy(_:)))
-		menu.item(L("Paste"), #selector(NSText.paste(_:)))
+		menu.item(Strings.common.cut, #selector(NSText.cut(_:)))
+		menu.item(Strings.common.copy, #selector(NSText.copy(_:)))
+		menu.item(Strings.common.paste, #selector(NSText.paste(_:)))
 		menu.addItem(.separator())
-		menu.item(L("Comment Selection"), #selector(EditorView.toggleComment(_:)))
-		menu.item(L("Find…"), #selector(DocumentWindow.showFind(_:)))
+		menu.item(Strings.menu.commentSelection, #selector(EditorView.toggleComment(_:)))
+		menu.item(Strings.find.findEllipsis, #selector(DocumentWindow.showFind(_:)))
 		menu.addItem(.separator())
-		let speech = menu.item(L("Speech"), nil)
-		speech.submenu = NSMenu(title: L("Speech"))
-		speech.submenu!.item(L("Start Speaking"), #selector(EditorView.startSpeaking(_:)))
-		speech.submenu!.item(L("Stop Speaking"), #selector(EditorView.stopSpeaking(_:)))
+		let speech = menu.item(Strings.window.speech, nil)
+		speech.submenu = NSMenu(title: Strings.window.speech)
+		speech.submenu!.item(Strings.window.startSpeaking, #selector(EditorView.startSpeaking(_:)))
+		speech.submenu!.item(Strings.window.stopSpeaking, #selector(EditorView.stopSpeaking(_:)))
 		return menu
 	}
 
@@ -328,12 +329,12 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		switch doc.diskNotice {
 		case nil: pane.banner.isHidden = true
 		case .deleted:
-			pane.banner.show(L("The file was deleted from disk. Saving creates it again."), [(L("OK"), { doc.dismissDiskNotice() }, true)])
+			pane.banner.show(Strings.window.fileDeleted, [(Strings.common.ok, { doc.dismissDiskNotice() }, true)])
 		case .changed:
-			pane.banner.show(L("The file changed on disk."), [
-				(L("Reload"), { doc.reload() }, true),
-				(L("Keep Mine"), { doc.keepMine() }, true),
-				(L("Compare"), { [weak self] in self?.compareWithDisk(doc) }, false),
+			pane.banner.show(Strings.window.fileChanged, [
+				(Strings.window.reload, { doc.reload() }, true),
+				(Strings.window.keepMine, { doc.keepMine() }, true),
+				(Strings.window.compare, { [weak self] in self?.compareWithDisk(doc) }, false),
 			])
 		}
 	}
@@ -358,7 +359,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		guard let panels else { return }
 		let right = rightShown ?? !panels.inspector.isCollapsed
 		rightPanelButton?.state = right ? .on : .off
-		rightPanelButton?.toolTip = right ? L("Hide Right Panel") : L("Show Right Panel")
+		rightPanelButton?.toolTip = right ? Strings.panel.hideRightPanel : Strings.panel.showRightPanel
 		statusBar.setBottomPanelShown(bottomShown ?? !panels.bottom.isCollapsed)
 	}
 
@@ -545,7 +546,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		switch item.action {
 		case #selector(toggleBottomPanel(_:)):
 			guard let bottom = panels?.bottom else { return false }
-			item.title = bottom.isCollapsed ? L("Show Bottom Panel") : L("Hide Bottom Panel")
+			item.title = bottom.isCollapsed ? Strings.panel.showBottomPanel : Strings.panel.hideBottomPanel
 		case #selector(closeEditorSplit(_:)):
 			return splitEditor != nil
 		case #selector(jumpToDefinition(_:)): return focusedPane.navigation?.supports(.definition) ?? false
@@ -568,10 +569,10 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			return project != nil
 		case #selector(toggleProjectTrust(_:)):
 			guard let project else { return false }
-			item.title = project.isTrusted ? L("Restrict Project") : L("Trust Project…")
+			item.title = project.isTrusted ? Strings.window.restrictProject : Strings.menu.trustProject
 		case #selector(toggleRightPanel(_:)):
 			guard let right = panels?.inspector else { return false }
-			item.title = right.isCollapsed ? L("Show Right Panel") : L("Hide Right Panel")
+			item.title = right.isCollapsed ? Strings.panel.showRightPanel : Strings.panel.hideRightPanel
 		default: break
 		}
 		return true
@@ -604,7 +605,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		guard let url = doc.url, let disk = doc.diskText() else { return }
 		let name = url.lastPathComponent
 		let compare = CompareWindow(title: name, old: disk, new: doc.text.rope.string,
-		                            oldLabel: L("%@ (on disk)", name), newLabel: L("%@ (in the editor)", name))
+		                            oldLabel: Strings.window.onDisk(name: name), newLabel: Strings.common.inEditor(name: name))
 		compare.onClose = { [weak self] in self?.compareWindow = nil }
 		compareWindow = compare
 	}
@@ -699,16 +700,16 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 	private func saveAs(_ doc: FileDocument) -> Bool {
 		let panel = NSSavePanel()
-		panel.nameFieldStringValue = doc.url?.lastPathComponent ?? L("Untitled")
+		panel.nameFieldStringValue = doc.url?.lastPathComponent ?? Strings.window.untitled
 		if let dir = doc.url?.deletingLastPathComponent() { panel.directoryURL = dir }
 		guard panel.runModal() == .OK, let chosen = panel.url else { return false }
 		// One model per file: the open document of that path gives way to this one.
 		if let other = FileDocument.document(for: chosen), other !== doc, other.isEdited {
 			let alert = NSAlert()
-			alert.messageText = L("“%@” is open with unsaved changes. Do you want to replace it?", chosen.lastPathComponent)
-			alert.informativeText = L("Its unsaved changes will be lost.")
-			alert.addButton(withTitle: L("Replace"))
-			alert.addButton(withTitle: L("Cancel"))
+			alert.messageText = Strings.window.replaceUnsavedQuestion(name: chosen.lastPathComponent)
+			alert.informativeText = Strings.window.unsavedChangesLost
+			alert.addButton(withTitle: Strings.common.replace)
+			alert.addButton(withTitle: Strings.common.cancel)
 			guard alert.runModal() == .alertFirstButtonReturn else { return false }
 		}
 		return write(doc, to: chosen)
@@ -734,10 +735,10 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	private func askToSaveAsUTF8(_ doc: FileDocument, to url: URL, char: Character) {
 		let alert = NSAlert()
 		let charset = doc.format.charset.rawValue.uppercased()
-		alert.messageText = L("“%@” contains characters that %@ can’t store, such as “%@”.", url.lastPathComponent, charset, String(char))
-		alert.informativeText = L("Saving in %@ would replace them with question marks. You can save the file in UTF-8 instead, or remove those characters.", charset)
-		alert.addButton(withTitle: L("Save as UTF-8"))
-		alert.addButton(withTitle: L("Cancel"))
+		alert.messageText = Strings.window.unsupportedCharacters(name: url.lastPathComponent, encoding: charset, character: String(char))
+		alert.informativeText = Strings.window.unsupportedCharactersInfo(encoding: charset)
+		alert.addButton(withTitle: Strings.window.saveAsUTF8)
+		alert.addButton(withTitle: Strings.common.cancel)
 		alert.beginSheetModal(for: window) { [weak self] response in
 			MainActor.assumeIsolated {
 				guard response == .alertFirstButtonReturn, let self else { return }
@@ -750,7 +751,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	/// Title and tab follow the focused pane's file; its format is in the status bar.
 	func updateTitle() {
 		let doc = document
-		let name = doc.url?.lastPathComponent ?? L("Untitled")
+		let name = doc.url?.lastPathComponent ?? Strings.window.untitled
 		window.title = name
 		statusBar.update()
 		window.representedURL = doc.url
@@ -772,11 +773,11 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	func confirmSave(_ doc: FileDocument, _ completion: @escaping (Bool) -> Void) {
 		if let url = doc.url { focus(url) }
 		let alert = NSAlert()
-		alert.messageText = L("Do you want to save the changes made to the document “%@”?", doc.url?.lastPathComponent ?? L("Untitled"))
-		alert.informativeText = L("Your changes will be lost if you don’t save them.")
-		alert.addButton(withTitle: L("Save"))
-		alert.addButton(withTitle: L("Cancel"))
-		let dontSave = alert.addButton(withTitle: L("Don’t Save"))
+		alert.messageText = Strings.window.saveChangesQuestion(name: doc.url?.lastPathComponent ?? Strings.window.untitled)
+		alert.informativeText = Strings.window.changesLostIfNotSaved
+		alert.addButton(withTitle: Strings.common.save)
+		alert.addButton(withTitle: Strings.common.cancel)
+		let dontSave = alert.addButton(withTitle: Strings.window.dontSave)
 		dontSave.keyEquivalent = "d"
 		dontSave.keyEquivalentModifierMask = .command
 		alert.beginSheetModal(for: window) { [weak self] response in
@@ -847,22 +848,22 @@ extension DocumentWindow {
 	func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
 		if id == Self.rightPanelItem {
 			// A push-on/push-off button, so the icon shows whether the panel is open.
-			let button = NSButton(image: NSImage(systemSymbolName: "sidebar.right", accessibilityDescription: L("Right Panel"))!,
+			let button = NSButton(image: NSImage(systemSymbolName: "sidebar.right", accessibilityDescription: Strings.panel.rightPanel)!,
 			                      target: self, action: #selector(toggleRightPanel(_:)))
 			button.bezelStyle = .toolbar
 			button.setButtonType(.pushOnPushOff)
 			rightPanelButton = button
 			let item = NSToolbarItem(itemIdentifier: id)
-			item.label = L("Right Panel")
+			item.label = Strings.panel.rightPanel
 			item.view = button
 			updatePanelButtons()
 			return item
 		}
 		guard id == Self.findItem else { return nil }
 		let item = NSToolbarItem(itemIdentifier: id)
-		item.label = L("Find")
-		item.toolTip = L("Find")
-		item.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: L("Find"))
+		item.label = Strings.common.find
+		item.toolTip = Strings.common.find
+		item.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: Strings.common.find)
 		item.action = #selector(showFind(_:))
 		item.target = self
 		item.isBordered = true

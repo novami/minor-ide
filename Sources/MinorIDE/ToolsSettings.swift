@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import MinorCore
 import SecretsKit
 import SwiftUI
@@ -14,19 +15,19 @@ struct ToolSpec: Sendable {
 
 	static var all: [ToolSpec] {
 		[
-			ToolSpec(name: "git", arguments: ["--version"], minimum: "2.30", purpose: L("Git integration"),
-			         hint: L("Install the Command Line Tools: xcode-select --install")),
-			ToolSpec(name: "go", arguments: ["version"], minimum: "1.22", purpose: L("Go language features"),
-			         hint: L("Install Go from go.dev or with Homebrew: brew install go")),
-			ToolSpec(name: "gopls", arguments: ["version"], minimum: "0.16", purpose: L("Go code intelligence"),
+			ToolSpec(name: "git", arguments: ["--version"], minimum: "2.30", purpose: Strings.tools.gitIntegration,
+			         hint: Strings.tools.installCommandLineTools),
+			ToolSpec(name: "go", arguments: ["version"], minimum: "1.22", purpose: Strings.tools.goLanguageFeatures,
+			         hint: Strings.tools.installGo),
+			ToolSpec(name: "gopls", arguments: ["version"], minimum: "0.16", purpose: Strings.tools.goCodeIntelligence,
 			         hint: "go install golang.org/x/tools/gopls@latest"),
-			ToolSpec(name: "dlv", arguments: ["version"], minimum: "1.22", purpose: L("Go debugging"),
+			ToolSpec(name: "dlv", arguments: ["version"], minimum: "1.22", purpose: Strings.tools.goDebugging,
 			         hint: "go install github.com/go-delve/delve/cmd/dlv@latest"),
-			ToolSpec(name: "php", arguments: ["--version"], minimum: "7.2", purpose: L("PHPStan and formatters"),
-			         hint: L("Optional: PHP code intelligence in MinorIDE works without it.")),
-			ToolSpec(name: "ssh", arguments: ["-V"], minimum: nil, purpose: L("SSH, SFTP and tunnels"), hint: L("Part of macOS.")),
-			ToolSpec(name: "rsync", arguments: ["--version"], minimum: nil, purpose: L("Synchronization with servers"), hint: L("Part of macOS.")),
-			ToolSpec(name: "docker", arguments: ["--version"], minimum: "24", purpose: L("PHP in a container"), hint: L("Optional.")),
+			ToolSpec(name: "php", arguments: ["--version"], minimum: "7.2", purpose: Strings.tools.phpstanFormatters,
+			         hint: Strings.tools.optionalForPHP),
+			ToolSpec(name: "ssh", arguments: ["-V"], minimum: nil, purpose: Strings.tools.sshAndTunnels, hint: Strings.tools.partOfMacOS),
+			ToolSpec(name: "rsync", arguments: ["--version"], minimum: nil, purpose: Strings.tools.serverSync, hint: Strings.tools.partOfMacOS),
+			ToolSpec(name: "docker", arguments: ["--version"], minimum: "24", purpose: Strings.tools.phpContainer, hint: Strings.tools.optional),
 		]
 	}
 }
@@ -96,15 +97,15 @@ struct ToolsSettingsView: View {
 				}
 			} footer: {
 				if let env = model.environment, !env.fromShell {
-					Text(L("Your shell’s PATH could not be read, so MinorIDE looks in /opt/homebrew/bin, /usr/local/bin and ~/go/bin too."))
+					Text(Strings.tools.pathFallback)
 				} else {
-					Text(L("Tools are found with the PATH of your login shell. A missing tool only turns off what needs it."))
+					Text(Strings.tools.pathInfo)
 				}
 			}
 			Section {
 				HStack {
 					Spacer()
-					Button(L("Check Again")) { model.refresh() }.disabled(model.checking)
+					Button(Strings.common.checkAgain) { model.refresh() }.disabled(model.checking)
 				}
 			}
 		}
@@ -143,11 +144,11 @@ struct ToolRow: View {
 		case .ok?:
 			Label(check?.version ?? "", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
 		case .unknownVersion?:
-			Label(L("Installed"), systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+			Label(Strings.tools.installed, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
 		case .tooOld?:
-			Label(L("%@ (needs %@)", check?.version ?? "", spec.minimum ?? ""), systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+			Label(Strings.tools.versionNeeds(version: check?.version ?? "", minimum: spec.minimum ?? ""), systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
 		case .missing?:
-			Label(L("Not found"), systemImage: "xmark.circle").foregroundStyle(.secondary)
+			Label(Strings.common.notFound, systemImage: "xmark.circle").foregroundStyle(.secondary)
 		}
 	}
 }

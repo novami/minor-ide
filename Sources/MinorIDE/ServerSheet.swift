@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import RemoteKit
 import SecretsKit
 
@@ -46,7 +47,7 @@ enum Servers {
 @MainActor
 final class ServerSheet: NSObject, NSTextFieldDelegate {
 	private static let kinds: [(RemoteServer.Kind, String)] = [
-		(.sftp, "SFTP"), (.ftps, L("FTPS (FTP over TLS)")),
+		(.sftp, "SFTP"), (.ftps, Strings.server.ftps),
 	]
 
 	private var server: RemoteServer
@@ -64,7 +65,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 	private let keyFile = NSTextField()
 	private let password = NSSecureTextField()
 	private let remotePath = NSTextField()
-	private let production = NSButton(checkboxWithTitle: L("Production server"), target: nil, action: nil)
+	private let production = NSButton(checkboxWithTitle: Strings.server.productionServer, target: nil, action: nil)
 	private let saveButton: NSButton
 	/// The password as loaded from the Keychain (nil while loading); an unchanged one is not written again.
 	private var loadedPassword: String?
@@ -86,7 +87,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 		oldScope = scope
 		self.server = server ?? RemoteServer()
 		panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 460, height: 300), styleMask: [.titled], backing: .buffered, defer: true)
-		saveButton = NSButton(title: server == nil ? L("Add") : L("Save"), target: nil, action: nil)
+		saveButton = NSButton(title: server == nil ? Strings.common.add : Strings.common.save, target: nil, action: nil)
 		super.init()
 		build()
 		fill()
@@ -107,7 +108,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 			kind.addItem(withTitle: title)
 			kind.lastItem?.representedObject = k.rawValue
 		}
-		authentication.addItems(withTitles: [L("SSH Key"), L("Password")])
+		authentication.addItems(withTitles: [Strings.server.sshKey, Strings.server.password])
 		for popup in [kind, authentication] {
 			popup.target = self
 			popup.action = #selector(changed(_:))
@@ -115,12 +116,12 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 		for field in [name, host, port, user, keyFile, password, remotePath] {
 			field.delegate = self
 		}
-		name.placeholderString = L("Required")
+		name.placeholderString = Strings.common.required
 		host.placeholderString = "example.com"
 		port.alignment = .right
-		keyFile.placeholderString = L("From SSH configuration")
-		password.placeholderString = L("Stored in the Keychain")
-		remotePath.placeholderString = L("Login folder")
+		keyFile.placeholderString = Strings.connection.fromSSHConfig
+		password.placeholderString = Strings.connection.storedInKeychain
+		remotePath.placeholderString = Strings.server.loginFolder
 		production.target = self
 		production.action = #selector(changed(_:))
 
@@ -129,26 +130,26 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 			l.alignment = .right
 			return l
 		}
-		let hostRow = NSStackView(views: [host, NSTextField(labelWithString: L("Port:")), port])
+		let hostRow = NSStackView(views: [host, NSTextField(labelWithString: Strings.connection.port), port])
 		hostRow.spacing = 6
 		host.setContentHuggingPriority(.defaultLow, for: .horizontal)
 		port.widthAnchor.constraint(equalToConstant: 64).isActive = true
-		let keyStack = NSStackView(views: [keyFile, NSButton(title: L("Choose…"), target: self, action: #selector(chooseKey(_:)))])
+		let keyStack = NSStackView(views: [keyFile, NSButton(title: Strings.common.choose, target: self, action: #selector(chooseKey(_:)))])
 		keyStack.spacing = 6
 		keyFile.setContentHuggingPriority(.defaultLow, for: .horizontal)
-		let productionNote = NSTextField(wrappingLabelWithString: L("Shown in red; uploads ask for confirmation."))
+		let productionNote = NSTextField(wrappingLabelWithString: Strings.server.productionHint)
 		productionNote.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		productionNote.textColor = .secondaryLabelColor
 
-		grid.addRow(with: [label(L("Available In:")), scope.popup])
-		grid.addRow(with: [label(L("Type:")), kind])
-		grid.addRow(with: [label(L("Name:")), name])
-		grid.addRow(with: [label(L("Host:")), hostRow])
-		grid.addRow(with: [label(L("User:")), user])
-		authRow = grid.addRow(with: [label(L("Log In With:")), authentication])
-		keyRow = grid.addRow(with: [label(L("Key File:")), keyStack])
-		passwordRow = grid.addRow(with: [label(L("Password:")), password])
-		grid.addRow(with: [label(L("Remote Folder:")), remotePath])
+		grid.addRow(with: [label(Strings.connection.availableIn), scope.popup])
+		grid.addRow(with: [label(Strings.connection.type), kind])
+		grid.addRow(with: [label(Strings.connection.name), name])
+		grid.addRow(with: [label(Strings.connection.host), hostRow])
+		grid.addRow(with: [label(Strings.connection.user), user])
+		authRow = grid.addRow(with: [label(Strings.server.logInWith), authentication])
+		keyRow = grid.addRow(with: [label(Strings.connection.keyFile), keyStack])
+		passwordRow = grid.addRow(with: [label(Strings.connection.password), password])
+		grid.addRow(with: [label(Strings.server.remoteFolderLabel), remotePath])
 		grid.addRow(with: [NSGridCell.emptyContentView, production])
 		grid.addRow(with: [NSGridCell.emptyContentView, productionNote])
 		grid.rowSpacing = 8
@@ -157,7 +158,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 		grid.rowAlignment = .firstBaseline
 		grid.column(at: 1).width = 300
 
-		let cancel = NSButton(title: L("Cancel"), target: self, action: #selector(cancel(_:)))
+		let cancel = NSButton(title: Strings.common.cancel, target: self, action: #selector(cancel(_:)))
 		cancel.keyEquivalent = "\u{1b}"
 		saveButton.target = self
 		saveButton.action = #selector(save(_:))
@@ -179,7 +180,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 			buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20),
 		])
 		panel.contentView = content
-		panel.title = isNew ? L("Add Server") : L("Edit Server")
+		panel.title = isNew ? Strings.server.addServer : Strings.server.editServer
 		panel.initialFirstResponder = name
 	}
 
@@ -219,7 +220,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 		keyRow.isHidden = s.usesPassword
 		passwordRow.isHidden = !s.usesPassword
 		port.placeholderString = String(s.kind.defaultPort)
-		user.placeholderString = s.kind == .sftp ? L("From SSH configuration") : L("Required")
+		user.placeholderString = s.kind == .sftp ? Strings.connection.fromSSHConfig : Strings.common.required
 		saveButton.isEnabled = s.isComplete
 	}
 
@@ -228,7 +229,7 @@ final class ServerSheet: NSObject, NSTextFieldDelegate {
 
 	@objc private func chooseKey(_ sender: Any?) {
 		let open = NSOpenPanel()
-		open.message = L("Choose the private key for the server.")
+		open.message = Strings.server.chooseKey
 		open.showsHiddenFiles = true
 		open.directoryURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".ssh")
 		open.beginSheetModal(for: panel) { [weak self] response in

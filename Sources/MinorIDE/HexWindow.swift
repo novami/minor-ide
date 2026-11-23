@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import MinorCore
 
 /// Read-only hex view of a binary file (first 1 MB).
@@ -16,12 +17,12 @@ final class HexWindow: NSObject, NSWindowDelegate {
 		text.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
 		let data = (try? Data(contentsOf: url, options: .alwaysMapped)) ?? Data()
 		var dump = HexDump.format(data)
-		if data.count > 1 << 20 { dump += "\n" + L("Showing the first 1 MB of %@.", ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file)) }
+		if data.count > 1 << 20 { dump += "\n" + Strings.hex.truncated(size: data.count) }
 		text.string = dump
-		text.setAccessibilityLabel(L("Hex View"))
+		text.setAccessibilityLabel(Strings.hex.hexView)
 		window.contentView = scroll
 		window.title = url.lastPathComponent
-		window.subtitle = L("Hex View")
+		window.subtitle = Strings.hex.hexView
 		window.representedURL = url
 		window.isReleasedWhenClosed = false
 		super.init()

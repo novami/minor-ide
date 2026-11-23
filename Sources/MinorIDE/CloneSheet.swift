@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import MinorCore
 
 /// Clone Git Repository… (welcome window, File menu): a sheet with the repository address
@@ -22,13 +23,13 @@ final class CloneSheet: NSObject, NSTextFieldDelegate {
 		super.init()
 		address.placeholderString = "https://github.com/owner/repository.git"
 		address.delegate = self
-		address.setAccessibilityLabel(L("Repository address"))
+		address.setAccessibilityLabel(Strings.clone.repositoryAddress)
 		name.delegate = self
-		name.setAccessibilityLabel(L("Folder name"))
+		name.setAccessibilityLabel(Strings.clone.folderName)
 		location.pathStyle = .popUp
 		location.allowedTypes = ["public.folder"]
 		location.url = Self.defaultParent
-		location.setAccessibilityLabel(L("Clone into"))
+		location.setAccessibilityLabel(Strings.clone.cloneInto)
 		progress.style = .bar
 		progress.isIndeterminate = true
 		progress.isHidden = true
@@ -37,21 +38,21 @@ final class CloneSheet: NSObject, NSTextFieldDelegate {
 		status.textColor = .secondaryLabelColor
 		status.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		status.preferredMaxLayoutWidth = 480
-		cloneButton.title = L("Clone")
+		cloneButton.title = Strings.clone.clone
 		cloneButton.bezelStyle = .rounded
 		cloneButton.keyEquivalent = "\r"
 		cloneButton.target = self
 		cloneButton.action = #selector(clone(_:))
 		cloneButton.isEnabled = false
-		let cancelButton = NSButton(title: L("Cancel"), target: self, action: #selector(cancelPressed(_:)))
+		let cancelButton = NSButton(title: Strings.common.cancel, target: self, action: #selector(cancelPressed(_:)))
 		cancelButton.keyEquivalent = "\u{1b}"
 
-		let title = NSTextField(labelWithString: L("Clone Git Repository"))
+		let title = NSTextField(labelWithString: Strings.clone.title)
 		title.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
 		let grid = NSGridView(views: [
-			[NSTextField(labelWithString: L("Repository:")), address],
-			[NSTextField(labelWithString: L("Clone into:")), location],
-			[NSTextField(labelWithString: L("Folder name:")), name],
+			[NSTextField(labelWithString: Strings.clone.repository), address],
+			[NSTextField(labelWithString: Strings.clone.cloneIntoLabel), location],
+			[NSTextField(labelWithString: Strings.clone.folderNameLabel), name],
 		])
 		grid.column(at: 0).xPlacement = .trailing
 		grid.rowAlignment = .firstBaseline
@@ -115,7 +116,7 @@ final class CloneSheet: NSObject, NSTextFieldDelegate {
 	@objc private func cancelPressed(_ sender: Any?) {
 		if let cancel {
 			cancel.cancel()
-			status.stringValue = L("Cancelling…")
+			status.stringValue = Strings.clone.cancelling
 			return
 		}
 		close()
@@ -130,7 +131,7 @@ final class CloneSheet: NSObject, NSTextFieldDelegate {
 		let destination = parent.appendingPathComponent(name.stringValue)
 		guard !FileManager.default.fileExists(atPath: destination.path) else {
 			status.textColor = .systemRed
-			status.stringValue = L("“%@” already exists in this folder.", name.stringValue)
+			status.stringValue = Strings.clone.alreadyExistsFolder(name: name.stringValue)
 			return
 		}
 		UserDefaults.standard.set(parent.path, forKey: Self.parentKey)
@@ -143,12 +144,12 @@ final class CloneSheet: NSObject, NSTextFieldDelegate {
 		progress.isIndeterminate = true
 		progress.startAnimation(nil)
 		status.textColor = .secondaryLabelColor
-		status.stringValue = L("Connecting…")
+		status.stringValue = Strings.clone.connecting
 		let url = address.stringValue.trimmingCharacters(in: .whitespaces)
 		let sink = CloneProgress(self)
 		Task {
 			guard let git = await ToolsModel.shared.gitTool() else {
-				return finish(nil, error: L("Git is not installed. Install the Command Line Tools with “xcode-select --install”."), destination: destination)
+				return finish(nil, error: Strings.clone.gitNotInstalled, destination: destination)
 			}
 			let result = await Task.detached(priority: .userInitiated) {
 				// No hooks or transports that run commands; "--" so the address is never an option.
@@ -159,9 +160,9 @@ final class CloneSheet: NSObject, NSTextFieldDelegate {
 				        }, cancel: token)
 			}.value
 			let error: String? = switch result {
-			case nil: L("Git could not be started.")
+			case nil: Strings.clone.gitNotStarted
 			case let r? where r.status != 0:
-				token.isCancelled ? L("The clone was cancelled.") : Self.lastLine(r.stderr)
+				token.isCancelled ? Strings.clone.cloneWasCancelled : Self.lastLine(r.stderr)
 			default: nil
 			}
 			finish(result?.status == 0 ? destination : nil, error: error, destination: destination)
@@ -171,7 +172,7 @@ final class CloneSheet: NSObject, NSTextFieldDelegate {
 	private static func lastLine(_ data: Data) -> String {
 		let lines = String(decoding: data, as: UTF8.self).split(whereSeparator: { $0 == "\n" || $0 == "\r" })
 		return lines.last(where: { $0.hasPrefix("fatal:") || $0.hasPrefix("error:") }).map(String.init)
-			?? lines.last.map(String.init) ?? L("The clone failed.")
+			?? lines.last.map(String.init) ?? Strings.clone.cloneFailed
 	}
 
 	/// Git writes progress as "Receiving objects:  42% (…)\r".

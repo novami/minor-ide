@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import TextEngine
 
 /// Unified diff of two versions of a file (disk vs. the editor), read only.
@@ -14,10 +15,10 @@ final class CompareWindow: NSObject, NSWindowDelegate {
 		let view = scroll.documentView as! NSTextView
 		view.isEditable = false
 		view.textStorage?.setAttributedString(Self.diff(old: old, new: new, oldLabel: oldLabel, newLabel: newLabel))
-		view.setAccessibilityLabel(L("Comparison"))
+		view.setAccessibilityLabel(Strings.compare.comparison)
 		window.contentView = scroll
 		window.title = title
-		window.subtitle = L("Comparison")
+		window.subtitle = Strings.compare.comparison
 		window.isReleasedWhenClosed = false
 		super.init()
 		window.delegate = self
@@ -34,7 +35,7 @@ final class CompareWindow: NSObject, NSWindowDelegate {
 		let lines = LineDiff.unified(old.components(separatedBy: "\n"), new.components(separatedBy: "\n"))
 		text.append(NSAttributedString(string: "--- \(oldLabel)\n+++ \(newLabel)\n", attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]))
 		if lines.isEmpty {
-			text.append(NSAttributedString(string: L("The versions are identical."), attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+			text.append(NSAttributedString(string: Strings.compare.versionsIdentical, attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
 		}
 		for (prefix, line) in lines {
 			var attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.labelColor]

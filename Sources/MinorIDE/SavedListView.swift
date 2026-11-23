@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import DBKit
 import RemoteKit
 
@@ -19,11 +20,11 @@ final class ScopePicker {
 	init(project: Project, current: SavedScope?) {
 		self.project = project
 		popup.autoenablesItems = false
-		popup.addItem(withTitle: L("All Projects"))
-		popup.addItem(withTitle: L("Only “%@”", project.name))
+		popup.addItem(withTitle: Strings.savedList.allProjects)
+		popup.addItem(withTitle: Strings.savedList.onlyProject(project: project.name))
 		if !project.isTrusted {
 			popup.lastItem?.isEnabled = false
-			popup.lastItem?.toolTip = L("Trust the project to save settings in it.")
+			popup.lastItem?.toolTip = Strings.savedList.trustToSave
 		}
 		let inProject = current.map { $0 != .global } ?? project.isTrusted
 		popup.selectItem(at: inProject ? 1 : 0)
@@ -179,10 +180,10 @@ final class SavedListView: NSView, NSTableViewDataSource, NSTableViewDelegate, N
 	@objc private func delete(_ sender: Any?) {
 		guard let window, let c = clicked else { return }
 		let alert = NSAlert()
-		alert.messageText = L("Delete “%@”?", c.name)
+		alert.messageText = Strings.savedList.deleteConfirmation(name: c.name)
 		alert.informativeText = list.deleteText
-		alert.addButton(withTitle: L("Delete")).hasDestructiveAction = true
-		alert.addButton(withTitle: L("Cancel"))
+		alert.addButton(withTitle: Strings.savedList.delete).hasDestructiveAction = true
+		alert.addButton(withTitle: Strings.common.cancel)
 		let list = list
 		alert.beginSheetModal(for: window) { response in
 			guard response == .alertFirstButtonReturn else { return }
@@ -201,8 +202,8 @@ final class SavedListView: NSView, NSTableViewDataSource, NSTableViewDelegate, N
 	func menuNeedsUpdate(_ menu: NSMenu) {
 		menu.removeAllItems()
 		if clicked != nil {
-			menu.addItem(withTitle: L("Edit…"), action: #selector(edit(_:)), keyEquivalent: "").target = self
-			menu.addItem(withTitle: L("Delete…"), action: #selector(delete(_:)), keyEquivalent: "").target = self
+			menu.addItem(withTitle: Strings.savedList.edit, action: #selector(edit(_:)), keyEquivalent: "").target = self
+			menu.addItem(withTitle: Strings.savedList.deleteEllipsis, action: #selector(delete(_:)), keyEquivalent: "").target = self
 			menu.addItem(.separator())
 		}
 		menu.addItem(withTitle: list.addTitle, action: #selector(add(_:)), keyEquivalent: "").target = self
@@ -223,8 +224,8 @@ final class SavedListView: NSView, NSTableViewDataSource, NSTableViewDelegate, N
 		let name = NSTextField(labelWithString: c.name)
 		name.lineBreakMode = .byTruncatingTail
 		var detail = c.detail
-		if c.scope != .global { detail = L("This project") + " · " + detail }
-		if c.production { detail = L("Production") + " · " + detail }
+		if c.scope != .global { detail = Strings.savedList.thisProject + " · " + detail }
+		if c.production { detail = Strings.savedList.production + " · " + detail }
 		let summary = NSTextField(labelWithString: detail)
 		summary.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		summary.textColor = c.production ? .systemRed : .secondaryLabelColor
@@ -274,12 +275,12 @@ extension SavedList {
 				try await Databases.delete(c, in: row.scope)
 			}
 		},
-		label: L("Databases"),
-		addTitle: L("Add Database…"),
-		deleteTitle: L("Delete Database…"),
-		deleteText: L("The connection and its password in the Keychain will be deleted. The database itself is not changed."),
-		emptyTitle: L("No Databases"),
-		emptyText: L("Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here."))
+		label: Strings.savedList.databases,
+		addTitle: Strings.savedList.addDatabase,
+		deleteTitle: Strings.savedList.deleteDatabase,
+		deleteText: Strings.savedList.deleteDatabaseInfo,
+		emptyTitle: Strings.panel.noDatabases,
+		emptyText: Strings.panel.databasesEmpty)
 
 	@MainActor static let servers = SavedList(
 		load: { project in
@@ -302,10 +303,10 @@ extension SavedList {
 				try await Servers.delete(s, in: row.scope)
 			}
 		},
-		label: L("Servers"),
-		addTitle: L("Add Server…"),
-		deleteTitle: L("Delete Server…"),
-		deleteText: L("The server and its password in the Keychain will be deleted. Files on the server are not changed."),
-		emptyTitle: L("No Servers"),
-		emptyText: L("Files on servers connected over SFTP or FTPS will appear here."))
+		label: Strings.savedList.servers,
+		addTitle: Strings.savedList.addServer,
+		deleteTitle: Strings.savedList.deleteServer,
+		deleteText: Strings.savedList.deleteServerInfo,
+		emptyTitle: Strings.panel.noServers,
+		emptyText: Strings.panel.serversEmpty)
 }

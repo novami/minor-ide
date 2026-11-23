@@ -1,6 +1,14 @@
 # Localization Engine
 
-Target design (ADR-9). Until roadmap phase R2 is done, the current process in [translations.md](translations.md) applies (`L("…")`, `.strings`, `make l10n`).
+Design (ADR-9), in use since phase R2. Code: `Sources/Localization` (engine), `Sources/L10nTooling` and `Sources/L10nTool` (`minoride-l10n`).
+
+## Adding or changing a text
+
+1. Add the message to `Resources/Localization/en-US.json` and its translation to `cs-CZ.json`.
+2. Run `make l10n` (regenerates `Strings.swift`) and use `Strings.<key>` in the code.
+3. `make test` runs `make l10n-check`; commit the JSON files and `Strings.swift` together with the code.
+
+Removing the last use of a key fails the check until the key is removed from all files.
 
 ## Files
 
@@ -10,7 +18,7 @@ Resources/Localization/
 └─ cs-CZ.json    must always be complete
 ```
 
-One file per language. Adding a language means adding one file and running the validator. No code changes. The bundle script generates `<lang>.lproj/InfoPlist.strings` (permission prompts) from the `infoPlist` namespace, and an empty `.lproj` per language so system-provided UI (standard menu items, open and save panels) follows the language.
+One file per language. Adding a language means adding one file and running the validator. No code changes. The bundle script (`minoride-l10n bundle`) copies the files into the app, generates `<lang>.lproj/InfoPlist.strings` (permission prompts) from the `infoPlist` namespace (`infoPlist.NSAppleEventsUsageDescription` …), and creates an empty `.lproj` per language so system-provided UI (standard menu items, open and save panels) follows the language.
 
 ## Format
 
@@ -44,7 +52,7 @@ One file per language. Adding a language means adding one file and running the v
 }
 ```
 
-- **Namespaces** are nested objects; the key path is the dotted path (`project.delete.confirmation`).
+- **Namespaces** are nested objects; the key path is the dotted path (`project.delete.confirmation`). Key segments are Swift identifiers; `text`, `note`, `variants` and the plural category names are reserved and cannot be keys.
 - **A message** is a string, an object with `text`, or an object with plural categories (`zero`, `one`, `two`, `few`, `many`, `other`; `other` is required).
 - **Variants** (`variants`) hold explicit grammatical or context forms. The caller chooses a variant by name. There is no automatic suffixing of words; full sentence templates are preferred.
 - **Notes**: `note` (only in `en-US.json`) describes where and how a text is used.
@@ -66,6 +74,8 @@ Strings.docker.container.name(.genitive)                  // variant
 ```
 
 - A missing key or parameter is a compile error.
+- Parameter types: `{name}` takes any `CustomStringConvertible` (text, or a number without grouping such as a line number), `{name, number}` and `{name, bytes}` an integer, `{name, percent}` a `Double`, `{name, date…}` and `{name, time}` a `Date`. A plural message takes `count: Int`; `{count}` is written without grouping.
+- English is built into `Strings.swift`, so `swift run` and tests show English without the bundle.
 - Values are formatted with `Locale(identifier: meta.locale)` through Foundation format styles.
 - The engine loads the selected language and its fallback once at startup; lookups are dictionary reads without allocation of new formats.
 - Fallback order: selected language → its `fallback` → `en-US`. A missing translation in a debug build shows `⟦key⟧` and logs once.
@@ -94,9 +104,6 @@ The release fails when Czech is incomplete. The report prints completeness per l
 - Invariant values (paths, identifiers, versions) are always parameters, never concatenated.
 - Help Book pages (`Resources/Help/<lang>.lproj`) stay as HTML per language; they are documents, not strings.
 
-## Migration (phase R2)
+## Migration (phase R2, done)
 
-1. Engine, plural evaluator, generator and validator in Swift. The Go tool `server/cmd/l10n` is removed.
-2. A converter turns each `L("…")` and `LP(…)` into a key (`<area>.<context>.<slug>`). English comes from the source, Czech from `cs.lproj`. Plurals come from `.stringsdict`.
-3. Keys and Czech wording are reviewed by hand, and the calls in the code are replaced.
-4. `.strings`, `.stringsdict`, `translations.md` and the `make l10n-new` target are replaced by this document and `make l10n`.
+All `L("…")` and `LP(…)` calls were converted to keys (`<area>.<slug>`; texts used in several places are in `common`, `format`, `connection`, `panel`, `find`, `menu`). The `.strings` and `.stringsdict` files, `translations.md` and the Go tool are removed.

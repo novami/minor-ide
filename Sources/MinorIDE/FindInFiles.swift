@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import MinorCore
 import TextEngine
@@ -30,9 +31,9 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	private let field = NSSearchField()
 	private let replaceField = NSTextField()
 	private let replaceButton = NSButton()
-	private let caseButton = FindBar.toggle("Aa", L("Match Case"))
-	private let wordButton = FindBar.toggle("W", L("Whole Word"))
-	private let regexButton = FindBar.toggle(".*", L("Regular Expression"))
+	private let caseButton = FindBar.toggle("Aa", Strings.find.matchCase)
+	private let wordButton = FindBar.toggle("W", Strings.find.wholeWord)
+	private let regexButton = FindBar.toggle(".*", Strings.find.regularExpression)
 	private let status = NSTextField(labelWithString: "")
 	private let outline = ResultsOutline()
 
@@ -70,16 +71,16 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	// MARK: Layout
 
 	private func build() {
-		field.placeholderString = L("Find in Project")
-		field.setAccessibilityLabel(L("Find in Project"))
+		field.placeholderString = Strings.findInFiles.title
+		field.setAccessibilityLabel(Strings.findInFiles.title)
 		field.delegate = self
 		field.sendsWholeSearchString = true
 		field.sendsSearchStringImmediately = false
 		field.target = self
 		field.action = #selector(searchNow(_:))
-		replaceField.placeholderString = L("Replace")
-		replaceField.setAccessibilityLabel(L("Replace"))
-		replaceButton.title = L("Replace All…")
+		replaceField.placeholderString = Strings.common.replace
+		replaceField.setAccessibilityLabel(Strings.common.replace)
+		replaceButton.title = Strings.findInFiles.replaceAll
 		replaceButton.bezelStyle = .rounded
 		replaceButton.controlSize = .small
 		replaceButton.target = self
@@ -108,7 +109,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		outline.doubleAction = #selector(rowOpened(_:))
 		outline.onReturn = { [weak self] in self?.openSelected(focusEditor: true) }
 		outline.onDelete = { [weak self] in self?.removeSelected() }
-		outline.setAccessibilityLabel(L("Search Results"))
+		outline.setAccessibilityLabel(Strings.findInFiles.searchResults)
 		let scroll = NSScrollView()
 		scroll.documentView = outline
 		scroll.hasVerticalScroller = true
@@ -203,12 +204,12 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 			do {
 				if let r = try Self.search(doc.text.rope, path: rel, query: query) { local.append(r) }
 			} catch {
-				errorText = error is FindError ? L("Invalid regular expression") : error.localizedDescription
+				errorText = error is FindError ? Strings.findInFiles.invalidRegularExpression : error.localizedDescription
 				return updateStatus()
 			}
 		}
 		guard let client = client ?? HelperTool.server.flatMap({ try? FileSearchClient(server: $0) }) else {
-			errorText = L("The search helper is missing.")
+			errorText = Strings.findInFiles.searchHelperMissing
 			return updateStatus()
 		}
 		self.client = client
@@ -289,14 +290,14 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		}
 		status.textColor = .secondaryLabelColor
 		if options.query.isEmpty {
-			status.stringValue = L("Type to search the project. Files ignored by Git are skipped.")
+			status.stringValue = Strings.findInFiles.prompt
 		} else if running {
-			status.stringValue = L("Searching…") + (matches > 0 ? " " + LP("%d matches", one: "%d match", matches) : "")
+			status.stringValue = Strings.findInFiles.searching + (matches > 0 ? " " + Strings.find.matchCount(count: matches) : "")
 		} else if files.isEmpty {
-			status.stringValue = L("No results")
+			status.stringValue = Strings.findInFiles.noResults
 		} else {
-			status.stringValue = LP("%d matches", one: "%d match", matches) + " " + LP("in %d files", one: "in %d file", files.count)
-				+ (summary.truncated ? " " + L("(stopped, too many matches)") : "")
+			status.stringValue = Strings.find.matchCount(count: matches) + " " + Strings.common.inFiles(count: files.count)
+				+ (summary.truncated ? " " + Strings.findInFiles.tooManyMatches : "")
 		}
 		replaceButton.isEnabled = !running && !files.isEmpty
 	}
@@ -409,10 +410,10 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		guard !files.isEmpty, let window = view.window else { return }
 		let matches = files.reduce(0) { $0 + $1.result.matchCount }
 		let alert = NSAlert()
-		alert.messageText = L("Replace %@ with “%@”?", LP("%d matches", one: "%d match", matches) + " " + LP("in %d files", one: "in %d file", files.count), replaceField.stringValue)
-		alert.informativeText = L("Open files change in their editors and can be undone there. Other files are saved right away; their previous versions stay in Local History.")
-		alert.addButton(withTitle: L("Replace"))
-		alert.addButton(withTitle: L("Cancel"))
+		alert.messageText = Strings.findInFiles.replaceConfirmation(matches: Strings.find.matchCount(count: matches) + " " + Strings.common.inFiles(count: files.count), replacement: replaceField.stringValue)
+		alert.informativeText = Strings.refactor.changesInfo
+		alert.addButton(withTitle: Strings.common.replace)
+		alert.addButton(withTitle: Strings.common.cancel)
 		alert.beginSheetModal(for: window) { response in
 			MainActor.assumeIsolated {
 				if response == .alertFirstButtonReturn { self.performReplace() }
@@ -439,7 +440,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		searchNow(self)
 		if !failed.isEmpty, let window = view.window {
 			let alert = NSAlert()
-			alert.messageText = L("Some files could not be changed.")
+			alert.messageText = Strings.refactor.someFilesFailed
 			alert.informativeText = failed.prefix(10).joined(separator: "\n")
 			alert.beginSheetModal(for: window)
 		}

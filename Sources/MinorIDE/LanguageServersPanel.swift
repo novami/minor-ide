@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import LSPKit
 
 /// Language Servers section of the bottom panel (shared by the project's tabs): the state of
@@ -8,8 +9,8 @@ final class LanguageServersPanel {
 	let view = NSView()
 	private let services: LanguageServices
 	private let title = NSTextField(labelWithString: "")
-	private let install = NSButton(title: L("Install gopls…"), target: nil, action: nil)
-	private let restart = NSButton(title: L("Restart"), target: nil, action: nil)
+	private let install = NSButton(title: Strings.menu.installGopls, target: nil, action: nil)
+	private let restart = NSButton(title: Strings.languageServers.restart, target: nil, action: nil)
 	private let textView = NSTextView()
 	private let scrollView = NSScrollView()
 	private var pending: [String] = []
@@ -38,7 +39,7 @@ final class LanguageServersPanel {
 		textView.isVerticallyResizable = true
 		textView.autoresizingMask = [.width]
 		textView.textContainer?.widthTracksTextView = true
-		textView.setAccessibilityLabel(L("Language Server Log"))
+		textView.setAccessibilityLabel(Strings.languageServers.log)
 		scrollView.documentView = textView
 		scrollView.hasVerticalScroller = true
 		scrollView.autohidesScrollers = true
@@ -94,10 +95,10 @@ final class LanguageServersPanel {
 		install.isHidden = status != .missing(goInstalled: true)
 		switch status {
 		case .server:
-			restart.title = L("Restart")
+			restart.title = Strings.languageServers.restart
 			restart.isHidden = false
 		case .missing:
-			restart.title = L("Check Again") // after installing gopls by hand
+			restart.title = Strings.common.checkAgain // after installing gopls by hand
 			restart.isHidden = false
 		default:
 			restart.isHidden = true
@@ -107,16 +108,16 @@ final class LanguageServersPanel {
 	/// The state in words, for the panel and the status bar tooltip.
 	static func describe(_ status: LanguageServices.Status, progress: ProgressTracker) -> String {
 		switch status {
-		case .idle: L("Starts when you open a Go file")
-		case .locating: L("Looking for gopls…")
-		case .missing(true): L("Not installed. Install it with go install.")
-		case .missing(false): L("Not installed. Install Go first, then gopls.")
-		case .installing: L("Installing…")
-		case .server(.starting): L("Starting…")
-		case .server(.restarting(let attempt)): L("Restarting after a crash (%d of 3)…", attempt)
-		case .server(.running): progress.text ?? L("Running")
-		case .server(.stopped): L("Stopped")
-		case .server(.failed): L("Stopped after repeated crashes. Click Restart to try again.")
+		case .idle: Strings.languageServers.startsWithGoFile
+		case .locating: Strings.languageServers.lookingForGopls
+		case .missing(true): Strings.languageServers.notInstalled
+		case .missing(false): Strings.languageServers.notInstalledNoGo
+		case .installing: Strings.languageServers.installing
+		case .server(.starting): Strings.languageServers.starting
+		case .server(.restarting(let attempt)): Strings.languageServers.restartingAfterCrash(attempt: attempt)
+		case .server(.running): progress.text ?? Strings.languageServers.running
+		case .server(.stopped): Strings.languageServers.stopped
+		case .server(.failed): Strings.languageServers.stoppedAfterCrashes
 		}
 	}
 
@@ -130,10 +131,10 @@ final class LanguageServersPanel {
 	/// Asks before downloading gopls (it runs `go install` from the internet).
 	static func confirmInstall(_ services: LanguageServices, in window: NSWindow) {
 		let alert = NSAlert()
-		alert.messageText = L("Install gopls?")
-		alert.informativeText = L("Go code intelligence needs gopls. MinorIDE runs “go install golang.org/x/tools/gopls@latest”, which downloads it from the Go module proxy into your Go bin folder.")
-		alert.addButton(withTitle: L("Install"))
-		alert.addButton(withTitle: L("Cancel"))
+		alert.messageText = Strings.languageServers.installGopls
+		alert.informativeText = Strings.languageServers.installGoplsInfo
+		alert.addButton(withTitle: Strings.languageServers.install)
+		alert.addButton(withTitle: Strings.common.cancel)
 		alert.beginSheetModal(for: window) { response in
 			guard response == .alertFirstButtonReturn else { return }
 			MainActor.assumeIsolated { services.installGopls() }

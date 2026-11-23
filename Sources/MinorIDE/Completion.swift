@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import LSPKit
 import MinorCore
@@ -360,7 +361,7 @@ final class CompletionController {
 
 	private func announce(_ item: CompletionItem, position: Int, of count: Int) {
 		guard NSWorkspace.shared.isVoiceOverEnabled else { return }
-		let text = [item.label, item.detail].compactMap { $0 }.joined(separator: ", ") + ", " + L("%d of %d", position, count)
+		let text = [item.label, item.detail].compactMap { $0 }.joined(separator: ", ") + ", " + Strings.common.indexOfTotal(index: position, total: count)
 		NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
 		                     userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue])
 	}

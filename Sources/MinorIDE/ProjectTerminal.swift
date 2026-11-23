@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import Carbon
 import EditorKit
 import SwiftTerm
@@ -41,15 +42,15 @@ final class ProjectTerminal: NSObject {
 		strip.trackingMode = .selectOne
 		strip.target = self
 		strip.action = #selector(tabPicked(_:))
-		strip.setAccessibilityLabel(L("Terminal Tabs"))
-		let add = NSButton(image: NSImage(systemSymbolName: "plus", accessibilityDescription: L("New Terminal Tab"))!, target: self, action: #selector(addClicked(_:)))
+		strip.setAccessibilityLabel(Strings.terminal.tabs)
+		let add = NSButton(image: NSImage(systemSymbolName: "plus", accessibilityDescription: Strings.menu.newTerminalTab)!, target: self, action: #selector(addClicked(_:)))
 		add.isBordered = false
 		add.controlSize = .small
-		add.toolTip = L("New Terminal Tab")
-		let close = NSButton(image: NSImage(systemSymbolName: "xmark", accessibilityDescription: L("Close Terminal Tab"))!, target: self, action: #selector(closeClicked(_:)))
+		add.toolTip = Strings.menu.newTerminalTab
+		let close = NSButton(image: NSImage(systemSymbolName: "xmark", accessibilityDescription: Strings.terminal.closeTab)!, target: self, action: #selector(closeClicked(_:)))
 		close.isBordered = false
 		close.controlSize = .small
-		close.toolTip = L("Close Terminal Tab")
+		close.toolTip = Strings.terminal.closeTab
 		let bar = NSStackView(views: [strip, add, close, NSView()])
 		bar.spacing = 6
 		bar.edgeInsets = NSEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
@@ -106,7 +107,7 @@ final class ProjectTerminal: NSObject {
 	private func updateStrip() {
 		strip.segmentCount = sessions.count
 		for (i, s) in sessions.enumerated() {
-			strip.setLabel(s.title ?? L("Shell %d", i + 1), forSegment: i)
+			strip.setLabel(s.title ?? Strings.terminal.shellNumber(number: i + 1), forSegment: i)
 			strip.setWidth(0, forSegment: i)
 		}
 		if sessions.indices.contains(current) { strip.selectedSegment = current }
@@ -160,15 +161,15 @@ final class ProjectTerminal: NSObject {
 	}
 
 	private func showPlaceholder(exited: Bool) {
-		let title = NSTextField(labelWithString: exited ? L("The Shell Exited") : L("Terminal Not Started"))
+		let title = NSTextField(labelWithString: exited ? Strings.terminal.shellExited : Strings.terminal.notStarted)
 		title.font = .systemFont(ofSize: NSFont.systemFontSize + 2, weight: .semibold)
 		title.textColor = .secondaryLabelColor
 		let text = NSTextField(wrappingLabelWithString: exited
-			? L("Start a new shell in the project folder.")
-			: L("In Restricted Mode the terminal doesn’t start by itself, because the shell prompt may run Git in the project folder."))
+			? Strings.terminal.startShellHint
+			: Strings.terminal.restrictedModeInfo)
 		text.textColor = .secondaryLabelColor
 		text.alignment = .center
-		let button = NSButton(title: L("Start Terminal"), target: self, action: #selector(startClicked(_:)))
+		let button = NSButton(title: Strings.terminal.startTerminal, target: self, action: #selector(startClicked(_:)))
 		let stack = NSStackView(views: [title, text, button])
 		stack.orientation = .vertical
 		stack.alignment = .centerX

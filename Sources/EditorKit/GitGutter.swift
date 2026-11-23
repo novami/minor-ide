@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import TextEngine
 
 /// Changes against Git HEAD in the gutter: a bar at its leading edge (green added, blue
@@ -116,16 +117,16 @@ private final class GitChangeController: NSViewController {
 		guard let editor else { view = NSView(); return }
 		let title: String
 		switch change.kind {
-		case .added: title = L("Added lines")
-		case .modified: title = L("Changed lines")
-		case .deleted: title = L("Deleted lines")
+		case .added: title = Strings.gitGutter.addedLines
+		case .modified: title = Strings.gitGutter.changedLines
+		case .deleted: title = Strings.gitGutter.deletedLines
 		}
 		let label = NSTextField(labelWithString: title)
 		label.font = .boldSystemFont(ofSize: NSFont.smallSystemFontSize)
-		let revert = NSButton(title: L("Revert"), target: self, action: #selector(revert(_:)))
+		let revert = NSButton(title: Strings.gitGutter.revert, target: self, action: #selector(revert(_:)))
 		revert.controlSize = .small
 		revert.bezelStyle = .rounded
-		revert.toolTip = L("Put back the lines from the last commit")
+		revert.toolTip = Strings.gitGutter.revertHint
 		let header = NSStackView(views: [label, NSView(), revert])
 		var views: [NSView] = [header]
 		let committed = editor.committedText(of: change)
@@ -140,7 +141,7 @@ private final class GitChangeController: NSViewController {
 			text.textContainer?.widthTracksTextView = false
 			text.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
 			text.isHorizontallyResizable = true
-			text.setAccessibilityLabel(L("Lines in the last commit"))
+			text.setAccessibilityLabel(Strings.gitGutter.committedLines)
 			let scroll = NSScrollView()
 			scroll.documentView = text
 			scroll.hasVerticalScroller = true

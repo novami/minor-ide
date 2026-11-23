@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import DBKit
 import SecretsKit
 
@@ -63,11 +64,11 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 	private let password = NSSecureTextField()
 	private let database = NSTextField()
 	private let file = NSTextField()
-	private let useSSH = NSButton(checkboxWithTitle: L("Connect through an SSH tunnel"), target: nil, action: nil)
+	private let useSSH = NSButton(checkboxWithTitle: Strings.database.useSSHTunnel, target: nil, action: nil)
 	private let sshHost = NSTextField()
 	private let sshUser = NSTextField()
 	private let sshKey = NSTextField()
-	private let production = NSButton(checkboxWithTitle: L("Production database"), target: nil, action: nil)
+	private let production = NSButton(checkboxWithTitle: Strings.database.productionDatabase, target: nil, action: nil)
 	private let saveButton: NSButton
 	/// The password as loaded from the Keychain (nil while loading); an unchanged one is not written again.
 	private var loadedPassword: String?
@@ -89,7 +90,7 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 		oldScope = scope
 		self.connection = connection ?? DatabaseConnection()
 		panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 460, height: 300), styleMask: [.titled], backing: .buffered, defer: true)
-		saveButton = NSButton(title: connection == nil ? L("Add") : L("Save"), target: nil, action: nil)
+		saveButton = NSButton(title: connection == nil ? Strings.common.add : Strings.common.save, target: nil, action: nil)
 		grid = NSGridView()
 		super.init()
 		build()
@@ -116,11 +117,11 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 		for field in [name, host, port, user, password, database, file, sshHost, sshUser, sshKey] {
 			field.delegate = self
 		}
-		name.placeholderString = L("Required")
+		name.placeholderString = Strings.common.required
 		host.placeholderString = "localhost"
 		port.alignment = .right
-		sshKey.placeholderString = L("From SSH configuration")
-		password.placeholderString = L("Stored in the Keychain")
+		sshKey.placeholderString = Strings.connection.fromSSHConfig
+		password.placeholderString = Strings.connection.storedInKeychain
 		useSSH.target = self
 		useSSH.action = #selector(changed(_:))
 		production.target = self
@@ -132,7 +133,7 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 			return l
 		}
 		func choose(_ action: Selector) -> NSButton {
-			NSButton(title: L("Choose…"), target: self, action: action)
+			NSButton(title: Strings.common.choose, target: self, action: action)
 		}
 		func withButton(_ field: NSTextField, _ button: NSButton) -> NSView {
 			let stack = NSStackView(views: [field, button])
@@ -140,29 +141,29 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 			field.setContentHuggingPriority(.defaultLow, for: .horizontal)
 			return stack
 		}
-		let hostRow = NSStackView(views: [host, NSTextField(labelWithString: L("Port:")), port])
+		let hostRow = NSStackView(views: [host, NSTextField(labelWithString: Strings.connection.port), port])
 		hostRow.spacing = 6
 		host.setContentHuggingPriority(.defaultLow, for: .horizontal)
 		port.widthAnchor.constraint(equalToConstant: 64).isActive = true
-		let productionNote = NSTextField(wrappingLabelWithString: L("Shown in red and opened read-only by default."))
+		let productionNote = NSTextField(wrappingLabelWithString: Strings.database.productionHint)
 		productionNote.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		productionNote.textColor = .secondaryLabelColor
 
-		grid.addRow(with: [label(L("Available In:")), scope.popup])
-		grid.addRow(with: [label(L("Type:")), kind])
-		grid.addRow(with: [label(L("Name:")), name])
+		grid.addRow(with: [label(Strings.connection.availableIn), scope.popup])
+		grid.addRow(with: [label(Strings.connection.type), kind])
+		grid.addRow(with: [label(Strings.connection.name), name])
 		networkRows = [
-			grid.addRow(with: [label(L("Host:")), hostRow]),
-			grid.addRow(with: [label(L("User:")), user]),
-			grid.addRow(with: [label(L("Password:")), password]),
-			grid.addRow(with: [label(L("Database:")), database]),
+			grid.addRow(with: [label(Strings.connection.host), hostRow]),
+			grid.addRow(with: [label(Strings.connection.user), user]),
+			grid.addRow(with: [label(Strings.connection.password), password]),
+			grid.addRow(with: [label(Strings.database.databaseLabel), database]),
 		]
-		fileRows = [grid.addRow(with: [label(L("File:")), withButton(file, choose(#selector(chooseFile(_:))))])]
+		fileRows = [grid.addRow(with: [label(Strings.database.fileLabel), withButton(file, choose(#selector(chooseFile(_:))))])]
 		let sshRow = grid.addRow(with: [NSGridCell.emptyContentView, useSSH])
 		sshRows = [
-			grid.addRow(with: [label(L("SSH Host:")), sshHost]),
-			grid.addRow(with: [label(L("SSH User:")), sshUser]),
-			grid.addRow(with: [label(L("Key File:")), withButton(sshKey, choose(#selector(chooseKey(_:))))]),
+			grid.addRow(with: [label(Strings.database.sshHostLabel), sshHost]),
+			grid.addRow(with: [label(Strings.database.sshUserLabel), sshUser]),
+			grid.addRow(with: [label(Strings.connection.keyFile), withButton(sshKey, choose(#selector(chooseKey(_:))))]),
 		]
 		networkRows.append(sshRow)
 		networkRows += sshRows
@@ -175,7 +176,7 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 		grid.column(at: 1).width = 300
 		sshRow.topPadding = 4
 
-		let cancel = NSButton(title: L("Cancel"), target: self, action: #selector(cancel(_:)))
+		let cancel = NSButton(title: Strings.common.cancel, target: self, action: #selector(cancel(_:)))
 		cancel.keyEquivalent = "\u{1b}"
 		saveButton.target = self
 		saveButton.action = #selector(save(_:))
@@ -197,7 +198,7 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 			buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20),
 		])
 		panel.contentView = content
-		panel.title = isNew ? L("Add Database") : L("Edit Database")
+		panel.title = isNew ? Strings.database.addDatabase : Strings.database.editDatabase
 		panel.initialFirstResponder = name
 	}
 
@@ -251,7 +252,7 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 
 	@objc private func chooseFile(_ sender: Any?) {
 		let open = NSOpenPanel()
-		open.message = L("Choose the SQLite database file.")
+		open.message = Strings.database.chooseSQLiteFile
 		open.beginSheetModal(for: panel) { [weak self] response in
 			guard response == .OK, let url = open.url, let self else { return }
 			MainActor.assumeIsolated {
@@ -264,7 +265,7 @@ final class DatabaseSheet: NSObject, NSTextFieldDelegate {
 
 	@objc private func chooseKey(_ sender: Any?) {
 		let open = NSOpenPanel()
-		open.message = L("Choose the private key for the SSH tunnel.")
+		open.message = Strings.database.chooseTunnelKey
 		open.showsHiddenFiles = true
 		open.directoryURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".ssh")
 		open.beginSheetModal(for: panel) { [weak self] response in

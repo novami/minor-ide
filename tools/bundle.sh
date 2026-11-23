@@ -17,7 +17,8 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Helpers" "$APP/Contents/Resources"
 cp .build/release/MinorIDE "$APP/Contents/MacOS/MinorIDE"
 cp server/bin/minoride-server "$APP/Contents/Helpers/minoride-server"
-cp -R Resources/*.lproj "$APP/Contents/Resources/"
+# Language files, one empty <lang>.lproj per language (system UI follows it) and InfoPlist.strings.
+LPROJS=$(swift run -q --build-system native L10nTool bundle "$APP/Contents/Resources")
 cp Resources/AppIcon.icns "$APP/Contents/Resources/" # drawn by tools/make-icon.swift
 cp -R Resources/Licenses "$APP/Contents/Resources/" # licenses of bundled third-party code
 
@@ -51,9 +52,9 @@ cat > "$HELP/Info.plist" <<EOF
 </plist>
 EOF
 
-# Every Resources/<lang>.lproj becomes a declared localization (new languages need no edit here).
+# Every language file becomes a declared localization (new languages need no edit here).
 LOCALIZATIONS=""
-for d in Resources/*.lproj; do LOCALIZATIONS="$LOCALIZATIONS<string>$(basename "$d" .lproj)</string>"; done
+for l in $LPROJS; do LOCALIZATIONS="$LOCALIZATIONS<string>$l</string>"; done
 
 cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>

@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import LSPKit
 import MinorCore
@@ -80,7 +81,7 @@ final class ProblemsPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDeleg
 		outline.action = #selector(rowClicked(_:))
 		outline.doubleAction = #selector(rowOpened(_:))
 		outline.onReturn = { [weak self] in self?.openSelected(focusEditor: true) }
-		outline.setAccessibilityLabel(L("Problems"))
+		outline.setAccessibilityLabel(Strings.panel.problems)
 		let scroll = NSScrollView()
 		scroll.documentView = outline
 		scroll.hasVerticalScroller = true
@@ -163,16 +164,16 @@ final class ProblemsPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDeleg
 		let old = status.stringValue
 		if all.isEmpty {
 			if case .server(.running) = project.languageServers.status {
-				status.stringValue = L("No problems.")
+				status.stringValue = Strings.problems.noProblems
 			} else {
-				status.stringValue = L("Errors and warnings from the language server will appear here.")
+				status.stringValue = Strings.panel.problemsEmpty
 			}
 		} else {
 			var parts: [String] = []
-			if errors > 0 { parts.append(LP("%d errors", one: "%d error", errors)) }
-			if warnings > 0 { parts.append(LP("%d warnings", one: "%d warning", warnings)) }
-			if notes > 0 { parts.append(LP("%d notes", one: "%d note", notes)) }
-			status.stringValue = parts.joined(separator: ", ") + " " + LP("in %d files", one: "in %d file", files.count)
+			if errors > 0 { parts.append(Strings.problems.errorCount(count: errors)) }
+			if warnings > 0 { parts.append(Strings.problems.warningCount(count: warnings)) }
+			if notes > 0 { parts.append(Strings.problems.noteCount(count: notes)) }
+			status.stringValue = parts.joined(separator: ", ") + " " + Strings.common.inFiles(count: files.count)
 		}
 		if status.stringValue != old { NSAccessibility.post(element: status, notification: .valueChanged) }
 	}
@@ -270,12 +271,12 @@ final class ProblemsPanel: NSObject, NSOutlineViewDataSource, NSOutlineViewDeleg
 				.withSymbolConfiguration(.init(paletteColors: [color]))
 			let message = p.message.split(separator: "\n", maxSplits: 1).first.map(String.init) ?? p.message
 			let text = NSMutableAttributedString(string: message, attributes: [.font: small])
-			var detail = "  " + L("line %d, column %d", p.line, p.column)
+			var detail = "  " + Strings.problems.lineColumn(line: p.line, column: p.column)
 			if let source = p.source, !source.isEmpty { detail = "  " + source + detail }
 			text.append(NSAttributedString(string: detail, attributes: [.font: small, .foregroundColor: NSColor.secondaryLabelColor]))
 			cell.textField?.attributedStringValue = text
 			cell.toolTip = p.message
-			cell.setAccessibilityLabel(label + ", " + p.message + ", " + L("line %d, column %d", p.line, p.column))
+			cell.setAccessibilityLabel(label + ", " + p.message + ", " + Strings.problems.lineColumn(line: p.line, column: p.column))
 		}
 		return cell
 	}

@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 
 /// A side or bottom panel with sections switched by a segmented control. Sections without
 /// content show an empty state saying what belongs there (HIG).
@@ -132,14 +133,14 @@ extension PanelView {
 	/// Right panel (an AppKit inspector item): saved databases and server browsers (phases 6 and 6b fill them).
 	static func inspector(project: Project) -> PanelView {
 		let panel = PanelView(sections: [
-			Section(title: L("Database"), symbol: "cylinder.split.1x2",
-			        emptyTitle: L("No Databases"),
-			        emptyText: L("Connections to MySQL, MariaDB, PostgreSQL and SQLite databases will appear here.")),
-			Section(title: L("Server"), symbol: "server.rack",
-			        emptyTitle: L("No Servers"),
-			        emptyText: L("Files on servers connected over SFTP or FTPS will appear here.")),
-		], label: L("Right Panel"), defaultsKey: "InspectorSection",
-		   hide: (#selector(DocumentWindow.toggleRightPanel(_:)), "chevron.right", L("Hide Right Panel")))
+			Section(title: Strings.panel.database, symbol: "cylinder.split.1x2",
+			        emptyTitle: Strings.panel.noDatabases,
+			        emptyText: Strings.panel.databasesEmpty),
+			Section(title: Strings.panel.server, symbol: "server.rack",
+			        emptyTitle: Strings.panel.noServers,
+			        emptyText: Strings.panel.serversEmpty),
+		], label: Strings.panel.rightPanel, defaultsKey: "InspectorSection",
+		   hide: (#selector(DocumentWindow.toggleRightPanel(_:)), "chevron.right", Strings.panel.hideRightPanel))
 		panel.setContent(SavedListView(.databases, project: project), at: 0)
 		panel.setContent(SavedListView(.servers, project: project), at: 1)
 		return panel
@@ -150,22 +151,22 @@ extension PanelView {
 
 	static func bottom() -> PanelView {
 		PanelView(sections: [
-			Section(title: L("Terminal"), symbol: "terminal",
-			        emptyTitle: L("No Terminal"),
-			        emptyText: L("A terminal in the project folder will appear here.")),
-			Section(title: L("Search"), symbol: "magnifyingglass",
-			        emptyTitle: L("No Search"),
-			        emptyText: L("Results of Find in Project will appear here.")),
-			Section(title: L("Usages"), symbol: "arrow.up.left.and.arrow.down.right",
-			        emptyTitle: L("No Usages"),
-			        emptyText: L("Usages of a symbol found with Navigate › Find Usages will appear here.")),
-			Section(title: L("Problems"), symbol: "exclamationmark.triangle",
-			        emptyTitle: L("No Problems"),
-			        emptyText: L("Errors and warnings from the language server will appear here.")),
-			Section(title: L("Language Servers"), symbol: "gearshape.2",
-			        emptyTitle: L("No Language Servers"),
-			        emptyText: L("The state and log of gopls will appear here.")),
-		], label: L("Bottom Panel"), defaultsKey: "BottomPanelSection", leading: true,
-		   hide: (#selector(DocumentWindow.toggleBottomPanel(_:)), "chevron.down", L("Hide Bottom Panel")))
+			Section(title: Strings.panel.terminal, symbol: "terminal",
+			        emptyTitle: Strings.panel.noTerminal,
+			        emptyText: Strings.panel.terminalEmpty),
+			Section(title: Strings.panel.search, symbol: "magnifyingglass",
+			        emptyTitle: Strings.panel.noSearch,
+			        emptyText: Strings.panel.searchEmpty),
+			Section(title: Strings.panel.usages, symbol: "arrow.up.left.and.arrow.down.right",
+			        emptyTitle: Strings.panel.noUsages,
+			        emptyText: Strings.panel.usagesEmpty),
+			Section(title: Strings.panel.problems, symbol: "exclamationmark.triangle",
+			        emptyTitle: Strings.panel.noProblems,
+			        emptyText: Strings.panel.problemsEmpty),
+			Section(title: Strings.panel.languageServers, symbol: "gearshape.2",
+			        emptyTitle: Strings.panel.noLanguageServers,
+			        emptyText: Strings.panel.languageServersEmpty),
+		], label: Strings.panel.bottomPanel, defaultsKey: "BottomPanelSection", leading: true,
+		   hide: (#selector(DocumentWindow.toggleBottomPanel(_:)), "chevron.down", Strings.panel.hideBottomPanel))
 	}
 }

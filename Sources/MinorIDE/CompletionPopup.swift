@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import LSPKit
 
 /// The completion list under the caret: a borderless panel that never becomes key (the editor
@@ -69,7 +70,7 @@ final class CompletionPopup: NSObject, NSTableViewDataSource, NSTableViewDelegat
 		table.delegate = self
 		table.target = self
 		table.doubleAction = #selector(doubleClicked(_:))
-		table.setAccessibilityLabel(L("Completions"))
+		table.setAccessibilityLabel(Strings.completion.completions)
 		scroll.documentView = table
 		scroll.drawsBackground = false
 		scroll.hasVerticalScroller = true
@@ -229,16 +230,16 @@ private final class CompletionCell: NSTableCellView {
 	/// Badge letter, colour and spoken name of a `CompletionItemKind`.
 	static func kind(_ kind: Int) -> (String, NSColor, String) {
 		switch kind {
-		case 2: ("m", .systemPurple, L("Method"))
-		case 3, 4: ("f", .systemPurple, L("Function"))
-		case 5, 10: ("p", .systemBlue, L("Field"))
-		case 6: ("v", .systemBlue, L("Variable"))
-		case 12, 20, 21: ("c", .systemTeal, L("Constant"))
-		case 7, 8, 13, 22, 25: ("t", .systemOrange, L("Type"))
-		case 9, 17, 19: ("n", .systemBrown, L("Package"))
-		case 14: ("k", .systemGray, L("Keyword"))
-		case 15: ("s", .systemGreen, L("Snippet"))
-		default: ("a", .systemGray, L("Text"))
+		case 2: ("m", .systemPurple, Strings.completion.method)
+		case 3, 4: ("f", .systemPurple, Strings.completion.function)
+		case 5, 10: ("p", .systemBlue, Strings.completion.field)
+		case 6: ("v", .systemBlue, Strings.completion.variable)
+		case 12, 20, 21: ("c", .systemTeal, Strings.completion.constant)
+		case 7, 8, 13, 22, 25: ("t", .systemOrange, Strings.completion.type)
+		case 9, 17, 19: ("n", .systemBrown, Strings.completion.package)
+		case 14: ("k", .systemGray, Strings.completion.keyword)
+		case 15: ("s", .systemGreen, Strings.completion.snippet)
+		default: ("a", .systemGray, Strings.completion.plainText)
 		}
 	}
 }

@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import MinorCore
 
 /// Open Quickly (⇧⌘O): a floating panel over the project window with a search field and the
@@ -34,19 +35,19 @@ final class QuickOpenPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate,
 		hidesOnDeactivate = true
 		becomesKeyOnlyIfNeeded = false
 		for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] { standardWindowButton(button)?.isHidden = true }
-		setAccessibilityLabel(L("Open Quickly"))
+		setAccessibilityLabel(Strings.quickOpen.openQuickly)
 
 		let background = NSVisualEffectView()
 		background.material = .menu
 		background.state = .active
 		contentView = background
 
-		field.placeholderString = recentOnly ? L("Recent Files") : L("Open Quickly")
+		field.placeholderString = recentOnly ? Strings.quickOpen.recentFiles : Strings.quickOpen.openQuickly
 		field.font = .systemFont(ofSize: 18)
 		field.focusRingType = .none
 		field.delegate = self
 		field.sendsSearchStringImmediately = true
-		field.setAccessibilityLabel(L("File name"))
+		field.setAccessibilityLabel(Strings.quickOpen.fileName)
 
 		let column = NSTableColumn(identifier: .init("file"))
 		table.addTableColumn(column)
@@ -59,7 +60,7 @@ final class QuickOpenPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate,
 		table.delegate = self
 		table.target = self
 		table.doubleAction = #selector(openSelected(_:))
-		table.setAccessibilityLabel(L("Matching files"))
+		table.setAccessibilityLabel(Strings.quickOpen.matchingFiles)
 		scroll.documentView = table
 		scroll.drawsBackground = false
 		scroll.hasVerticalScroller = true
@@ -147,7 +148,7 @@ final class QuickOpenPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate,
 			table.selectRowIndexes([0], byExtendingSelection: false)
 			table.scrollRowToVisible(0)
 		}
-		empty.stringValue = q.isEmpty ? L("No recent files") : L("No matching files")
+		empty.stringValue = q.isEmpty ? Strings.quickOpen.noRecentFiles : Strings.quickOpen.noMatchingFiles
 		empty.isHidden = !found.isEmpty
 		let rows = CGFloat(min(max(found.count, 1), Self.maxRows))
 		let height = 14 + field.fittingSize.height + 8 + rows * Self.rowHeight + 6

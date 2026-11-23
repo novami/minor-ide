@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import TextEngine
 
@@ -15,10 +16,10 @@ final class FindBar: NSView, NSSearchFieldDelegate {
 	let replaceField = NSTextField()
 	private let status = NSTextField(labelWithString: "")
 	private let navigation = NSSegmentedControl()
-	private let caseButton = FindBar.toggle("Aa", L("Match Case"))
-	private let wordButton = FindBar.toggle("W", L("Whole Word"))
-	private let regexButton = FindBar.toggle(".*", L("Regular Expression"))
-	private let preserveButton = FindBar.toggle("AB", L("Preserve Case"))
+	private let caseButton = FindBar.toggle("Aa", Strings.find.matchCase)
+	private let wordButton = FindBar.toggle("W", Strings.find.wholeWord)
+	private let regexButton = FindBar.toggle(".*", Strings.find.regularExpression)
+	private let preserveButton = FindBar.toggle("AB", Strings.find.preserveCase)
 	private var replaceRow: NSStackView!
 
 	var showsReplace: Bool {
@@ -29,21 +30,21 @@ final class FindBar: NSView, NSSearchFieldDelegate {
 	init(controller: FindController) {
 		self.controller = controller
 		super.init(frame: .zero)
-		findField.placeholderString = L("Find")
+		findField.placeholderString = Strings.common.find
 		findField.delegate = self
 		findField.sendsSearchStringImmediately = true
-		findField.setAccessibilityLabel(L("Find"))
-		replaceField.placeholderString = L("Replace")
+		findField.setAccessibilityLabel(Strings.common.find)
+		replaceField.placeholderString = Strings.common.replace
 		replaceField.delegate = self
-		replaceField.setAccessibilityLabel(L("Replace"))
+		replaceField.setAccessibilityLabel(Strings.common.replace)
 
 		navigation.segmentCount = 2
 		navigation.trackingMode = .momentary
 		navigation.segmentStyle = .separated
-		navigation.setImage(NSImage(systemSymbolName: "chevron.left", accessibilityDescription: L("Find Previous")), forSegment: 0)
-		navigation.setImage(NSImage(systemSymbolName: "chevron.right", accessibilityDescription: L("Find Next")), forSegment: 1)
-		navigation.setToolTip(L("Find Previous"), forSegment: 0)
-		navigation.setToolTip(L("Find Next"), forSegment: 1)
+		navigation.setImage(NSImage(systemSymbolName: "chevron.left", accessibilityDescription: Strings.find.findPrevious), forSegment: 0)
+		navigation.setImage(NSImage(systemSymbolName: "chevron.right", accessibilityDescription: Strings.find.findNext), forSegment: 1)
+		navigation.setToolTip(Strings.find.findPrevious, forSegment: 0)
+		navigation.setToolTip(Strings.find.findNext, forSegment: 1)
 		navigation.target = self
 		navigation.action = #selector(navigate(_:))
 
@@ -55,13 +56,13 @@ final class FindBar: NSView, NSSearchFieldDelegate {
 			button.target = self
 			button.action = #selector(optionsChanged(_:))
 		}
-		let done = NSButton(title: L("Done"), target: self, action: #selector(close(_:)))
+		let done = NSButton(title: Strings.find.done, target: self, action: #selector(close(_:)))
 		done.bezelStyle = .rounded
 		done.controlSize = .small
-		let replaceButton = NSButton(title: L("Replace"), target: self, action: #selector(replace(_:)))
-		let replaceAllButton = NSButton(title: L("All"), target: self, action: #selector(replaceAll(_:)))
-		replaceAllButton.setAccessibilityLabel(L("Replace All"))
-		replaceAllButton.toolTip = L("Replace All")
+		let replaceButton = NSButton(title: Strings.common.replace, target: self, action: #selector(replace(_:)))
+		let replaceAllButton = NSButton(title: Strings.find.all, target: self, action: #selector(replaceAll(_:)))
+		replaceAllButton.setAccessibilityLabel(Strings.find.replaceAll)
+		replaceAllButton.toolTip = Strings.find.replaceAll
 		for b in [replaceButton, replaceAllButton] {
 			b.bezelStyle = .rounded
 			b.controlSize = .small
@@ -106,7 +107,7 @@ final class FindBar: NSView, NSSearchFieldDelegate {
 			replaceField.widthAnchor.constraint(equalTo: findField.widthAnchor),
 		])
 		setAccessibilityRole(.group)
-		setAccessibilityLabel(L("Find"))
+		setAccessibilityLabel(Strings.common.find)
 		controller.onUpdate = { [weak self] in self?.updateStatus() }
 	}
 
@@ -138,16 +139,16 @@ final class FindBar: NSView, NSSearchFieldDelegate {
 	func updateStatus() {
 		status.textColor = .secondaryLabelColor
 		if controller.error != nil {
-			status.stringValue = L("Invalid pattern")
+			status.stringValue = Strings.find.invalidPattern
 			status.textColor = .systemRed
 		} else if controller.query.text.isEmpty {
 			status.stringValue = ""
 		} else if controller.matches.isEmpty {
-			status.stringValue = L("Not found")
+			status.stringValue = Strings.common.notFound
 		} else if let i = controller.currentIndex {
-			status.stringValue = L("%d of %d", i + 1, controller.matches.count)
+			status.stringValue = Strings.common.indexOfTotal(index: i + 1, total: controller.matches.count)
 		} else {
-			status.stringValue = LP("%d matches", one: "%d match", controller.matches.count)
+			status.stringValue = Strings.find.matchCount(count: controller.matches.count)
 		}
 	}
 

@@ -43,12 +43,18 @@ public struct Validator {
 			for key in catalog.messages.keys.sorted() where !key.split(separator: ".").allSatisfy({ Generator.isValidSegment(String($0)) }) {
 				report.errors.append("\(file): key \(key) is not a valid name (letters, digits and _ between dots)")
 			}
+			for key in catalog.messages.keys.sorted() where key.split(separator: ".").contains(where: { reserved.contains(String($0)) }) {
+				report.errors.append("\(file): key \(key) uses a reserved name (text, note, variants or a plural category)")
+			}
 			return (text, catalog)
 		} catch {
 			report.errors.append("\(file): \(error)")
 			return nil
 		}
 	}
+
+	/// Names that mark a message object; a namespace cannot contain them as keys.
+	static let reserved: Set<String> = Set(["text", "note", "variants"] + PluralCategory.allCases.map(\.rawValue))
 
 	public func run() -> Report {
 		var report = Report()
@@ -99,7 +105,8 @@ public struct Validator {
 			      let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
 			for match in text.matches(of: pattern) { used.insert(String(match.output.1.dropFirst())) }
 		}
-		for key in source.messages.keys.sorted() where !used.contains(where: { $0 == key || $0.hasPrefix(key + ".") }) {
+		// infoPlist.* goes into InfoPlist.strings, not into the code.
+		for key in source.messages.keys.sorted() where !key.hasPrefix("infoPlist.") && !used.contains(where: { $0 == key || $0.hasPrefix(key + ".") }) {
 			report.errors.append("en-US.json: \(key) is not used in the code")
 		}
 	}

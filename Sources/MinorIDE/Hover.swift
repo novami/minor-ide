@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import LSPKit
 import MinorCore
@@ -129,7 +130,7 @@ final class HoverController {
 	private func show(_ markup: Markup?, problems: [EditorDiagnostic], word: Range<Int>, byMouse: Bool) {
 		guard let editor, let window = editor.window else { return }
 		hideTask?.cancel()
-		let popup = self.popup ?? InfoPopup(accessibilityLabel: L("Documentation"))
+		let popup = self.popup ?? InfoPopup(accessibilityLabel: Strings.hover.documentation)
 		self.popup = popup
 		popup.onMouseExit = { [weak self] in self?.scheduleHideUnlessMouseInside() }
 		popup.onLink = { [weak self] in self?.openRelated($0) ?? false }
@@ -212,7 +213,7 @@ extension HoverController {
 				if let link = d.link { attributes[.link] = link }
 				out.append(NSAttributedString(string: (d.source?.isEmpty == false ? " " : "  ") + code, attributes: attributes))
 			} else if let link = d.link {
-				out.append(NSAttributedString(string: "  " + L("Description"), attributes: secondary.merging([.link: link]) { $1 }))
+				out.append(NSAttributedString(string: "  " + Strings.hover.description, attributes: secondary.merging([.link: link]) { $1 }))
 			}
 			for (j, r) in d.related.enumerated() {
 				out.append(NSAttributedString(string: "\n    " + r.message + "  ", attributes: secondary))
@@ -226,10 +227,10 @@ extension HoverController {
 	/// SF Symbol and spoken name of a severity.
 	static func severitySymbol(_ severity: EditorDiagnostic.Severity) -> (String, String) {
 		switch severity {
-		case .error: ("xmark.octagon.fill", L("Error"))
-		case .warning: ("exclamationmark.triangle.fill", L("Warning"))
-		case .information: ("info.circle.fill", L("Information"))
-		case .hint: ("lightbulb", L("Hint"))
+		case .error: ("xmark.octagon.fill", Strings.hover.error)
+		case .warning: ("exclamationmark.triangle.fill", Strings.hover.warning)
+		case .information: ("info.circle.fill", Strings.hover.information)
+		case .hint: ("lightbulb", Strings.hover.hint)
 		}
 	}
 }
@@ -332,7 +333,7 @@ final class SignatureHelpController {
 		guard let editor, let window = editor.window else { return }
 		let announce = help.map { $0.active.label != result.active.label } ?? true
 		help = result
-		let popup = self.popup ?? InfoPopup(accessibilityLabel: L("Parameter Info"))
+		let popup = self.popup ?? InfoPopup(accessibilityLabel: Strings.hover.parameterInfo)
 		self.popup = popup
 		popup.show(Self.text(result, font: editor.font, appearance: editor.effectiveAppearance),
 		           at: caretRect(), placement: .above, parent: window)

@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import EditorKit
 import MinorCore
 
@@ -19,6 +20,7 @@ import MinorCore
 //        MINORIDE_QUICKOPEN=<query> with --snapshot <png> <folder> prints Open Quickly's rows and frame
 //        MINORIDE_FIND_IN_PROJECT=<query> with --snapshot <png> <folder> prints Find in Project's results
 
+AppLanguage.start()
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
@@ -41,8 +43,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 		let args = CommandLine.arguments.dropFirst()
 		WindowFrameKeeper.enabled = !utilityMode
 		if utilityMode { setvbuf(stdout, nil, _IOLBF, 0) } // results survive even if the run is killed
-		if args.first == "--l10n-sample" { // prints plural forms (checks .stringsdict in the bundle)
-			print([0, 1, 2, 3, 4, 5, 11, 21, 22, 25, 101].map { LP("%d spaces", one: "%d space", $0) }.joined(separator: ", "))
+		if args.first == "--l10n-sample" { // prints plural forms of the loaded language
+			print([0, 1, 2, 3, 4, 5, 11, 21, 22, 25, 101].map { Strings.format.spaceCount(count: $0) }.joined(separator: ", "))
 			NSApp.terminate(nil)
 			return
 		}
@@ -188,11 +190,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	/// Binary files are not opened as text; Finder (Space for Quick Look) can show them.
 	private func refuseBinary(_ url: URL) {
 		let alert = NSAlert()
-		alert.messageText = L("“%@” is not a text file.", url.lastPathComponent)
-		alert.informativeText = L("MinorIDE edits text files only. You can view its bytes or preview it in the Finder with Quick Look.")
-		alert.addButton(withTitle: L("Show Hex"))
-		alert.addButton(withTitle: L("Cancel"))
-		alert.addButton(withTitle: L("Show in Finder"))
+		alert.messageText = Strings.app.notTextFile(name: url.lastPathComponent)
+		alert.informativeText = Strings.app.notTextFileInfo
+		alert.addButton(withTitle: Strings.app.showHex)
+		alert.addButton(withTitle: Strings.common.cancel)
+		alert.addButton(withTitle: Strings.common.showInFinder)
 		let respond = { [weak self] (response: NSApplication.ModalResponse) in
 			switch response {
 			case .alertFirstButtonReturn: self?.showHex(url)
@@ -453,7 +455,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			try? history.record(Data(("// older\n" + text).utf8), for: url.standardizedFileURL.path, date: Date().addingTimeInterval(-90_000))
 			try? history.record(Data(text.replacingOccurrences(of: "\n", with: "\n\n", options: [], range: text.range(of: "\n")).utf8), for: url.standardizedFileURL.path)
 			doc.showLocalHistory(nil)
-			if let window = NSApp.windows.first(where: { $0.subtitle == L("Local History") }), let content = window.contentView {
+			if let window = NSApp.windows.first(where: { $0.subtitle == Strings.menu.localHistory }), let content = window.contentView {
 				window.displayIfNeeded()
 				print("history", NSStringFromSize(content.bounds.size), doc.document.versions.count)
 				if let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds) {
@@ -571,8 +573,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
 	private func tellRecovered(_ count: Int) {
 		let alert = NSAlert()
-		alert.messageText = LP("MinorIDE recovered unsaved changes in %d files.", one: "MinorIDE recovered unsaved changes in %d file.", count)
-		alert.informativeText = L("MinorIDE quit unexpectedly. The recovered text isn’t saved yet: save the files to keep it, or close them without saving.")
+		alert.messageText = Strings.app.recoveredFiles(count: count)
+		alert.informativeText = Strings.app.recoveredInfo
 		if let window = current?.window { alert.beginSheetModal(for: window) } else { alert.runModal() }
 	}
 
@@ -679,7 +681,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return true
 		}
 		if item.action == #selector(quitTogglingKeepWindows(_:)) {
-			item.title = keepWindowsSetting ? L("Quit and Close All Windows") : L("Quit and Keep Windows")
+			item.title = keepWindowsSetting ? Strings.app.quitCloseAllWindows : Strings.menu.quitAndKeepWindows
 			return true
 		}
 		let needsDocument: Set<Selector?> = [#selector(saveDocument(_:)), #selector(saveDocumentAs(_:)),

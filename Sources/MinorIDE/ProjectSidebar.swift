@@ -1,4 +1,5 @@
 import AppKit
+import Localization
 import MinorCore
 
 /// The project's files as a source list. A click on a file opens it; folders load lazily.
@@ -29,7 +30,7 @@ final class ProjectSidebar: NSScrollView, NSOutlineViewDataSource, NSOutlineView
 		outline.target = self
 		outline.action = #selector(clicked(_:))
 		outline.autosaveExpandedItems = false
-		outline.setAccessibilityLabel(L("Project Files"))
+		outline.setAccessibilityLabel(Strings.sidebar.projectFiles)
 		documentView = outline
 		hasVerticalScroller = true
 		autohidesScrollers = true
