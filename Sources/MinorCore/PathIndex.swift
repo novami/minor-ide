@@ -154,14 +154,13 @@ public final class PathIndex: @unchecked Sendable {
 	}
 
 	private func isHidden(_ rel: String) -> Bool {
-		rel.split(separator: "/").contains { FileNode.hiddenNames.contains(String($0)) }
+		rel.split(separator: "/").contains { ExclusionPolicy.neverRead(String($0)) }
 	}
 
 	/// Ignored folders not worth reading: hidden ones (build output, tool caches) and
 	/// JavaScript packages.
 	private func skipsIgnored(_ rel: String) -> Bool {
-		let name = rel.split(separator: "/").last ?? ""
-		return name.hasPrefix(".") || name == "node_modules"
+		ExclusionPolicy.skipsIgnoredFolder(String(rel.split(separator: "/").last ?? ""))
 	}
 
 	/// Reads the folder `rel` recursively with `readdir` (types without a `stat` per file).
@@ -178,7 +177,7 @@ public final class PathIndex: @unchecked Sendable {
 				let name = withUnsafePointer(to: ent.pointee.d_name) {
 					$0.withMemoryRebound(to: CChar.self, capacity: Int(ent.pointee.d_namlen) + 1) { String(cString: $0) }
 				}
-				if name == "." || name == ".." || FileNode.hiddenNames.contains(name) { continue }
+				if name == "." || name == ".." || ExclusionPolicy.neverRead(name) { continue }
 				let child = folder.isEmpty ? name : folder + "/" + name
 				var type = ent.pointee.d_type
 				if type == DT_LNK || type == DT_UNKNOWN {

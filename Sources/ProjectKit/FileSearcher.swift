@@ -34,7 +34,7 @@ public enum FileSearcher {
 			}
 			group.addTask {
 				// The walk blocks on a full buffer, so it runs off the cooperative pool's fast path.
-				FileWalker.walk(root: root, ignore: IgnoreSet(root: root)) { rel in
+				FileWalker.walk(root: root, ignore: GitIgnoreSet(root: root)) { rel in
 					if state.isFull { return false }
 					if skip.contains(rel) { return true }
 					while case .dropped = feed.yield(rel) {
