@@ -75,8 +75,7 @@ final class AboutWindow: NSObject {
 		let name = NSTextField(labelWithString: "MinorIDE")
 		name.font = .boldSystemFont(ofSize: 20)
 		let short = info["CFBundleShortVersionString"] as? String ?? "0.0.0"
-		let build = info["CFBundleVersion"] as? String
-		let version = NSTextField(labelWithString: Strings.common.version(version: short) + (build.map { $0 == short ? "" : " (\($0))" } ?? ""))
+		let version = NSTextField(labelWithString: Strings.common.version(version: short))
 		version.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
 		version.textColor = .secondaryLabelColor
 		version.isSelectable = true

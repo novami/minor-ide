@@ -4,10 +4,10 @@
 set -eu
 cd "$(dirname "$0")/.."
 
-# Bundle versions must be numeric: use the latest vX.Y.Z tag, or 0.0.0 before the first release.
-VERSION=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
-VERSION=${VERSION#v}
+# The version is plain major.minor.patch (no prefix, no hash): the latest X.Y.Z tag, or 0.0.0 before the first release.
+VERSION=$(git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || true)
 [ -n "$VERSION" ] || VERSION=0.0.0
+echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "tag $VERSION is not major.minor.patch" >&2; exit 1; }
 APP=build/MinorIDE.app
 
 swift build -c release --build-system native --product MinorIDE
