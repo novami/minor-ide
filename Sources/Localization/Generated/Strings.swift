@@ -436,7 +436,9 @@ extension L10n {
 			"invalidSettingsFile": "settings.json is not valid JSON. Fix it in the editor; until then these settings can’t be changed here.",
 			"keep": "Keep",
 			"language": "Language",
+			"languageInfo": "The language of menus and windows. It changes after MinorIDE restarts.",
 			"languageOverrideInfo": "Overrides All Languages for this language.",
+			"later": "Later",
 			"lineEndings": "Line endings",
 			"lineLength": "Line length",
 			"notSet": "Not set",
@@ -445,13 +447,18 @@ extension L10n {
 			"pinEnclosingLinesInfo": "While you scroll, the lines that open the class, function and blocks around the top of the editor stay pinned above the text. Click one to go to it.",
 			"removeAllLines": "Remove from all lines",
 			"removeEditedLines": "Remove from edited lines",
+			"restartInfo": "Open windows come back after the restart. You are asked about unsaved changes first.",
+			"restartNow": "Restart Now",
+			"restartQuestion": "Restart MinorIDE to change the language?",
 			"saveFilesAutomatically": "Save files automatically",
 			"settingsFileInfo": "Settings are stored in settings.json. A project can override them in .minoride/settings.json.",
 			"size": "Size",
 			"spaces": "Spaces",
+			"systemDefault": "System Default",
 			"tabWidth": "Tab width",
 			"tools": "Tools",
 			"trailingSpaces": "Trailing spaces",
+			"uiLanguage": "Language",
 			"wrapLines": "Wrap lines",
 			"wrapLinesInfo": "Long lines continue on the next row at the line length from Format (120 when not set). Large and minified files are not wrapped."
 		},
@@ -978,7 +985,9 @@ public enum Strings {
 		public static var invalidSettingsFile: String { L10n.string("settings.invalidSettingsFile") }
 		public static var keep: String { L10n.string("settings.keep") }
 		public static var language: String { L10n.string("settings.language") }
+		public static var languageInfo: String { L10n.string("settings.languageInfo") }
 		public static var languageOverrideInfo: String { L10n.string("settings.languageOverrideInfo") }
+		public static var later: String { L10n.string("settings.later") }
 		public static var lineEndings: String { L10n.string("settings.lineEndings") }
 		public static var lineLength: String { L10n.string("settings.lineLength") }
 		public static var notSet: String { L10n.string("settings.notSet") }
@@ -987,13 +996,18 @@ public enum Strings {
 		public static var pinEnclosingLinesInfo: String { L10n.string("settings.pinEnclosingLinesInfo") }
 		public static var removeAllLines: String { L10n.string("settings.removeAllLines") }
 		public static var removeEditedLines: String { L10n.string("settings.removeEditedLines") }
+		public static var restartInfo: String { L10n.string("settings.restartInfo") }
+		public static var restartNow: String { L10n.string("settings.restartNow") }
+		public static var restartQuestion: String { L10n.string("settings.restartQuestion") }
 		public static var saveFilesAutomatically: String { L10n.string("settings.saveFilesAutomatically") }
 		public static var settingsFileInfo: String { L10n.string("settings.settingsFileInfo") }
 		public static var size: String { L10n.string("settings.size") }
 		public static var spaces: String { L10n.string("settings.spaces") }
+		public static var systemDefault: String { L10n.string("settings.systemDefault") }
 		public static var tabWidth: String { L10n.string("settings.tabWidth") }
 		public static var tools: String { L10n.string("settings.tools") }
 		public static var trailingSpaces: String { L10n.string("settings.trailingSpaces") }
+		public static var uiLanguage: String { L10n.string("settings.uiLanguage") }
 		public static var wrapLines: String { L10n.string("settings.wrapLines") }
 		public static var wrapLinesInfo: String { L10n.string("settings.wrapLinesInfo") }
 	}

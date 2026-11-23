@@ -137,6 +137,21 @@ struct GeneralSettingsView: View {
 	var body: some View {
 		Form {
 			Section {
+				Picker(Strings.settings.uiLanguage, selection: Binding(
+					get: { AppLanguage.preference(store.file) ?? "" },
+					set: { code in
+						store.set(nil, "language", code.isEmpty ? nil : .string(code))
+						AppLanguage.changed(to: code.isEmpty ? nil : code, in: NSApp.keyWindow)
+					})) {
+					Text(Strings.settings.systemDefault).tag("")
+					Divider()
+					ForEach(AppLanguage.choices, id: \.code) { Text($0.name).tag($0.code) }
+				}
+				Text(Strings.settings.languageInfo)
+					.font(.callout).foregroundStyle(.secondary)
+			}
+			.disabled(store.unreadable)
+			Section {
 				Picker(Strings.settings.font, selection: Binding(
 					get: { store.file.fontFamily ?? "" },
 					set: { store.set(nil, "font_family", $0.isEmpty ? nil : .string($0)); applyFont() })) {

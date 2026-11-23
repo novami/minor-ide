@@ -528,6 +528,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	/// Quit and Keep Windows / Quit and Close All Windows (⌥⌘Q) turns the setting around once.
 	private var invertKeepWindows = false
 
+	/// Quits keeping the windows and opens a new instance (Settings › General › Language).
+	private var restarting = false
+
+	func restart() {
+		restarting = true
+		NSApp.terminate(nil)
+		restarting = false // quitting was cancelled
+	}
+
 	@objc func quitTogglingKeepWindows(_ sender: Any?) {
 		invertKeepWindows = true
 		NSApp.terminate(sender)
@@ -542,7 +551,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return Session.Window(project: doc.project?.url.path, file: doc.url?.path)
 		}
 		let front = current.flatMap { $0.url?.path ?? $0.project?.url.path }
-		try? Session(windows: windows, front: front, restore: keepWindowsSetting != invertKeepWindows).save()
+		try? Session(windows: windows, front: front, restore: restarting || keepWindowsSetting != invertKeepWindows).save()
+		if restarting {
+			let open = Process()
+			open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+			open.arguments = ["-n", Bundle.main.bundlePath]
+			try? open.run()
+		}
 	}
 
 	// MARK: Crash recovery

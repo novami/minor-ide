@@ -24,6 +24,8 @@ public struct SettingsFile: Sendable, Equatable {
 	/// Editor font family and size (system monospaced, 13 unless set).
 	public var fontFamily: String?
 	public var fontSize: Double?
+	/// UI language as a locale code ("cs-CZ"); nil or "system" follows the system. Applies after a restart.
+	public var language: String?
 
 	public init() {}
 
@@ -35,6 +37,7 @@ public struct SettingsFile: Sendable, Equatable {
 		if case .bool(let b)? = value["sticky_lines"] { stickyLines = b }
 		if case .string(let f)? = value["font_family"], !f.isEmpty { fontFamily = f }
 		if case .number(let n)? = value["font_size"], n > 0 { fontSize = n }
+		if case .string(let l)? = value["language"], !l.isEmpty { language = l }
 		if case .object(let sections)? = value["format"] {
 			for (section, props) in sections {
 				guard case .object(let p) = props else { continue }
