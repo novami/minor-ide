@@ -169,7 +169,6 @@ extension L10n {
 			"prompt": "Type to search the project. Files ignored by Git are skipped.",
 			"replaceAll": "Replace All…",
 			"replaceConfirmation": "Replace {matches} with “{replacement}”?",
-			"searchHelperMissing": "The search helper is missing.",
 			"searchResults": "Search Results",
 			"searching": "Searching…",
 			"title": "Find in Project",
@@ -733,7 +732,6 @@ public enum Strings {
 		public static var prompt: String { L10n.string("findInFiles.prompt") }
 		public static var replaceAll: String { L10n.string("findInFiles.replaceAll") }
 		public static func replaceConfirmation(matches: some CustomStringConvertible, replacement: some CustomStringConvertible) -> String { L10n.string("findInFiles.replaceConfirmation", ["matches": .text(String(describing: matches)), "replacement": .text(String(describing: replacement))]) }
-		public static var searchHelperMissing: String { L10n.string("findInFiles.searchHelperMissing") }
 		public static var searchResults: String { L10n.string("findInFiles.searchResults") }
 		public static var searching: String { L10n.string("findInFiles.searching") }
 		public static var title: String { L10n.string("findInFiles.title") }

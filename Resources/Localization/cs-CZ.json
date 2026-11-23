@@ -176,7 +176,6 @@
 		"prompt": "Pište pro hledání v projektu. Soubory ignorované Gitem se přeskočí.",
 		"replaceAll": "Nahradit vše…",
 		"replaceConfirmation": "Nahradit {matches} textem „{replacement}“?",
-		"searchHelperMissing": "Chybí pomocný program pro hledání.",
 		"searchResults": "Výsledky hledání",
 		"searching": "Hledání…",
 		"title": "Najít v projektu",

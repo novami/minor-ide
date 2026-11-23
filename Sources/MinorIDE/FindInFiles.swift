@@ -2,25 +2,11 @@ import AppKit
 import Localization
 import EditorKit
 import MinorCore
+import ProjectKit
 import TextEngine
 
-/// The helper executable: in the app bundle, or `server/bin` of the source tree (swift run).
-enum HelperTool {
-	static let server: URL? = {
-		let bundled = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/minoride-server")
-		if FileManager.default.isExecutableFile(atPath: bundled.path) { return bundled }
-		var dir = Bundle.main.executableURL?.deletingLastPathComponent()
-		while let d = dir, d.path != "/" {
-			let candidate = d.appendingPathComponent("server/bin/minoride-server")
-			if FileManager.default.isExecutableFile(atPath: candidate.path) { return candidate }
-			dir = d.deletingLastPathComponent()
-		}
-		return nil
-	}()
-}
-
 /// Find in Project (⇧⌘F): a section of the bottom panel shared by the project's tabs. The
-/// helper searches the files on disk (RE2, .gitignore) and streams results per file; files
+/// searcher reads the files on disk (.gitignore respected) and streams results per file; files
 /// with unsaved changes are searched here in their editor text. Selecting a line shows the
 /// match in the editor, Return or a double click also moves the focus there. Replace All
 /// changes open files in their editors (undoable, unsaved) and writes the others.
@@ -52,7 +38,6 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	private var files: [FileItem] = []
 	private var pending: [FileSearchResult] = []
 	private var flushScheduled = false
-	private var client: FileSearchClient?
 	private var task: Task<Void, Never>?
 	private var generation = 0
 	private var options = FileSearchOptions(query: "")
@@ -208,11 +193,6 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 				return updateStatus()
 			}
 		}
-		guard let client = client ?? HelperTool.server.flatMap({ try? FileSearchClient(server: $0) }) else {
-			errorText = Strings.findInFiles.searchHelperMissing
-			return updateStatus()
-		}
-		self.client = client
 		running = true
 		updateStatus()
 		receive(local)
@@ -220,7 +200,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		let sink = ResultSink(self)
 		task = Task { [weak self] in
 			do {
-				let s = try await client.search(root: root, options) { result in
+				let s = try await FileSearcher.search(root: root, options) { result in
 					Task { @MainActor in sink.owner?.receive([result], generation: gen) }
 				}
 				self?.finish(s, generation: gen)
@@ -276,8 +256,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	private func fail(_ error: Error, generation gen: Int) {
 		guard gen == generation else { return }
 		running = false
-		errorText = (error as? RPCError)?.message ?? error.localizedDescription
-		client = nil // a crashed helper starts again next time
+		errorText = error is FileSearchError ? Strings.findInFiles.invalidRegularExpression : error.localizedDescription
 		updateStatus()
 	}
 

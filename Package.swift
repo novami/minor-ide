@@ -25,11 +25,12 @@ let package = Package(
 		.target(name: "RemoteKit", dependencies: ["MinorCore"]),
 		.target(name: "LSPKit", dependencies: ["MinorCore", "TextEngine"]),
 		.target(name: "PHPKit"),
+		.target(name: "ProjectKit", dependencies: ["MinorCore"]),
 		// Spike S1 benchmark (docs/spike-php-swift.md).
 		.executableTarget(name: "PHPScan", dependencies: ["PHPKit"], path: "Sources/PHPScan"),
 		// Spike S2: TLS upgrade inside a database connection (docs/spike-tls.md).
 		.executableTarget(name: "TLSSpike", path: "Sources/TLSSpike"),
-		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "Localization", "TextEngine", "EditorKit", "Highlight", "SecretsKit", "DBKit", "RemoteKit", "LSPKit",
+		.executableTarget(name: "MinorIDE", dependencies: ["MinorCore", "Localization", "TextEngine", "EditorKit", "Highlight", "SecretsKit", "DBKit", "RemoteKit", "LSPKit", "ProjectKit",
 		                                                .product(name: "SwiftTerm", package: "SwiftTerm")]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
 		.testTarget(name: "MinorCoreTests", dependencies: ["MinorCore"]),
@@ -39,6 +40,7 @@ let package = Package(
 		.testTarget(name: "RemoteKitTests", dependencies: ["RemoteKit"]),
 		.testTarget(name: "LSPKitTests", dependencies: ["LSPKit", "MinorCore", "TextEngine"]),
 		.testTarget(name: "EditorKitTests", dependencies: ["EditorKit", "MinorCore"]),
+		.testTarget(name: "ProjectKitTests", dependencies: ["ProjectKit", "MinorCore"]),
 		.testTarget(name: "PHPKitTests", dependencies: ["PHPKit"]),
 		.testTarget(name: "HighlightTests", dependencies: ["Highlight", "TextEngine"], exclude: ["Golden"]),
 	]

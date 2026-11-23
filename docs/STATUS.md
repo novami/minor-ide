@@ -2,7 +2,7 @@
 
 Working position. Updated after every finished block of work; a new session starts here. The detailed log until 2026-11-18 is in [archive/status-v1.md](archive/status-v1.md) (Czech).
 
-**Last update:** 2026-11-23 (R2 done)
+**Last update:** 2026-11-23 (R3: Find in Files in Swift)
 
 ## Where we are
 
@@ -10,7 +10,7 @@ Working position. Updated after every finished block of work; a new session star
 - Postponed: phase 2 (release and updater) until an Apple Developer account exists.
 - The architecture was revised on 2026-11-22 after a new product specification. Decisions: [DECISIONS.md](DECISIONS.md). The old plan is archived.
 - Editor performance (M2, `make bench`): typing p99 0.11 ms, newline 0.31 ms, scroll 0.20 ms, jump 0.43 ms, 1 M rope edits in 0.74 s.
-- The app still uses the Go helper for Find in Files; it is ported in R3.
+- Find in Files runs in Swift (`Sources/ProjectKit`: `.gitignore` rules, file walker, parallel searcher). The Go helper remains only for the database and PHP scan spikes until they are ported.
 
 ## Next step
 
@@ -18,7 +18,7 @@ Working position. Updated after every finished block of work; a new session star
 2. Spike S3 measured (`make bench-startup`, results in [PERFORMANCE.md](PERFORMANCE.md#measurements)): warm start ~180 ms (budget 200 ms, at the limit), welcome window 75–93 ms, idle 33–37 MB. Waiting for the owner to confirm the 100 MB idle target; real cold start needs `sudo purge`.
 3. **R1 done** (2026-11-23): 3.8 was never built, nothing to remove. "Done when" checked on `~/MinorDLNA` with `MINORIDE_LSP_CHECK=1 MINORIDE_OPEN=<file.go> --snapshot <png> <project>`: all of 3.4–3.7 pass, then gopls is killed (SIGKILL) and restarts (1/3) and serves the open file again. `GoplsTests` kills the real gopls too and checks that the unsaved text came back. The hover step of the check had failed since 6e (a redraw after semantic tokens looks up the word under the real mouse and cancels the simulated hover); it now waits for redraws to settle. Bench BUDGET OK (typing p99 0.24 ms, Go 0.42 ms).
 4. **R2 done** (2026-11-23): `Sources/Localization` (JSON files, CLDR plural rules, named parameters with locale formats, fallback chain, `⟦key⟧` for a missing translation in debug), `minoride-l10n` in Swift (`make l10n` generates `Strings.swift`, `make l10n-check` validates and is part of `make test`, `bundle` copies the files into the app with one `.lproj` per language and `InfoPlist.strings` from `infoPlist.*`). All 601 `L`/`LP` calls converted to 459 keys (Czech 100 %); `.strings`, `.stringsdict`, `translations.md` and the Go tool removed. Settings › General › Language (stored as `language` in settings.json) with an offer to restart (windows are kept). Bench BUDGET OK.
-5. **Next: R3** (project system and search in Swift, [ROADMAP.md](ROADMAP.md#r3-project-system-and-search-in-swift--3-weeks)).
+5. **R3 in progress** ([ROADMAP.md](ROADMAP.md#r3-project-system-and-search-in-swift--3-weeks)). Done: Find in Files ported (ICU regex instead of RE2, same results and limits; Go `search` removed). Next: shared exclusion policy and persistent file catalog (FSEvents) with open-by-name on it, scopes and replace preview in Find in Files, `LanguageKit`/`LanguageProvider`, breadcrumbs and selection expand. Not yet measured: first results < 100 ms and open-by-name < 50 ms on a 20 000-file project.
 
 ## Open items
 
