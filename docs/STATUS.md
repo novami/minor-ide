@@ -2,7 +2,7 @@
 
 Working position. Updated after every finished block of work; a new session starts here. The detailed log until 2026-11-18 is in [archive/status-v1.md](archive/status-v1.md) (Czech).
 
-**Last update:** 2026-11-23 (R3: shared exclusion policy)
+**Last update:** 2026-11-23 (audit: update checking, CI, repo files)
 
 ## Where we are
 
@@ -21,6 +21,9 @@ Working position. Updated after every finished block of work; a new session star
 5. **R3 in progress** ([ROADMAP.md](ROADMAP.md#r3-project-system-and-search-in-swift--3-weeks)). Done: Find in Files ported (ICU regex instead of RE2, same results and limits; Go `search` removed). Shared exclusion policy done (`MinorCore/ExclusionPolicy`, one `.gitignore` engine `GitIgnoreSet` for the file catalog and Find in Files; the duplicate in ProjectKit removed). Measured on 19 197 files ([PERFORMANCE.md](PERFORMANCE.md#measurements)): full walk ~100 ms, open-by-name ~1 ms, first Find in Files result 2–3 ms, so both R3 targets are met and the on-disk catalog with FSEvents event IDs is **postponed** (build it only if a cold-cache or very large project measures badly). Find in Files scopes done (whole project, open files, folder via sidebar “Find in Folder…”, file mask `*.php, !tests/**` in `MinorCore/PathMask`; not yet checked by hand in the UI). Replace All shows a before/after preview of the listed lines in its confirmation sheet (first 300 lines; not yet checked by hand). Next: `LanguageKit`/`LanguageProvider`, breadcrumbs and selection expand. 
 
 ## Open items
+
+- **Updates (partial phase 2)**: `UpdateKit` checks an HTTPS feed, downloads and verifies SHA-256 + Ed25519; Settings › Updates (auto check and auto download default on, stored as `auto_check_updates`, `auto_download_updates`). Inactive until `MINORIDE_UPDATE_FEED_URL` and `MINORIDE_UPDATE_PUBLIC_KEY` are set for `make bundle`. Missing: install helper `minoride-updater`, code signature check, Developer ID, notarization, release workflow. Not tested against a real feed.
+- **SwiftLint** is advisory in CI (about 180 findings, mostly force unwraps); not yet seen in a CI run, as is the new SHA-pinned workflow.
 
 - **Semantic tokens**: no `workspace/semanticTokens/refresh` and no delta requests; files changed by an external tool refresh only after an edit or a save. Bench today runs about 2× slower than the numbers above even without changes (machine noise); it stays within budget.
 

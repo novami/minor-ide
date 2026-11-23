@@ -207,3 +207,10 @@ struct HexDumpTests {
 		#expect(lines[1].hasSuffix("|b|"))
 	}
 }
+
+@Test func updateSettingsDefaultToUnsetAndParse() throws {
+	let empty = try SettingsFile(json: Data("{}".utf8))
+	#expect(empty.autoCheckUpdates == nil && empty.autoDownloadUpdates == nil)
+	let off = try SettingsFile(json: Data(#"{"auto_check_updates":false,"auto_download_updates":false}"#.utf8))
+	#expect(off.autoCheckUpdates == false && off.autoDownloadUpdates == false)
+}

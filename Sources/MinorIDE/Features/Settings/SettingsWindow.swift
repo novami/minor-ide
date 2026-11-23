@@ -3,6 +3,7 @@ import Localization
 import EditorKit
 import MinorCore
 import SwiftUI
+import UpdateKit
 
 /// MinorIDE › Settings… (⌘,): tabs in the toolbar (HIG), changes saved to the user's
 /// settings.json at once and applied to open files through its file watcher.
@@ -33,6 +34,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
 		add(GeneralSettingsView(store: store), Strings.settings.general, "gearshape")
 		add(FormatSettingsView(store: store), Strings.settings.formatting, "text.alignleft")
 		add(ToolsSettingsView(model: ToolsModel.shared), Strings.settings.tools, "hammer")
+		add(UpdatesSettingsView(store: store, updater: AppUpdater.shared), Strings.updates.tab, "arrow.triangle.2.circlepath")
 		tabs.title = tabs.tabViewItems.first?.label
 		let window = NSWindow(contentViewController: tabs) // its title follows tabs.title
 		window.styleMask = [.titled, .closable]

@@ -92,6 +92,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 			return
 		}
 		Self.loadEditorSettings()
+		if !utilityMode { AppUpdater.shared.startAutomaticChecks() }
 		// The automatic font follows the displays being connected or removed.
 		NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { _ in
 			MainActor.assumeIsolated { Self.loadEditorSettings() }
@@ -314,6 +315,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	/// Settings every editor shares (settings.json in Application Support).
 	static func loadEditorSettings() {
 		let settings = SettingsFile.load(SettingsFile.userURL)
+		AppUpdater.reloadPreferences()
 		EditorView.wrapsLines = settings?.wrapLines ?? false
 		EditorView.showsStickyLines = settings?.stickyLines ?? true
 		let size = ProcessInfo.processInfo.environment["MINORIDE_FONT_SIZE"].flatMap(Double.init) ?? settings?.fontSize

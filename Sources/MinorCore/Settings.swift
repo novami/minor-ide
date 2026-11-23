@@ -26,6 +26,10 @@ public struct SettingsFile: Sendable, Equatable {
 	public var fontSize: Double?
 	/// UI language as a locale code ("cs-CZ"); nil or "system" follows the system. Applies after a restart.
 	public var language: String?
+	/// Check for app updates once a day (on unless set).
+	public var autoCheckUpdates: Bool?
+	/// Download a found update without asking (on unless set).
+	public var autoDownloadUpdates: Bool?
 
 	public init() {}
 
@@ -37,6 +41,8 @@ public struct SettingsFile: Sendable, Equatable {
 		if case .bool(let b)? = value["sticky_lines"] { stickyLines = b }
 		if case .string(let f)? = value["font_family"], !f.isEmpty { fontFamily = f }
 		if case .number(let n)? = value["font_size"], n > 0 { fontSize = n }
+		if case .bool(let b)? = value["auto_check_updates"] { autoCheckUpdates = b }
+		if case .bool(let b)? = value["auto_download_updates"] { autoDownloadUpdates = b }
 		if case .string(let l)? = value["language"], !l.isEmpty { language = l }
 		if case .object(let sections)? = value["format"] {
 			for (section, props) in sections {

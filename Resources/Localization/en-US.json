@@ -539,6 +539,26 @@
 		"sshAndTunnels": "SSH, SFTP and tunnels",
 		"versionNeeds": "{version} (needs {minimum})"
 	},
+	"updates": {
+		"automaticCheck": "Check for updates automatically",
+		"automaticDownload": "Download updates automatically",
+		"automaticInfo": "MinorIDE checks once a day. With automatic download off, it asks before downloading a new version.",
+		"availableVersion": "Available version",
+		"checkNow": "Check Now",
+		"currentVersion": "Current version",
+		"downloadNow": "Download",
+		"lastChecked": "Last checked",
+		"releaseNotes": "Release notes",
+		"statusAvailable": "A new version is available.",
+		"statusChecking": "Checking…",
+		"statusDownloading": "Downloading…",
+		"statusFailed": "The update check failed.",
+		"statusIdle": "Not checked yet.",
+		"statusNotConfigured": "Updates are not set up in this build (no update feed or signing key).",
+		"statusReady": "Downloaded and verified. Installing is not available yet.",
+		"statusUpToDate": "MinorIDE is up to date.",
+		"tab": "Updates"
+	},
 	"usages": {
 		"emptyHint": "Usages of a symbol appear here. Use Navigate › Find Usages in an editor.",
 		"findingUsages": "Finding usages of “{name}”…",

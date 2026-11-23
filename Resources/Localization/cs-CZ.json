@@ -566,6 +566,26 @@
 		"sshAndTunnels": "SSH, SFTP a tunely",
 		"versionNeeds": "{version} (potřeba {minimum})"
 	},
+	"updates": {
+		"automaticCheck": "Automaticky kontrolovat aktualizace",
+		"automaticDownload": "Automaticky stahovat aktualizace",
+		"automaticInfo": "MinorIDE kontroluje jednou denně. Při vypnutém automatickém stahování se před stažením nové verze zeptá.",
+		"availableVersion": "Dostupná verze",
+		"checkNow": "Zkontrolovat nyní",
+		"currentVersion": "Aktuální verze",
+		"downloadNow": "Stáhnout",
+		"lastChecked": "Naposledy zkontrolováno",
+		"releaseNotes": "Poznámky k vydání",
+		"statusAvailable": "Je dostupná nová verze.",
+		"statusChecking": "Kontroluji…",
+		"statusDownloading": "Stahuji…",
+		"statusFailed": "Kontrola aktualizací selhala.",
+		"statusIdle": "Zatím nekontrolováno.",
+		"statusNotConfigured": "V tomto sestavení nejsou aktualizace nastavené (chybí zdroj aktualizací nebo klíč podpisu).",
+		"statusReady": "Staženo a ověřeno. Instalace zatím není dostupná.",
+		"statusUpToDate": "MinorIDE je aktuální.",
+		"tab": "Aktualizace"
+	},
 	"usages": {
 		"emptyHint": "Zde se zobrazují použití symbolu. V editoru zvolte Navigace › Najít použití.",
 		"findingUsages": "Hledám použití „{name}“…",

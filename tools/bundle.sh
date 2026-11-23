@@ -76,6 +76,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
 	<key>LSMinimumSystemVersion</key><string>14.0</string>
 	<key>NSHighResolutionCapable</key><true/>
 	<key>NSPrincipalClass</key><string>NSApplication</string>
+	<key>MIUpdateFeedURL</key><string>${MINORIDE_UPDATE_FEED_URL:-}</string>
+	<key>MIUpdatePublicKey</key><string>${MINORIDE_UPDATE_PUBLIC_KEY:-}</string>
 </dict>
 </plist>
 EOF

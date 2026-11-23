@@ -543,6 +543,26 @@ extension L10n {
 			"sshAndTunnels": "SSH, SFTP and tunnels",
 			"versionNeeds": "{version} (needs {minimum})"
 		},
+		"updates": {
+			"automaticCheck": "Check for updates automatically",
+			"automaticDownload": "Download updates automatically",
+			"automaticInfo": "MinorIDE checks once a day. With automatic download off, it asks before downloading a new version.",
+			"availableVersion": "Available version",
+			"checkNow": "Check Now",
+			"currentVersion": "Current version",
+			"downloadNow": "Download",
+			"lastChecked": "Last checked",
+			"releaseNotes": "Release notes",
+			"statusAvailable": "A new version is available.",
+			"statusChecking": "Checking…",
+			"statusDownloading": "Downloading…",
+			"statusFailed": "The update check failed.",
+			"statusIdle": "Not checked yet.",
+			"statusNotConfigured": "Updates are not set up in this build (no update feed or signing key).",
+			"statusReady": "Downloaded and verified. Installing is not available yet.",
+			"statusUpToDate": "MinorIDE is up to date.",
+			"tab": "Updates"
+		},
 		"usages": {
 			"emptyHint": "Usages of a symbol appear here. Use Navigate › Find Usages in an editor.",
 			"findingUsages": "Finding usages of “{name}”…",
@@ -1090,6 +1110,26 @@ public enum Strings {
 		public static var serverSync: String { L10n.string("tools.serverSync") }
 		public static var sshAndTunnels: String { L10n.string("tools.sshAndTunnels") }
 		public static func versionNeeds(version: some CustomStringConvertible, minimum: some CustomStringConvertible) -> String { L10n.string("tools.versionNeeds", ["version": .text(String(describing: version)), "minimum": .text(String(describing: minimum))]) }
+	}
+	public enum updates {
+		public static var automaticCheck: String { L10n.string("updates.automaticCheck") }
+		public static var automaticDownload: String { L10n.string("updates.automaticDownload") }
+		public static var automaticInfo: String { L10n.string("updates.automaticInfo") }
+		public static var availableVersion: String { L10n.string("updates.availableVersion") }
+		public static var checkNow: String { L10n.string("updates.checkNow") }
+		public static var currentVersion: String { L10n.string("updates.currentVersion") }
+		public static var downloadNow: String { L10n.string("updates.downloadNow") }
+		public static var lastChecked: String { L10n.string("updates.lastChecked") }
+		public static var releaseNotes: String { L10n.string("updates.releaseNotes") }
+		public static var statusAvailable: String { L10n.string("updates.statusAvailable") }
+		public static var statusChecking: String { L10n.string("updates.statusChecking") }
+		public static var statusDownloading: String { L10n.string("updates.statusDownloading") }
+		public static var statusFailed: String { L10n.string("updates.statusFailed") }
+		public static var statusIdle: String { L10n.string("updates.statusIdle") }
+		public static var statusNotConfigured: String { L10n.string("updates.statusNotConfigured") }
+		public static var statusReady: String { L10n.string("updates.statusReady") }
+		public static var statusUpToDate: String { L10n.string("updates.statusUpToDate") }
+		public static var tab: String { L10n.string("updates.tab") }
 	}
 	public enum usages {
 		public static var emptyHint: String { L10n.string("usages.emptyHint") }
