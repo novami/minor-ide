@@ -33,6 +33,10 @@ struct FindTests {
 		#expect(try r.replacements(of: FindQuery(text: "a"), with: "$1", preserveCase: false).map(\.1) == ["$1"])
 	}
 
+	@Test func replacingPreviewsOneLine() throws {
+		#expect(try Rope.replacing(in: "foo(a) = foo(b)", query: FindQuery(text: "foo\\((\\w)\\)", regex: true), with: "bar[$1]") == "bar[a] = bar[b]")
+	}
+
 	@Test func preserveCaseFollowsMatch() {
 		#expect(FindQuery.applyingCase(of: "ŘÁDEK", to: "line") == "LINE")
 		#expect(FindQuery.applyingCase(of: "Řádek", to: "line") == "Line")

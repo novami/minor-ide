@@ -163,6 +163,10 @@
 		"fileMask": "File mask, e.g. *.php, !tests/**",
 		"invalidRegularExpression": "Invalid regular expression",
 		"noResults": "No results",
+		"previewMore": {
+			"one": "… and {count} more line",
+			"other": "… and {count} more lines"
+		},
 		"prompt": "Type to search the project. Files ignored by Git are skipped.",
 		"replaceAll": "Replace All…",
 		"replaceConfirmation": "Replace {matches} with “{replacement}”?",

@@ -167,6 +167,10 @@ extension L10n {
 			"fileMask": "File mask, e.g. *.php, !tests/**",
 			"invalidRegularExpression": "Invalid regular expression",
 			"noResults": "No results",
+			"previewMore": {
+				"one": "… and {count} more line",
+				"other": "… and {count} more lines"
+			},
 			"prompt": "Type to search the project. Files ignored by Git are skipped.",
 			"replaceAll": "Replace All…",
 			"replaceConfirmation": "Replace {matches} with “{replacement}”?",
@@ -735,6 +739,7 @@ public enum Strings {
 		public static var fileMask: String { L10n.string("findInFiles.fileMask") }
 		public static var invalidRegularExpression: String { L10n.string("findInFiles.invalidRegularExpression") }
 		public static var noResults: String { L10n.string("findInFiles.noResults") }
+		public static func previewMore(count: Int) -> String { L10n.string("findInFiles.previewMore", count: count) }
 		public static var prompt: String { L10n.string("findInFiles.prompt") }
 		public static var replaceAll: String { L10n.string("findInFiles.replaceAll") }
 		public static func replaceConfirmation(matches: some CustomStringConvertible, replacement: some CustomStringConvertible) -> String { L10n.string("findInFiles.replaceConfirmation", ["matches": .text(String(describing: matches)), "replacement": .text(String(describing: replacement))]) }

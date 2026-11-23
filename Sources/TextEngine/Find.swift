@@ -96,6 +96,15 @@ extension Rope {
 		return edits
 	}
 
+	/// `text` with every match replaced (preview of a Replace All on one line).
+	public static func replacing(in text: String, query: FindQuery, with template: String) throws -> String {
+		var rope = Rope(text)
+		for (range, new) in try rope.replacements(of: query, with: template, preserveCase: false).reversed() {
+			rope.replace(range, with: new)
+		}
+		return rope.string
+	}
+
 	/// Replacement for one match found with `query`. A regex runs again on the match's lines,
 	/// so $1 expands as it did in the whole text (look-behind past the line start excepted).
 	public func replacement(for match: Range<Int>, query: FindQuery, template: String, preserveCase: Bool) throws -> String {

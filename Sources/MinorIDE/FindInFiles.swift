@@ -435,6 +435,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		let alert = NSAlert()
 		alert.messageText = Strings.findInFiles.replaceConfirmation(matches: Strings.find.matchCount(count: matches) + " " + Strings.common.inFiles(count: files.count), replacement: replaceField.stringValue)
 		alert.informativeText = Strings.refactor.changesInfo
+		alert.accessoryView = previewView()
 		alert.addButton(withTitle: Strings.common.replace)
 		alert.addButton(withTitle: Strings.common.cancel)
 		alert.beginSheetModal(for: window) { response in
@@ -443,6 +444,46 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 			}
 		}
 	}
+
+	/// Before and after of the lines Replace All will change (the first few hundred).
+	private func previewView() -> NSView {
+		let query = findQuery, template = replaceField.stringValue
+		let font = NSFont.monospacedSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
+		let text = NSMutableAttributedString()
+		func add(_ s: String, _ attrs: [NSAttributedString.Key: Any]) {
+			text.append(NSAttributedString(string: s + "\n", attributes: [.font: font].merging(attrs) { $1 }))
+		}
+		var shown = 0, total = 0
+		for f in files {
+			total += f.result.lines.count
+			guard shown < Self.previewLimit else { continue }
+			add(f.result.path, [.font: NSFont.boldSystemFont(ofSize: NSFont.smallSystemFontSize)])
+			for line in f.result.lines where shown < Self.previewLimit {
+				shown += 1
+				let old = line.text.trimmingCharacters(in: .whitespaces)
+				let new = (try? Rope.replacing(in: line.text, query: query, with: template))?.trimmingCharacters(in: .whitespaces) ?? old
+				add("\(line.line + 1)  − " + old, [.foregroundColor: NSColor.systemRed])
+				add("\(line.line + 1)  + " + new, [.foregroundColor: NSColor.systemGreen])
+			}
+		}
+		if total > shown { add(Strings.findInFiles.previewMore(count: total - shown), [.foregroundColor: NSColor.secondaryLabelColor]) }
+		let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 560, height: 260))
+		textView.isEditable = false
+		textView.drawsBackground = false
+		textView.textStorage?.setAttributedString(text)
+		textView.autoresizingMask = [.width]
+		textView.isHorizontallyResizable = true
+		textView.textContainer?.widthTracksTextView = false
+		textView.textContainer?.containerSize = NSSize(width: 100_000, height: CGFloat.greatestFiniteMagnitude)
+		let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 560, height: 260))
+		scroll.documentView = textView
+		scroll.hasVerticalScroller = true
+		scroll.hasHorizontalScroller = true
+		scroll.borderType = .bezelBorder
+		return scroll
+	}
+
+	private static let previewLimit = 300
 
 	private func performReplace() {
 		let query = findQuery, template = replaceField.stringValue
