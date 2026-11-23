@@ -13,6 +13,7 @@ let package = Package(
 	],
 	targets: [
 		.target(name: "MinorCore"),
+		.target(name: "Localization"),
 		.target(name: "TextEngine"),
 		.target(name: "Highlight", dependencies: ["TextEngine"]),
 		.target(name: "EditorKit", dependencies: ["TextEngine", "MinorCore", "Highlight"]),
@@ -29,6 +30,7 @@ let package = Package(
 		                                                .product(name: "SwiftTerm", package: "SwiftTerm")]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
 		.testTarget(name: "MinorCoreTests", dependencies: ["MinorCore"]),
+		.testTarget(name: "LocalizationTests", dependencies: ["Localization"]),
 		.testTarget(name: "DBKitTests", dependencies: ["DBKit"]),
 		.testTarget(name: "SecretsKitTests", dependencies: ["SecretsKit"]),
 		.testTarget(name: "RemoteKitTests", dependencies: ["RemoteKit"]),
