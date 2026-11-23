@@ -9,6 +9,12 @@ public struct FileSearchOptions: Sendable, Equatable {
 	/// Relative paths the caller searches itself (files with unsaved changes).
 	public var skip: [String] = []
 	public var maxMatches = 20_000
+	/// File mask (`*.php, !tests/**`, see `PathMask`); empty means all files.
+	public var mask = ""
+	/// Folder relative to the project root to search in; empty means the whole project.
+	public var folder = ""
+	/// Search only these relative paths (open files) instead of walking the project.
+	public var only: [String]?
 
 	public init(query: String, regex: Bool = false, caseSensitive: Bool = false, wholeWord: Bool = false) {
 		self.query = query

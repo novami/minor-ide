@@ -438,6 +438,15 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		project.terminal.newTab()
 	}
 
+	/// Find in Folder… of the sidebar: the Search section limited to `folder` ("" = project).
+	func findInProject(folder: String) {
+		guard let project, let bottomPanel, let item = panels?.bottom else { return }
+		attachTerminal()
+		bottomPanel.select(PanelView.searchSection)
+		if item.isCollapsed { togglePanel(item) }
+		project.findInFiles.focus(folder: folder)
+	}
+
 	/// Edit › Find › Find in Project… (⇧⌘F): the Search section of the bottom panel, with the
 	/// editor's selection as the query.
 	@objc func findInProject(_ sender: Any?) {

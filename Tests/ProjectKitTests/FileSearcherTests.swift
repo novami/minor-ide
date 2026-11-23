@@ -33,6 +33,20 @@ import MinorCore
 		#expect(r[1].lines[0].text == "Foo")
 	}
 
+	@Test func scopes() async throws {
+		let root = try project(["a.php": "foo", "src/b.php": "foo", "src/c.js": "foo", "tests/d.php": "foo"])
+		var o = FileSearchOptions(query: "foo")
+		o.mask = "*.php, !tests/**"
+		#expect(try await run(root, o).0.map(\.path) == ["a.php", "src/b.php"])
+		o.mask = ""
+		o.folder = "src"
+		#expect(try await run(root, o).0.map(\.path) == ["src/b.php", "src/c.js"])
+		o.folder = ""
+		o.only = ["tests/d.php", "src/c.js"]
+		o.mask = "*.js"
+		#expect(try await run(root, o).0.map(\.path) == ["src/c.js"])
+	}
+
 	@Test func regexWholeWordUnicode() async throws {
 		let root = try project(["u.txt": "žluť cat concat\n"])
 		var o = FileSearchOptions(query: "cat", wholeWord: true)

@@ -19,6 +19,9 @@ public enum FileSearcher {
 		let matcher = try Matcher(options)
 		let limit = options.maxMatches > 0 ? options.maxMatches : 20_000
 		let skip = Set(options.skip)
+		let mask = PathMask(options.mask)
+		let folderPrefix = options.folder.isEmpty ? "" : options.folder + "/"
+		func wanted(_ rel: String) -> Bool { rel.hasPrefix(folderPrefix) && !skip.contains(rel) && mask.matches(rel) }
 		let state = SearchState(limit: limit, emit: onFile)
 		let (stream, feed) = AsyncStream.makeStream(of: String.self, bufferingPolicy: .bufferingOldest(512))
 		await withTaskGroup(of: Void.self) { group in
@@ -34,14 +37,19 @@ public enum FileSearcher {
 			}
 			group.addTask {
 				// The walk blocks on a full buffer, so it runs off the cooperative pool's fast path.
-				FileWalker.walk(root: root, ignore: GitIgnoreSet(root: root)) { rel in
+				func send(_ rel: String) -> Bool {
 					if state.isFull { return false }
-					if skip.contains(rel) { return true }
+					guard wanted(rel) else { return true }
 					while case .dropped = feed.yield(rel) {
 						if Task.isCancelled || state.isFull { return false }
 						Thread.sleep(forTimeInterval: 0.001)
 					}
 					return true
+				}
+				if let only = options.only {
+					for rel in only where !send(rel) { break }
+				} else {
+					FileWalker.walk(root: root, ignore: GitIgnoreSet(root: root), visit: send)
 				}
 				feed.finish()
 			}

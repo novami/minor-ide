@@ -164,11 +164,15 @@ extension L10n {
 			"wholeWord": "Whole Word"
 		},
 		"findInFiles": {
+			"fileMask": "File mask, e.g. *.php, !tests/**",
 			"invalidRegularExpression": "Invalid regular expression",
 			"noResults": "No results",
 			"prompt": "Type to search the project. Files ignored by Git are skipped.",
 			"replaceAll": "Replace All…",
 			"replaceConfirmation": "Replace {matches} with “{replacement}”?",
+			"scopeFolder": "Folder: {folder}",
+			"scopeOpenFiles": "Open Files",
+			"scopeProject": "Whole Project",
 			"searchResults": "Search Results",
 			"searching": "Searching…",
 			"title": "Find in Project",
@@ -466,6 +470,7 @@ extension L10n {
 			"copyPath": "Copy Path",
 			"copyRelativePath": "Copy Relative Path",
 			"fileNotCreated": "The file could not be created.",
+			"findInFolder": "Find in Folder…",
 			"invalidFileName": "“{name}” is not a valid file name.",
 			"moveToTrash": "Move to Trash",
 			"newFile": "New File…",
@@ -727,11 +732,15 @@ public enum Strings {
 		public static var wholeWord: String { L10n.string("find.wholeWord") }
 	}
 	public enum findInFiles {
+		public static var fileMask: String { L10n.string("findInFiles.fileMask") }
 		public static var invalidRegularExpression: String { L10n.string("findInFiles.invalidRegularExpression") }
 		public static var noResults: String { L10n.string("findInFiles.noResults") }
 		public static var prompt: String { L10n.string("findInFiles.prompt") }
 		public static var replaceAll: String { L10n.string("findInFiles.replaceAll") }
 		public static func replaceConfirmation(matches: some CustomStringConvertible, replacement: some CustomStringConvertible) -> String { L10n.string("findInFiles.replaceConfirmation", ["matches": .text(String(describing: matches)), "replacement": .text(String(describing: replacement))]) }
+		public static func scopeFolder(folder: some CustomStringConvertible) -> String { L10n.string("findInFiles.scopeFolder", ["folder": .text(String(describing: folder))]) }
+		public static var scopeOpenFiles: String { L10n.string("findInFiles.scopeOpenFiles") }
+		public static var scopeProject: String { L10n.string("findInFiles.scopeProject") }
 		public static var searchResults: String { L10n.string("findInFiles.searchResults") }
 		public static var searching: String { L10n.string("findInFiles.searching") }
 		public static var title: String { L10n.string("findInFiles.title") }
@@ -1014,6 +1023,7 @@ public enum Strings {
 		public static var copyPath: String { L10n.string("sidebar.copyPath") }
 		public static var copyRelativePath: String { L10n.string("sidebar.copyRelativePath") }
 		public static var fileNotCreated: String { L10n.string("sidebar.fileNotCreated") }
+		public static var findInFolder: String { L10n.string("sidebar.findInFolder") }
 		public static func invalidFileName(name: some CustomStringConvertible) -> String { L10n.string("sidebar.invalidFileName", ["name": .text(String(describing: name))]) }
 		public static var moveToTrash: String { L10n.string("sidebar.moveToTrash") }
 		public static var newFile: String { L10n.string("sidebar.newFile") }

@@ -35,10 +35,20 @@ extension ProjectSidebar: NSMenuDelegate {
 			add(Strings.common.rename, #selector(rename(_:)))
 			add(Strings.sidebar.moveToTrash, #selector(moveToTrash(_:)))
 		}
+		if node.isDirectory {
+			menu.addItem(.separator())
+			add(Strings.sidebar.findInFolder, #selector(findInFolder(_:)))
+		}
 		menu.addItem(.separator())
 		add(Strings.common.showInFinder, #selector(showInFinder(_:)))
 		add(Strings.sidebar.copyPath, #selector(copyPath(_:)))
 		add(Strings.sidebar.copyRelativePath, #selector(copyRelativePath(_:)))
+	}
+
+	@objc private func findInFolder(_ sender: Any?) {
+		guard let node = node(sender) else { return }
+		let rel = project.paths.relative(node.url.standardizedFileURL.path) ?? ""
+		(window?.delegate as? DocumentWindow)?.findInProject(folder: rel)
 	}
 
 	private func node(_ sender: Any?) -> FileNode? { (sender as? NSMenuItem)?.representedObject as? FileNode }

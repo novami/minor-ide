@@ -171,11 +171,15 @@
 		"wholeWord": "Celá slova"
 	},
 	"findInFiles": {
+		"fileMask": "Maska souborů, např. *.php, !tests/**",
 		"invalidRegularExpression": "Neplatný regulární výraz",
 		"noResults": "Nic nenalezeno",
 		"prompt": "Pište pro hledání v projektu. Soubory ignorované Gitem se přeskočí.",
 		"replaceAll": "Nahradit vše…",
 		"replaceConfirmation": "Nahradit {matches} textem „{replacement}“?",
+		"scopeFolder": "Složka: {folder}",
+		"scopeOpenFiles": "Otevřené soubory",
+		"scopeProject": "Celý projekt",
 		"searchResults": "Výsledky hledání",
 		"searching": "Hledání…",
 		"title": "Najít v projektu",
@@ -483,6 +487,7 @@
 		"copyPath": "Kopírovat cestu",
 		"copyRelativePath": "Kopírovat relativní cestu",
 		"fileNotCreated": "Soubor se nepodařilo vytvořit.",
+		"findInFolder": "Najít ve složce…",
 		"invalidFileName": "„{name}“ není platný název souboru.",
 		"moveToTrash": "Přesunout do koše",
 		"newFile": "Nový soubor…",

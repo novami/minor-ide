@@ -17,6 +17,10 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	private let field = NSSearchField()
 	private let replaceField = NSTextField()
 	private let replaceButton = NSButton()
+	private let scopeButton = NSPopUpButton()
+	private let maskField = NSTextField()
+	/// Folder (relative to the project) the search is limited to; set by Find in Folder.
+	private(set) var folder = ""
 	private let caseButton = FindBar.toggle("Aa", Strings.find.matchCase)
 	private let wordButton = FindBar.toggle("W", Strings.find.wholeWord)
 	private let regexButton = FindBar.toggle(".*", Strings.find.regularExpression)
@@ -70,6 +74,16 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		replaceButton.controlSize = .small
 		replaceButton.target = self
 		replaceButton.action = #selector(replaceAll(_:))
+		scopeButton.controlSize = .small
+		scopeButton.target = self
+		scopeButton.action = #selector(optionsChanged(_:))
+		scopeButton.setAccessibilityLabel(Strings.findInFiles.scopeProject)
+		maskField.placeholderString = Strings.findInFiles.fileMask
+		maskField.setAccessibilityLabel(Strings.findInFiles.fileMask)
+		maskField.delegate = self
+		maskField.target = self
+		maskField.action = #selector(searchNow(_:))
+		rebuildScopes()
 		for b in [caseButton, wordButton, regexButton] {
 			b.target = self
 			b.action = #selector(optionsChanged(_:))
@@ -103,8 +117,9 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 
 		let findRow = NSStackView(views: [field, caseButton, wordButton, regexButton])
 		let replaceRow = NSStackView(views: [replaceField, replaceButton])
-		for row in [findRow, replaceRow] { row.spacing = 6 }
-		let top = NSStackView(views: [findRow, replaceRow, status])
+		let scopeRow = NSStackView(views: [scopeButton, maskField])
+		for row in [findRow, replaceRow, scopeRow] { row.spacing = 6 }
+		let top = NSStackView(views: [findRow, replaceRow, scopeRow, status])
 		top.orientation = .vertical
 		top.alignment = .leading
 		top.spacing = 6
@@ -118,12 +133,30 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 			top.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
 			findRow.widthAnchor.constraint(equalTo: top.widthAnchor),
 			replaceRow.widthAnchor.constraint(equalTo: top.widthAnchor),
+			scopeRow.widthAnchor.constraint(equalTo: top.widthAnchor),
 			replaceField.widthAnchor.constraint(equalTo: field.widthAnchor),
 			scroll.topAnchor.constraint(equalTo: top.bottomAnchor, constant: 6),
 			scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor),
 			scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 			scroll.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 		])
+	}
+
+	private static let projectScope = 0, openFilesScope = 1, folderScope = 2
+
+	private func rebuildScopes() {
+		scopeButton.removeAllItems()
+		scopeButton.addItems(withTitles: [Strings.findInFiles.scopeProject, Strings.findInFiles.scopeOpenFiles])
+		if !folder.isEmpty { scopeButton.addItem(withTitle: Strings.findInFiles.scopeFolder(folder: folder)) }
+		scopeButton.selectItem(at: folder.isEmpty ? Self.projectScope : Self.folderScope)
+	}
+
+	/// Limits the search to `folder` (relative path) and focuses the field.
+	func focus(folder: String) {
+		self.folder = folder
+		rebuildScopes()
+		focus(query: nil)
+		searchNow(nil)
 	}
 
 	/// Puts the focus into the search field; `query` (the editor's selection) replaces its text.
@@ -152,7 +185,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	// MARK: Searching
 
 	func controlTextDidChange(_ obj: Notification) {
-		guard (obj.object as? NSSearchField) === field else { return }
+		guard (obj.object as? NSSearchField) === field || (obj.object as? NSTextField) === maskField else { return }
 		// Searching while typing, after a short pause; an empty field clears the results.
 		typing += 1
 		let typed = typing
@@ -167,6 +200,15 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 	@objc private func searchNow(_ sender: Any?) {
 		var o = FileSearchOptions(query: field.stringValue, regex: regexButton.state == .on,
 		                          caseSensitive: caseButton.state == .on, wholeWord: wordButton.state == .on)
+		o.mask = maskField.stringValue
+		switch scopeButton.indexOfSelectedItem {
+		case Self.openFilesScope:
+			o.only = FileDocument.all.compactMap { doc in
+				doc.url.flatMap { project.paths.relative($0.standardizedFileURL.path) }.flatMap { $0.isEmpty ? nil : $0 }
+			}
+		case Self.folderScope: o.folder = folder
+		default: break
+		}
 		guard sender != nil || o != options || !running else { return }
 		task?.cancel()
 		generation += 1
@@ -183,8 +225,10 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 		// Files with unsaved changes: their editor text, not the disk.
 		let query = findQuery
 		var local: [FileSearchResult] = []
+		let mask = PathMask(o.mask)
 		for doc in FileDocument.all where doc.isEdited {
 			guard let url = doc.url, let rel = project.paths.relative(url.standardizedFileURL.path), !rel.isEmpty else { continue }
+			guard rel.hasPrefix(o.folder.isEmpty ? "" : o.folder + "/"), mask.matches(rel), o.only?.contains(rel) ?? true else { continue }
 			o.skip.append(rel)
 			do {
 				if let r = try Self.search(doc.text.rope, path: rel, query: query) { local.append(r) }
