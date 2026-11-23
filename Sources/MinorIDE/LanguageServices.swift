@@ -352,7 +352,10 @@ final class LanguageServices {
 		editor.replace([(e6..<e6, "\n// minorideDoc says *hi*.\nfunc minorideDoc(a int, b string) {}\n\nfunc minorideCall() { minorideDoc }\n")])
 		let callEnd = editor.rope.byteCount - " }\n".utf8.count
 		let symbol = editor.rope.wordRange(at: callEnd - 2)
-		RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+		// Let semantic tokens and diagnostics for the edit arrive first: each redraw looks up the
+		// word under the real mouse again, which is not over the simulated word.
+		RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+		editor.window?.displayIfNeeded()
 		editor.mouseWord = symbol
 		editor.onMouseWord?(symbol)
 		wait { pane.hover?.isShowing == true }
@@ -431,6 +434,15 @@ final class LanguageServices {
 		}
 		editor.undo(nil)
 		print("text restored:", editor.rope.byteCount == e8)
+		// A gopls crash: the server restarts and serves the open file again.
+		if let pid = server?.processIdentifier {
+			kill(pid, SIGKILL)
+			wait { server?.processIdentifier != pid && status == .server(.running) && !progress.isActive }
+			var served = false
+			Task { served = !(((try? await request("textDocument/documentSymbol", ["textDocument": ["uri": .string(uri)]]))?.arrayValue ?? []).isEmpty) }
+			wait { served }
+			print("after crash:", status, "served:", served)
+		}
 		for line in log.suffix(8) { print("  ", line) }
 	}
 

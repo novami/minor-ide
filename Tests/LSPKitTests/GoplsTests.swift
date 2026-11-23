@@ -104,6 +104,21 @@ struct GoplsTests {
 		let all = try #require(try await server.format(uri: uri, in: text, settings: FormatSettings()))
 		ChangeSet(all).apply(to: &text)
 		#expect(text.string.hasSuffix("func a() {}\nfunc b() {}\n"))
+		server.change(uri: uri, version: 5, changes: ChangeSet(all), text: text)
+
+		// Crash: the server restarts and gets the unsaved text again.
+		let pid = try #require(server.processIdentifier)
+		kill(pid, SIGKILL)
+		var restarted: [String] = []
+		for _ in 0..<100 {
+			try await Task.sleep(for: .milliseconds(200))
+			guard server.isRunning, server.processIdentifier != pid else { continue }
+			let result = try? await server.request("textDocument/documentSymbol", ["textDocument": ["uri": .string(uri)]])
+			restarted = (result?.arrayValue ?? []).compactMap { $0["name"]?.stringValue }
+			if restarted.contains("b") { break }
+		}
+		#expect(restarted == ["main", "helper", "use", "z", "a", "b"])
+		#expect(states.value.contains(.restarting(attempt: 1)))
 		await server.stop()
 	}
 }
