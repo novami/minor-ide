@@ -32,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	private var documents: [DocumentWindow] = []
 	/// Benchmark/snapshot runs ignore files AppKit passes from the command line. Set at init:
 	/// AppKit delivers files to open before applicationDidFinishLaunching.
-	private let utilityMode = ["--bench", "--bench-startup", "--snapshot", "--dump-menu", "--l10n-sample"].contains(CommandLine.arguments.dropFirst().first ?? "")
+	private let utilityMode = ["--bench", "--bench-startup", "--bench-catalog", "--snapshot", "--dump-menu", "--l10n-sample"].contains(CommandLine.arguments.dropFirst().first ?? "")
 
 	/// Editor of the most recently opened window (benchmark and snapshot use it).
 	var editor: EditorView! { documents.last?.editor }
@@ -55,6 +55,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 				print("\(item.submenu?.title ?? item.title): \(sub.joined(separator: " | "))")
 			}
 			NSApp.terminate(nil)
+			return
+		}
+		if args.first == "--bench-catalog", args.count >= 2 {
+			CatalogBench.run(root: args[args.startIndex + 1])
 			return
 		}
 		if args.first == "--bench" {
