@@ -551,6 +551,7 @@ extension L10n {
 			"checkNow": "Check Now",
 			"currentVersion": "Current version",
 			"downloadNow": "Download",
+			"installNow": "Install and Restart",
 			"lastChecked": "Last checked",
 			"releaseNotes": "Release notes",
 			"statusAvailable": "A new version is available.",
@@ -558,8 +559,10 @@ extension L10n {
 			"statusDownloading": "Downloading…",
 			"statusFailed": "The update check failed.",
 			"statusIdle": "Not checked yet.",
+			"statusInstalled": "The update is installed. Restart MinorIDE to use it.",
+			"statusInstalling": "Installing…",
 			"statusNotConfigured": "Updates are not set up in this build (no update feed or signing key).",
-			"statusReady": "Downloaded and verified. Installing is not available yet.",
+			"statusReady": "Downloaded and verified. Ready to install.",
 			"statusUpToDate": "MinorIDE is up to date.",
 			"tab": "Updates"
 		},
@@ -1119,6 +1122,7 @@ public enum Strings {
 		public static var checkNow: String { L10n.string("updates.checkNow") }
 		public static var currentVersion: String { L10n.string("updates.currentVersion") }
 		public static var downloadNow: String { L10n.string("updates.downloadNow") }
+		public static var installNow: String { L10n.string("updates.installNow") }
 		public static var lastChecked: String { L10n.string("updates.lastChecked") }
 		public static var releaseNotes: String { L10n.string("updates.releaseNotes") }
 		public static var statusAvailable: String { L10n.string("updates.statusAvailable") }
@@ -1126,6 +1130,8 @@ public enum Strings {
 		public static var statusDownloading: String { L10n.string("updates.statusDownloading") }
 		public static var statusFailed: String { L10n.string("updates.statusFailed") }
 		public static var statusIdle: String { L10n.string("updates.statusIdle") }
+		public static var statusInstalled: String { L10n.string("updates.statusInstalled") }
+		public static var statusInstalling: String { L10n.string("updates.statusInstalling") }
 		public static var statusNotConfigured: String { L10n.string("updates.statusNotConfigured") }
 		public static var statusReady: String { L10n.string("updates.statusReady") }
 		public static var statusUpToDate: String { L10n.string("updates.statusUpToDate") }

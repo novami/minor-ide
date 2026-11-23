@@ -9,7 +9,7 @@ struct UpdatesSettingsView: View {
 
 	private var availableInfo: UpdateInfo? {
 		switch updater.state {
-		case .available(let i), .downloading(let i, _), .ready(let i, _): i
+		case .available(let i), .downloading(let i, _), .ready(let i, _), .installing(let i), .installed(let i): i
 		default: nil
 		}
 	}
@@ -22,6 +22,8 @@ struct UpdatesSettingsView: View {
 		case .available: Strings.updates.statusAvailable
 		case .downloading: Strings.updates.statusDownloading
 		case .ready: Strings.updates.statusReady
+		case .installing: Strings.updates.statusInstalling
+		case .installed: Strings.updates.statusInstalled
 		case .notConfigured: Strings.updates.statusNotConfigured
 		case .failed: Strings.updates.statusFailed
 		}
@@ -54,6 +56,9 @@ struct UpdatesSettingsView: View {
 				HStack {
 					Button(Strings.updates.checkNow) { Task { await updater.check() } }
 						.disabled(!updater.isConfigured || updater.state == .checking)
+					if case .ready = updater.state {
+						Button(Strings.updates.installNow) { AppUpdater.installAndRestart() }
+					}
 					if case .available = updater.state {
 						Button(Strings.updates.downloadNow) { Task { await updater.downloadAvailable() } }
 					}

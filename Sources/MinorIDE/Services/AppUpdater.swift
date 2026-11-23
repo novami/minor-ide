@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import MinorCore
 import UpdateKit
@@ -18,6 +19,18 @@ enum AppUpdater {
 
 	static func preferences(_ file: SettingsFile?) -> UpdatePreferences {
 		UpdatePreferences(autoCheck: file?.autoCheckUpdates ?? true, autoDownload: file?.autoDownloadUpdates ?? true)
+	}
+
+	/// Installs the verified update over the running bundle and starts the new copy. Only for an app
+	/// bundle (a development build run from .build is not replaced).
+	static func installAndRestart() {
+		let app = Bundle.main.bundleURL
+		guard app.pathExtension == "app", shared.install(currentApp: app) else { return }
+		let relaunch = Process()
+		relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
+		relaunch.arguments = ["-c", "sleep 1; exec /usr/bin/open -n \"$1\"", "sh", app.path] // fixed script, the path is an argument
+		try? relaunch.run()
+		NSApp.terminate(nil)
 	}
 
 	/// Called at launch and whenever settings.json changes.

@@ -17,8 +17,11 @@ public enum UpdateState: Sendable, Equatable {
 	case upToDate
 	case available(UpdateInfo)
 	case downloading(UpdateInfo, progress: Double)
-	/// Archive downloaded and its signature verified; installing is not implemented yet.
+	/// Archive downloaded and its signature verified.
 	case ready(UpdateInfo, file: URL)
+	case installing(UpdateInfo)
+	/// The new version is in place; the app must restart to use it.
+	case installed(UpdateInfo)
 	case notConfigured
 	case failed(String)
 }
@@ -97,6 +100,23 @@ public final class UpdateController {
 			state = .ready(info, file: file)
 		} catch {
 			state = .failed("\(error)")
+		}
+	}
+
+	/// Replaces `currentApp` with the downloaded, verified update. The caller restarts the app.
+	@discardableResult
+	public func install(currentApp: URL, checkCodeSignature: Bool = true) -> Bool {
+		guard case .ready(let info, let file) = state else { return false }
+		state = .installing(info)
+		do {
+			try UpdateInstaller.install(archive: file, info: info, appID: appID, currentVersion: currentVersion,
+			                            currentApp: currentApp, checkCodeSignature: checkCodeSignature)
+			try? FileManager.default.removeItem(at: file)
+			state = .installed(info)
+			return true
+		} catch {
+			state = .failed("\(error)")
+			return false
 		}
 	}
 

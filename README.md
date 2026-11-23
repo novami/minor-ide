@@ -41,7 +41,7 @@ SwiftTerm (pinned exactly). Everything else uses Apple system frameworks.
 
 The app can check a signed feed over HTTPS, download an update and verify its SHA-256 digest and
 Ed25519 signature. The feed is a release asset (`appcast.json`) in this public repository; archives are signed with the shared MinorUpdate key (`tools/minorupdate.swift`). Delivery is **not active yet**: there is no Developer ID signing, notarization or
-published release (so the feed does not exist yet), and installing a downloaded update is not implemented. The release
+published release (so the feed does not exist yet), and no release has been published. Installing swaps the app bundle in place (with rollback) after the signature, bundle ID, version and code signature checks. Releases are prepared locally with `tools/release.sh`. The release
 design is in [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## License

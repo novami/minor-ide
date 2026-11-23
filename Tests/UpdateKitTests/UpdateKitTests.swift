@@ -95,3 +95,64 @@ private func signedFeed(version: String, archive: Data, key: Curve25519.Signing.
 	await c.check()
 	guard case .failed = c.state else { Issue.record("state \(c.state)"); return }
 }
+
+// MARK: Installer
+
+private func makeApp(at dir: URL, id: String, version: String, marker: String) throws -> URL {
+	let app = dir.appendingPathComponent("T.app")
+	try FileManager.default.createDirectory(at: app.appendingPathComponent("Contents"), withIntermediateDirectories: true)
+	let plist: NSDictionary = ["CFBundleIdentifier": id, "CFBundleShortVersionString": version]
+	plist.write(to: app.appendingPathComponent("Contents/Info.plist"), atomically: true)
+	try Data(marker.utf8).write(to: app.appendingPathComponent("Contents/marker"))
+	return app
+}
+
+private func zip(_ app: URL, to zip: URL) throws {
+	let p = Process()
+	p.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+	p.arguments = ["-c", "-k", "--keepParent", app.path, zip.path]
+	try p.run(); p.waitUntilExit()
+}
+
+private func info(_ version: String) -> UpdateInfo {
+	let json = #"{"version":"\#(version)","url":"https://example.com/a.zip","sha256":"\#(String(repeating: "a", count: 64))","signature":""}"#
+	return (try? UpdateInfo.parse(Data(json.utf8))) ?? { fatalError() }()
+}
+
+@Test func installSwapsTheBundle() throws {
+	let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+	let src = root.appendingPathComponent("src"), dst = root.appendingPathComponent("dst")
+	try FileManager.default.createDirectory(at: src, withIntermediateDirectories: true)
+	try FileManager.default.createDirectory(at: dst, withIntermediateDirectories: true)
+	let fresh = try makeApp(at: src, id: "app.test", version: "0.2.0", marker: "new")
+	let current = try makeApp(at: dst, id: "app.test", version: "0.1.0", marker: "old")
+	let archive = root.appendingPathComponent("a.zip")
+	try zip(fresh, to: archive)
+	try UpdateInstaller.install(archive: archive, info: info("0.2.0"), appID: "app.test", currentVersion: "0.1.0",
+	                            currentApp: current, checkCodeSignature: false)
+	#expect(try String(contentsOf: current.appendingPathComponent("Contents/marker"), encoding: .utf8) == "new")
+	#expect(try FileManager.default.contentsOfDirectory(atPath: dst.path) == ["T.app"]) // no backup left behind
+}
+
+@Test func installRejectsWrongAppAndKeepsCurrent() throws {
+	let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+	let src = root.appendingPathComponent("src"), dst = root.appendingPathComponent("dst")
+	try FileManager.default.createDirectory(at: src, withIntermediateDirectories: true)
+	try FileManager.default.createDirectory(at: dst, withIntermediateDirectories: true)
+	let other = try makeApp(at: src, id: "app.other", version: "0.2.0", marker: "evil")
+	let current = try makeApp(at: dst, id: "app.test", version: "0.1.0", marker: "old")
+	let archive = root.appendingPathComponent("a.zip")
+	try zip(other, to: archive)
+	#expect(throws: UpdateInstaller.Failure.wrongApp) {
+		try UpdateInstaller.install(archive: archive, info: info("0.2.0"), appID: "app.test", currentVersion: "0.1.0",
+		                            currentApp: current, checkCodeSignature: false)
+	}
+	#expect(try String(contentsOf: current.appendingPathComponent("Contents/marker"), encoding: .utf8) == "old")
+}
+
+@Test func installRejectsNotNewer() {
+	#expect(throws: UpdateInstaller.Failure.notNewer) {
+		try UpdateInstaller.install(archive: URL(fileURLWithPath: "/x"), info: info("0.1.0"), appID: "a", currentVersion: "0.1.0",
+		                            currentApp: URL(fileURLWithPath: "/y"))
+	}
+}
