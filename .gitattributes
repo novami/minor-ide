@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.icns binary
+*.png binary
+Sources/Localization/Generated/*.swift linguist-generated=true

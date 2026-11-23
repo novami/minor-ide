@@ -3,7 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ['docs/**', '*.md']
   pull_request:
+    paths-ignore: ['docs/**', '*.md']
 
 permissions:
   contents: read
@@ -14,29 +16,34 @@ concurrency:
 
 jobs:
   test:
-    runs-on: macos-latest
+    name: Tests
+    runs-on: macos-latest # Apple Silicon (arm64); checked below
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version-file: server/go.mod
           cache: false # no third-party Go modules yet
 
-      # Dependencies and compiled modules; the key follows the manifest, older caches are a fallback.
-      - uses: actions/cache@v4
-        with:
-          path: .build
-          key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
-          restore-keys: ${{ runner.os }}-spm-
-
       - name: Toolchain versions
+        id: toolchain
         run: |
+          test "$(uname -m)" = arm64
           sw_vers
           xcode-select -p
           swift --version
           go version
+          echo "swift=$(swift --version 2>&1 | head -1 | tr -c 'A-Za-z0-9.\n' '-')" >> "$GITHUB_OUTPUT"
+
+      # Dependencies and compiled modules. Keyed by OS, Swift toolchain and the manifest; a cache
+      # from another toolchain is never restored (stale module files break builds).
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-${{ runner.arch }}-spm-${{ steps.toolchain.outputs.swift }}-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-spm-${{ steps.toolchain.outputs.swift }}-
 
       - name: Tests (Go vet + tests, Swift tests)
         run: make test
@@ -47,3 +54,15 @@ jobs:
         run: make bench
         env:
           MINORIDE_BENCH_PROFILE: ci # p99 per frame and rope throughput; VM one-off stalls ignored
+
+  lint:
+    name: SwiftLint (advisory)
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: SwiftLint
+        continue-on-error: true # findings are reported, they never fail the build
+        run: |
+          brew list swiftlint >/dev/null 2>&1 || brew install swiftlint
+          swiftlint lint --reporter github-actions-logging

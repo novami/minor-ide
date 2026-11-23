@@ -1,0 +1,31 @@
+# Advisory: CI reports findings but does not fail the build.
+included:
+  - Sources
+  - Tests
+excluded:
+  - Sources/Localization/Generated
+  - Sources/Highlight/Lexers
+disabled_rules:
+  - line_length
+  - identifier_name
+  - type_name
+  - function_body_length
+  - type_body_length
+  - file_length
+  - cyclomatic_complexity
+  - function_parameter_count
+  - large_tuple
+  - nesting
+  - todo
+  - trailing_comma
+  - opening_brace
+  - vertical_whitespace
+  - empty_enum_arguments
+  - unused_closure_parameter
+  - statement_position
+opt_in_rules:
+  - unused_import
+  - empty_count
+  - force_unwrapping
+force_unwrapping:
+  severity: warning
