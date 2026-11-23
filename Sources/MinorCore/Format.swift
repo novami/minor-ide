@@ -80,7 +80,8 @@ public struct FormatSettings: Equatable, Sendable {
 		var keys = Array(properties.keys)
 		if let i = keys.firstIndex(of: "tab_width") { keys.swapAt(0, i) }
 		for key in keys {
-			let value = properties[key]!.lowercased().trimmingCharacters(in: .whitespaces)
+			guard let rawValue = properties[key] else { continue }
+			let value = rawValue.lowercased().trimmingCharacters(in: .whitespaces)
 			let unset = value == "unset"
 			switch key {
 			case "indent_style":
@@ -172,7 +173,9 @@ public enum FormatDefaults {
 		]
 		let languageDefaults: [String: String]
 		switch language {
-		case "php": languageDefaults = presets["php"]![preset ?? "psr12"] ?? presets["php"]!["psr12"]!
+		case "php":
+			let php = presets["php"] ?? [:]
+			languageDefaults = php[preset ?? "psr12"] ?? php["psr12"] ?? [:]
 		case "go": languageDefaults = ["indent_style": "tab", "tab_width": "4", "format_on_save": "true"] // gofmt
 		case "latte", "neon": languageDefaults = ["indent_style": "tab", "tab_width": "4"] // Nette conventions
 		case "javascript", "typescript", "vue", "css", "scss", "html", "yaml":

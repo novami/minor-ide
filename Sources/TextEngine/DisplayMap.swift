@@ -22,19 +22,19 @@ public struct DisplayMap: Sendable, Equatable {
 			}
 		}
 		before = [0]
-		for r in hidden { before.append(before.last! + r.count) }
+		for r in hidden { before.append((before.last ?? 0) + r.count) }
 		for w in wrapped where w.extra > 0 && !isHidden(w.line) {
 			wrapLine.append(w.line)
 			wrapRow.append(foldRow(of: w.line))
 			wrapExtra.append(w.extra)
-			wrapBefore.append(wrapBefore.last! + w.extra)
+			wrapBefore.append((wrapBefore.last ?? 0) + w.extra)
 		}
 	}
 
 	public var isEmpty: Bool { hidden.isEmpty && wrapLine.isEmpty }
-	public var hiddenCount: Int { before.last! }
+	public var hiddenCount: Int { before.last ?? 0 }
 	/// Rows added by wrapping of visible lines.
-	public var extraRows: Int { wrapBefore.last! }
+	public var extraRows: Int { wrapBefore.last ?? 0 }
 
 	public func rowCount(lineCount: Int) -> Int { lineCount - hiddenCount + extraRows }
 

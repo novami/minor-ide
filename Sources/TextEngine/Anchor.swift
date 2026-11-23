@@ -48,8 +48,8 @@ public struct AnchorSet: Sendable {
 	public mutating func apply(_ changes: ChangeSet) {
 		guard !entries.isEmpty, !changes.isEmpty else { return }
 		for key in entries.keys {
-			let e = entries[key]!
-			entries[key]!.offset = changes.map(e.offset, bias: e.bias)
+			guard let e = entries[key] else { continue }
+			entries[key]?.offset = changes.map(e.offset, bias: e.bias)
 		}
 	}
 }

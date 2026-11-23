@@ -19,6 +19,9 @@ public struct TextSummary: Sendable, Equatable {
 
 	init() {}
 
+	static func += (a: inout TextSummary, b: TextSummary) { a = a + b }
+	static func -= (a: inout TextSummary, b: TextSummary) { a = a - b }
+
 	static func - (a: TextSummary, b: TextSummary) -> TextSummary {
 		var r = a
 		r.bytes -= b.bytes
@@ -301,7 +304,7 @@ public struct Rope: Sendable {
 		makeUnique(&node)
 		if node.isLeaf {
 			node.bytes.insert(contentsOf: bytes, at: offset)
-			node.summary = node.summary + added
+			node.summary += added
 			guard node.bytes.count > Node.maxLeaf else { return [] }
 			var parts = leaves(node.bytes)
 			node.bytes = parts[0].bytes
@@ -317,7 +320,7 @@ public struct Rope: Sendable {
 			o -= size
 		}
 		let extra = insert(&node.children[index], at: o, bytes, added)
-		node.summary = node.summary + added
+		node.summary += added
 		guard !extra.isEmpty else { return [] }
 		node.children.insert(contentsOf: extra, at: index + 1)
 		guard node.children.count > Node.maxChildren else { return [] }
@@ -332,7 +335,7 @@ public struct Rope: Sendable {
 	static func delete(_ node: inout Node, _ range: Range<Int>) -> Bool {
 		makeUnique(&node)
 		if node.isLeaf {
-			node.summary = node.summary - TextSummary(bytes: node.bytes[range])
+			node.summary -= TextSummary(bytes: node.bytes[range])
 			node.bytes.removeSubrange(range)
 			return node.bytes.isEmpty
 		}

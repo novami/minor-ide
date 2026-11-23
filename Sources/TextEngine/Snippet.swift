@@ -22,7 +22,7 @@ public struct Snippet: Sendable, Equatable {
 		text = String(decoding: out, as: UTF8.self)
 		var byIndex: [Int: [Range<Int>]] = [:]
 		for (index, range) in found { byIndex[index, default: []].append(range) }
-		stops = byIndex.keys.filter { $0 > 0 }.sorted().map { byIndex[$0]! }
+		stops = byIndex.keys.filter { $0 > 0 }.sorted().compactMap { byIndex[$0] }
 		stops.append(byIndex[0] ?? [out.count..<out.count])
 	}
 

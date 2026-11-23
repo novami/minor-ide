@@ -22,8 +22,8 @@ Working position. Updated after every finished block of work; a new session star
 
 ## Open items
 
-- **Updates (partial phase 2)**: `UpdateKit` checks an HTTPS feed, downloads and verifies SHA-256 + Ed25519; Settings › Updates (auto check and auto download default on, stored as `auto_check_updates`, `auto_download_updates`). Inactive until `MINORIDE_UPDATE_FEED_URL` and `MINORIDE_UPDATE_PUBLIC_KEY` are set for `make bundle`. Missing: install helper `minoride-updater`, code signature check, Developer ID, notarization, release workflow. Not tested against a real feed.
-- **SwiftLint** is advisory in CI (about 180 findings, mostly force unwraps); not yet seen in a CI run, as is the new SHA-pinned workflow.
+- **Updates (partial phase 2)**: `UpdateKit` checks an HTTPS feed, downloads and verifies SHA-256 + Ed25519; Settings › Updates (auto check and auto download default on, stored as `auto_check_updates`, `auto_download_updates`). Shared signing key "MinorUpdate" for all Minor* apps (Ed25519; private key only in the login Keychain, service `MinorUpdate`; tool `tools/minorupdate.swift keygen|sign`; signed message binds app ID + version + SHA-256). `make bundle` defaults: feed `https://github.com/novami/minor-ide/releases/latest/download/appcast.json` (public repo, release asset), the public key (override with `MINORIDE_UPDATE_FEED_URL`, `MINORIDE_UPDATE_PUBLIC_KEY`). No release exists yet, so the feed returns 404 and a check reports a failure. Back up the private key. Missing: install helper `minoride-updater`, code signature check, Developer ID, notarization, release workflow. Not tested against a real feed.
+- **SwiftLint** is advisory in CI (now 0 findings; rules documented in `.swiftlint.yml`); not yet seen in a CI run, as is the new SHA-pinned workflow.
 
 - **Semantic tokens**: no `workspace/semanticTokens/refresh` and no delta requests; files changed by an external tool refresh only after an edit or a save. Bench today runs about 2× slower than the numbers above even without changes (machine noise); it stays within budget.
 

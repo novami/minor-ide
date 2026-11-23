@@ -25,11 +25,15 @@ struct NavigationTarget: Sendable {
 			var targets: [NavigationTarget] = []
 			for location in Set(locations) {
 				guard let url = location.url else { continue }
-				if ropes[url] == nil {
+				let rope: Rope
+				if let known = ropes[url] {
+					rope = known
+				} else {
 					guard let data = try? Data(contentsOf: url) else { continue }
-					ropes[url] = Rope(bytes: [UInt8](data))
+					rope = Rope(bytes: [UInt8](data))
+					ropes[url] = rope
 				}
-				targets.append(target(url, ropes[url]!, location.range, encoding))
+				targets.append(target(url, rope, location.range, encoding))
 			}
 			return targets.sorted { ($0.url.path, $0.range.lowerBound) < ($1.url.path, $1.range.lowerBound) }
 		}.value

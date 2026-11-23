@@ -35,6 +35,7 @@ public final class UpdateController {
 	public private(set) var state: UpdateState = .idle
 	public var preferences: UpdatePreferences
 	public let currentVersion: String
+	public let appID: String
 	public private(set) var lastChecked: Date?
 
 	private let feedURL: URL?
@@ -44,7 +45,8 @@ public final class UpdateController {
 
 	/// `feedURL` or `publicKey` empty means the release infrastructure is not set up: nothing is
 	/// checked and the state is `.notConfigured`.
-	public init(currentVersion: String, feedURL: URL?, publicKey: Data, preferences: UpdatePreferences = .init(), transport: UpdateTransport) {
+	public init(appID: String, currentVersion: String, feedURL: URL?, publicKey: Data, preferences: UpdatePreferences = .init(), transport: UpdateTransport) {
+		self.appID = appID
 		self.currentVersion = currentVersion
 		self.feedURL = feedURL
 		self.publicKey = publicKey
@@ -87,7 +89,7 @@ public final class UpdateController {
 				}
 			}
 			do {
-				try UpdateVerifier.verify(file: file, info: info, publicKey: publicKey)
+				try UpdateVerifier.verify(file: file, info: info, appID: appID, publicKey: publicKey)
 			} catch {
 				try? FileManager.default.removeItem(at: file)
 				throw error

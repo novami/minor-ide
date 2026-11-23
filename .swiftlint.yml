@@ -5,6 +5,7 @@ included:
 excluded:
   - Sources/Localization/Generated
   - Sources/Highlight/Lexers
+  - Sources/MinorIDE/Diagnostics # benchmarks: a failed invariant should stop the run
 disabled_rules:
   - line_length
   - identifier_name
@@ -23,8 +24,8 @@ disabled_rules:
   - empty_enum_arguments
   - unused_closure_parameter
   - statement_position
+  - optional_data_string_conversion # String(decoding:) is intended: invalid UTF-8 becomes U+FFFD, never a nil
 opt_in_rules:
-  - unused_import
   - empty_count
   - force_unwrapping
 force_unwrapping:

@@ -43,6 +43,8 @@ public struct Theme: Sendable, Codable, Equatable {
 		(max(a, b) + 0.05) / (min(a, b) + 0.05)
 	}
 
+	// A constant, valid JSON checked by the tests: a failure is a programming error.
+	// swiftlint:disable:next force_try
 	public static let light = try! Theme(json: """
 		{"name": "Light", "colors": {
 			"keyword": "#9C27B0", "type": "#00796B", "function": "#3949AB", "string": "#C62828",
@@ -51,6 +53,7 @@ public struct Theme: Sendable, Codable, Equatable {
 			"macro": "#AD1457", "invalid": "#D32F2F"}}
 		""")
 
+	// swiftlint:disable:next force_try
 	public static let dark = try! Theme(json: """
 		{"name": "Dark", "colors": {
 			"keyword": "#E58BE0", "type": "#6FD3C4", "function": "#8FB4FF", "string": "#FF8A80",

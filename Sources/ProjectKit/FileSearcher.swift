@@ -164,12 +164,12 @@ struct Matcher: Sendable {
 	/// Byte ranges of the matches (at most `limit`); empty matches are not results.
 	func find(in b: UnsafeBufferPointer<UInt8>, data: Data, limit: Int) -> [Range<Int>] {
 		var out: [Range<Int>] = []
-		if let literal {
+		if let literal, let base = b.baseAddress {
 			let n = literal.count
 			var at = 0
 			while out.count < limit, at + n <= b.count,
-			      let p = memmem(b.baseAddress! + at, b.count - at, literal, n) {
-				let i = b.baseAddress!.distance(to: p.assumingMemoryBound(to: UInt8.self))
+			      let p = memmem(base + at, b.count - at, literal, n) {
+				let i = base.distance(to: p.assumingMemoryBound(to: UInt8.self))
 				out.append(i..<i + n)
 				at = i + n
 			}

@@ -75,9 +75,10 @@ final class FindBar: NSView, NSSearchFieldDelegate {
 		navigation.controlSize = .small
 
 		let findRow = NSStackView(views: [findField, status, caseButton, wordButton, regexButton, navigation, done])
-		replaceRow = NSStackView(views: [replaceField, preserveButton, replaceButton, replaceAllButton])
-		replaceRow.isHidden = true
-		for row in [findRow, replaceRow!] {
+		let replace = NSStackView(views: [replaceField, preserveButton, replaceButton, replaceAllButton])
+		replaceRow = replace
+		replace.isHidden = true
+		for row in [findRow, replace] {
 			row.orientation = .horizontal
 			row.spacing = 6
 		}

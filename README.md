@@ -40,7 +40,7 @@ SwiftTerm (pinned exactly). Everything else uses Apple system frameworks.
 ## Updates and distribution
 
 The app can check a signed feed over HTTPS, download an update and verify its SHA-256 digest and
-Ed25519 signature. Delivery is **not active yet**: there is no Developer ID signing, notarization,
+Ed25519 signature. The feed is a release asset (`appcast.json`) in this public repository; archives are signed with the shared MinorUpdate key (`tools/minorupdate.swift`). Delivery is **not active yet**: there is no Developer ID signing, notarization,
 release feed or signing key, and installing a downloaded update is not implemented. The release
 design is in [docs/DECISIONS.md](docs/DECISIONS.md).
 

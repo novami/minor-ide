@@ -607,10 +607,11 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		}
 		// Wrapped rows of the edited lines; lines below keep theirs but may move.
 		var rowsChanged = false
-		if wraps != nil {
-			let hadWraps = !wraps!.isEmpty
-			rowsChanged = wraps!.update(rope: rope, first: firstLine, oldLast: lastLine, newLast: edit.newLastLine)
-			if !sameLines && hadWraps { rowsChanged = rowsChanged || !wraps!.isEmpty }
+		if var map = wraps {
+			let hadWraps = !map.isEmpty
+			rowsChanged = map.update(rope: rope, first: firstLine, oldLast: lastLine, newLast: edit.newLastLine)
+			if !sameLines && hadWraps { rowsChanged = rowsChanged || !map.isEmpty }
+			wraps = map
 		}
 		if foldsChanged || rowsChanged || (!sameLines && !folds.isEmpty) { rebuildDisplay() }
 		selections = newSelections
@@ -696,7 +697,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 			return
 		}
 		let offset = offset(at: point)
-		if navigatesOnClick(clicks: clicks, modifiers: modifiers), onNavigate!(offset) { return }
+		if navigatesOnClick(clicks: clicks, modifiers: modifiers), onNavigate?(offset) == true { return }
 		let unit: DragUnit = clicks >= 3 ? .line : clicks == 2 ? .word : .character
 		var others: [Selection] = []
 		var origin = range(of: unit, at: offset)
@@ -986,7 +987,7 @@ public final class EditorView: NSView, @preconcurrency NSTextInputClient {
 		}
 		onWillTypeText?(text)
 		defer { onTypedText?(text) }
-		if text.utf8.count == 1, language != nil, typePairCharacter(text.utf8.first!) { return }
+		if text.utf8.count == 1, language != nil, let char = text.utf8.first, typePairCharacter(char) { return }
 		replaceSelections(text.contains("\n") ? .other : .typing) { _ in text }
 	}
 

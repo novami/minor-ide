@@ -57,25 +57,25 @@ enum MainMenu {
 			m.item(Strings.menu.selectNextOccurrence, #selector(EditorView.selectNextOccurrence(_:)), "g", .control)
 			m.item(Strings.menu.selectAllOccurrences, #selector(EditorView.selectAllOccurrences(_:)), "g", [.control, .command])
 			m.addItem(.separator())
-			let up = String(UnicodeScalar(UInt16(NSUpArrowFunctionKey))!), down = String(UnicodeScalar(UInt16(NSDownArrowFunctionKey))!)
+			let up = functionKeyString(NSUpArrowFunctionKey), down = functionKeyString(NSDownArrowFunctionKey)
 			m.item(Strings.menu.duplicateLine, #selector(EditorView.duplicateLines(_:)), "d", [.command, .shift])
 			m.item(Strings.menu.moveLineUp, #selector(EditorView.moveLinesUp(_:)), up, [.command, .option])
 			m.item(Strings.menu.moveLineDown, #selector(EditorView.moveLinesDown(_:)), down, [.command, .option])
 			m.item(Strings.menu.showCompletions, #selector(EditorView.showCompletions(_:)), " ", .control)
 			m.item(Strings.menu.showParameterInfo, #selector(DocumentWindow.showParameterInfo(_:)), " ", [.control, .shift])
-			m.item(Strings.menu.showDocumentation, #selector(DocumentWindow.showDocumentation(_:)), String(UnicodeScalar(NSF1FunctionKey)!), [])
+			m.item(Strings.menu.showDocumentation, #selector(DocumentWindow.showDocumentation(_:)), functionKeyString(NSF1FunctionKey), [])
 			KeyboardLayout.bind(m.item(Strings.menu.commentSelection, #selector(EditorView.toggleComment(_:)), "/"), keyCode: UInt16(kVK_ANSI_Slash))
 			m.addItem(.separator())
 			let find = m.item(Strings.common.find, nil)
 			find.submenu = NSMenu(title: Strings.common.find)
-			find.submenu!.item(Strings.find.findEllipsis, #selector(DocumentWindow.showFind(_:)), "f")
-			find.submenu!.item(Strings.menu.findAndReplace, #selector(DocumentWindow.showFindAndReplace(_:)), "f", [.command, .option])
-			find.submenu!.item(Strings.menu.findInProject, #selector(DocumentWindow.findInProject(_:)), "f", [.command, .shift])
-			find.submenu!.item(Strings.find.findNext, #selector(DocumentWindow.findNextMatch(_:)), "g")
-			find.submenu!.item(Strings.find.findPrevious, #selector(DocumentWindow.findPreviousMatch(_:)), "g", [.command, .shift])
-			find.submenu!.item(Strings.menu.useSelectionForFind, #selector(DocumentWindow.useSelectionForFind(_:)), "e")
-			find.submenu!.item(Strings.menu.useSelectionForReplace, #selector(DocumentWindow.useSelectionForReplace(_:)), "e", [.command, .shift])
-			find.submenu!.item(Strings.menu.jumpToSelection, #selector(NSResponder.centerSelectionInVisibleArea(_:)), "j")
+			find.menuOrEmpty.item(Strings.find.findEllipsis, #selector(DocumentWindow.showFind(_:)), "f")
+			find.menuOrEmpty.item(Strings.menu.findAndReplace, #selector(DocumentWindow.showFindAndReplace(_:)), "f", [.command, .option])
+			find.menuOrEmpty.item(Strings.menu.findInProject, #selector(DocumentWindow.findInProject(_:)), "f", [.command, .shift])
+			find.menuOrEmpty.item(Strings.find.findNext, #selector(DocumentWindow.findNextMatch(_:)), "g")
+			find.menuOrEmpty.item(Strings.find.findPrevious, #selector(DocumentWindow.findPreviousMatch(_:)), "g", [.command, .shift])
+			find.menuOrEmpty.item(Strings.menu.useSelectionForFind, #selector(DocumentWindow.useSelectionForFind(_:)), "e")
+			find.menuOrEmpty.item(Strings.menu.useSelectionForReplace, #selector(DocumentWindow.useSelectionForReplace(_:)), "e", [.command, .shift])
+			find.menuOrEmpty.item(Strings.menu.jumpToSelection, #selector(NSResponder.centerSelectionInVisibleArea(_:)), "j")
 		}
 
 		main.add(submenu: Strings.menu.format) { m in
@@ -84,19 +84,19 @@ enum MainMenu {
 			let eol = m.item(Strings.format.lineEndings, nil)
 			eol.submenu = NSMenu()
 			for (title, value) in [(Strings.format.lineEndingLF, "lf"), (Strings.format.lineEndingCRLF, "crlf"), (Strings.format.lineEndingCR, "cr")] {
-				eol.submenu!.item(title, #selector(AppDelegate.setLineEnding(_:)), target: target).representedObject = value
+				eol.menuOrEmpty.item(title, #selector(AppDelegate.setLineEnding(_:)), target: target).representedObject = value
 			}
 			let indent = m.item(Strings.format.indentation, nil)
 			indent.submenu = NSMenu()
 			for (title, tag) in [(Strings.format.tabs, 0), (Strings.menu.twoSpaces, 2), (Strings.menu.fourSpaces, 4)] {
-				indent.submenu!.item(title, #selector(AppDelegate.setIndent(_:)), target: target).tag = tag
+				indent.menuOrEmpty.item(title, #selector(AppDelegate.setIndent(_:)), target: target).tag = tag
 			}
-			indent.submenu!.addItem(.separator())
-			indent.submenu!.item(Strings.format.convertIndentation, #selector(EditorView.convertIndentation(_:)))
+			indent.menuOrEmpty.addItem(.separator())
+			indent.menuOrEmpty.item(Strings.format.convertIndentation, #selector(EditorView.convertIndentation(_:)))
 			let width = m.item(Strings.menu.tabWidth, nil)
 			width.submenu = NSMenu()
 			for w in [2, 4, 8] {
-				width.submenu!.item("\(w)", #selector(AppDelegate.setTabWidth(_:)), target: target).tag = w
+				width.menuOrEmpty.item("\(w)", #selector(AppDelegate.setTabWidth(_:)), target: target).tag = w
 			}
 		}
 
@@ -114,18 +114,18 @@ enum MainMenu {
 			m.item(Strings.menu.pinEnclosingLines, #selector(AppDelegate.toggleStickyLines(_:)), target: target)
 			let folding = m.item(Strings.menu.codeFolding, nil)
 			folding.submenu = NSMenu(title: Strings.menu.codeFolding)
-			let left = String(UnicodeScalar(UInt16(NSLeftArrowFunctionKey))!), right = String(UnicodeScalar(UInt16(NSRightArrowFunctionKey))!)
-			folding.submenu!.item(Strings.menu.fold, #selector(EditorView.fold(_:)), left, [.command, .option])
-			folding.submenu!.item(Strings.menu.unfold, #selector(EditorView.unfold(_:)), right, [.command, .option])
-			folding.submenu!.item(Strings.menu.foldAll, #selector(EditorView.foldAll(_:)), left, [.command, .option, .shift])
-			folding.submenu!.item(Strings.menu.unfoldAll, #selector(EditorView.unfoldAll(_:)), right, [.command, .option, .shift])
+			let left = functionKeyString(NSLeftArrowFunctionKey), right = functionKeyString(NSRightArrowFunctionKey)
+			folding.menuOrEmpty.item(Strings.menu.fold, #selector(EditorView.fold(_:)), left, [.command, .option])
+			folding.menuOrEmpty.item(Strings.menu.unfold, #selector(EditorView.unfold(_:)), right, [.command, .option])
+			folding.menuOrEmpty.item(Strings.menu.foldAll, #selector(EditorView.foldAll(_:)), left, [.command, .option, .shift])
+			folding.menuOrEmpty.item(Strings.menu.unfoldAll, #selector(EditorView.unfoldAll(_:)), right, [.command, .option, .shift])
 			m.addItem(.separator())
 			// AppKit adds only a hidden fn-key variant of this item, so the visible one must be ours.
 			m.item(Strings.menu.enterFullScreen, #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control])
 		}
 
 		main.add(submenu: Strings.menu.navigate) { m in
-			let left = String(UnicodeScalar(UInt16(NSLeftArrowFunctionKey))!), right = String(UnicodeScalar(UInt16(NSRightArrowFunctionKey))!)
+			let left = functionKeyString(NSLeftArrowFunctionKey), right = functionKeyString(NSRightArrowFunctionKey)
 			m.item(Strings.menu.back, #selector(DocumentWindow.navigateBack(_:)), left, [.command, .control])
 			m.item(Strings.menu.forward, #selector(DocumentWindow.navigateForward(_:)), right, [.command, .control])
 			m.item(Strings.menu.recentFiles, #selector(DocumentWindow.showRecentFiles(_:)), "e", [.command, .control])
@@ -133,9 +133,9 @@ enum MainMenu {
 			m.item(Strings.menu.jumpToDefinition, #selector(DocumentWindow.jumpToDefinition(_:)), "b")
 			m.item(Strings.menu.jumpToImplementation, #selector(DocumentWindow.jumpToImplementation(_:)), "b", [.command, .option])
 			m.item(Strings.menu.jumpToTypeDefinition, #selector(DocumentWindow.jumpToTypeDefinition(_:)), "b", [.command, .shift])
-			m.item(Strings.menu.findUsages, #selector(DocumentWindow.findUsages(_:)), String(UnicodeScalar(NSF7FunctionKey)!), .option)
+			m.item(Strings.menu.findUsages, #selector(DocumentWindow.findUsages(_:)), functionKeyString(NSF7FunctionKey), .option)
 			m.addItem(.separator())
-			let f2 = String(UnicodeScalar(NSF2FunctionKey)!)
+			let f2 = functionKeyString(NSF2FunctionKey)
 			m.item(Strings.menu.nextProblem, #selector(DocumentWindow.nextProblem(_:)), f2, [])
 			m.item(Strings.menu.previousProblem, #selector(DocumentWindow.previousProblem(_:)), f2, .shift)
 			m.item(Strings.menu.showProblems, #selector(DocumentWindow.showProblems(_:)))
@@ -143,7 +143,7 @@ enum MainMenu {
 
 		main.add(submenu: Strings.menu.refactor) { m in
 			m.item(Strings.menu.quickActions, #selector(DocumentWindow.showQuickActions(_:)), "\r", .option)
-			m.item(Strings.common.rename, #selector(DocumentWindow.renameSymbol(_:)), String(UnicodeScalar(NSF6FunctionKey)!), .shift)
+			m.item(Strings.common.rename, #selector(DocumentWindow.renameSymbol(_:)), functionKeyString(NSF6FunctionKey), .shift)
 		}
 
 		main.add(submenu: Strings.menu.window) { m in

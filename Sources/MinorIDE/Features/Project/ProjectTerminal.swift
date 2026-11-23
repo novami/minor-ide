@@ -43,11 +43,11 @@ final class ProjectTerminal: NSObject {
 		strip.target = self
 		strip.action = #selector(tabPicked(_:))
 		strip.setAccessibilityLabel(Strings.terminal.tabs)
-		let add = NSButton(image: NSImage(systemSymbolName: "plus", accessibilityDescription: Strings.menu.newTerminalTab)!, target: self, action: #selector(addClicked(_:)))
+		let add = NSButton(image: NSImage.symbol("plus", Strings.menu.newTerminalTab), target: self, action: #selector(addClicked(_:)))
 		add.isBordered = false
 		add.controlSize = .small
 		add.toolTip = Strings.menu.newTerminalTab
-		let close = NSButton(image: NSImage(systemSymbolName: "xmark", accessibilityDescription: Strings.terminal.closeTab)!, target: self, action: #selector(closeClicked(_:)))
+		let close = NSButton(image: NSImage.symbol("xmark", Strings.terminal.closeTab), target: self, action: #selector(closeClicked(_:)))
 		close.isBordered = false
 		close.controlSize = .small
 		close.toolTip = Strings.terminal.closeTab

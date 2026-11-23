@@ -218,7 +218,7 @@ extension HoverController {
 			for (j, r) in d.related.enumerated() {
 				out.append(NSAttributedString(string: "\n    " + r.message + "  ", attributes: secondary))
 				let place = r.url.lastPathComponent + ":" + String(r.line + 1)
-				out.append(NSAttributedString(string: place, attributes: secondary.merging([.link: URL(string: "\(relatedScheme)://\(i)-\(j)")!]) { $1 }))
+				out.append(NSAttributedString(string: place, attributes: secondary.merging([.link: URL(string: "\(relatedScheme)://\(i)-\(j)") ?? URL(fileURLWithPath: "/")]) { $1 }))
 			}
 		}
 		return out
@@ -363,12 +363,12 @@ final class SignatureHelpController {
 
 	/// The help follows the caret; it hides while the caret is out of view.
 	private func followScroll() {
-		guard let popup, help != nil, let editor, let window = editor.window,
+		guard let popup, let help, let editor, let window = editor.window,
 		      let clip = editor.enclosingScrollView?.contentView else { return }
 		let rect = caretRect()
 		let visible = window.convertToScreen(clip.convert(clip.bounds, to: nil))
 		if visible.contains(NSPoint(x: rect.minX, y: rect.midY)) {
-			if popup.isVisible { popup.move(to: rect) } else { show(help!) }
+			if popup.isVisible { popup.move(to: rect) } else { show(help) }
 		} else {
 			popup.hide()
 		}

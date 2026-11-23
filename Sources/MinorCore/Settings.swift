@@ -50,7 +50,7 @@ public struct SettingsFile: Sendable, Equatable {
 				format[section] = p.compactMapValues { v in
 					switch v {
 					case .string(let s): s
-					case .number(let n): n == n.rounded() ? String(Int(n)) : String(n)
+					case .number(let n): n == n.rounded() ? "\(Int(n))" : "\(n)"
 					case .bool(let b): b ? "true" : "false"
 					default: nil
 					}

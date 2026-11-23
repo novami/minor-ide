@@ -74,7 +74,7 @@ extension EditorView {
 			}
 		}
 		// Insert at the smallest indentation, so the comment markers line up.
-		let column = lines.map(\.1).min()!
+		guard let column = lines.map(\.1).min() else { return [] }
 		let text = String(decoding: prefix, as: UTF8.self) + " "
 		return lines.map { line, _, _ in
 			let at = rope.offset(ofLine: line) + column
@@ -124,7 +124,7 @@ extension EditorView {
 			if !s.isEmpty { return close != nil ? .wrap : .insert }
 			let p = s.head, next = byte(at: p), prev = byte(before: p)
 			if (isClosingBracket(c) || isQuote) && next == c && prev != 0x5C { return .over }
-			if let _ = close, !inStringOrComment(p) {
+			if close != nil, !inStringOrComment(p) {
 				let nextOK = next == 0 || next == 0x0A || Bytes.isWhitespace(next) || isClosingBracket(next) || next == 0x2C || next == 0x3B
 				let prevOK = !isQuote || !(Bytes.isIdentifier(prev) || prev == c || prev == 0x5C)
 				if nextOK && prevOK { return .pair }

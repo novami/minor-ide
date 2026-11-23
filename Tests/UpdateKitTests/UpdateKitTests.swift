@@ -14,16 +14,18 @@ private struct FakeTransport: UpdateTransport {
 	}
 }
 
-private func signedFeed(version: String, archive: Data, key: Curve25519.Signing.PrivateKey, url: String = "https://example.com/a.zip") -> Data {
+private func signedFeed(version: String, archive: Data, key: Curve25519.Signing.PrivateKey, appID: String = "app.test", url: String = "https://example.com/a.zip") -> Data {
 	let digest = Data(SHA256.hash(data: archive))
 	let hex = digest.map { String(format: "%02x", $0) }.joined()
-	let signature = try! key.signature(for: digest).base64EncodedString()
+	let message = UpdateVerifier.signedMessage(appID: appID, version: version, sha256Hex: hex)
+	let signature = (try? key.signature(for: message).base64EncodedString()) ?? ""
 	return Data(#"{"version":"\#(version)","url":"\#(url)","sha256":"\#(hex)","signature":"\#(signature)"}"#.utf8)
 }
 
 @Test func versionsCompareNumerically() {
-	#expect(AppVersion("1.10.0")! > AppVersion("1.9.9")!)
-	#expect(AppVersion("1.2")! == AppVersion("1.2.0")!)
+	let a = AppVersion("1.10.0"), b = AppVersion("1.9.9"), c = AppVersion("1.2"), d = AppVersion("1.2.0")
+	#expect(a != nil && b != nil && a.map { x in b.map { x > $0 } } == true)
+	#expect(c == d)
 	#expect(AppVersion("1.x") == nil)
 }
 
@@ -40,7 +42,7 @@ private func signedFeed(version: String, archive: Data, key: Curve25519.Signing.
 @MainActor @Test func autoDownloadVerifiesAndIsReady() async throws {
 	let key = Curve25519.Signing.PrivateKey()
 	let archive = Data("archive".utf8)
-	let c = UpdateController(currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
+	let c = UpdateController(appID: "app.test", currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
 	                         publicKey: key.publicKey.rawRepresentation,
 	                         transport: FakeTransport(feed: signedFeed(version: "0.2.0", archive: archive, key: key), archive: archive))
 	await c.check()
@@ -51,7 +53,7 @@ private func signedFeed(version: String, archive: Data, key: Curve25519.Signing.
 @MainActor @Test func withoutAutoDownloadWaitsForUser() async throws {
 	let key = Curve25519.Signing.PrivateKey()
 	let archive = Data("archive".utf8)
-	let c = UpdateController(currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
+	let c = UpdateController(appID: "app.test", currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
 	                         publicKey: key.publicKey.rawRepresentation, preferences: .init(autoCheck: true, autoDownload: false),
 	                         transport: FakeTransport(feed: signedFeed(version: "0.2.0", archive: archive, key: key), archive: archive))
 	await c.check()
@@ -62,7 +64,7 @@ private func signedFeed(version: String, archive: Data, key: Curve25519.Signing.
 
 @MainActor @Test func tamperedArchiveIsRejected() async throws {
 	let key = Curve25519.Signing.PrivateKey()
-	let c = UpdateController(currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
+	let c = UpdateController(appID: "app.test", currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
 	                         publicKey: key.publicKey.rawRepresentation,
 	                         transport: FakeTransport(feed: signedFeed(version: "0.2.0", archive: Data("good".utf8), key: key), archive: Data("evil".utf8)))
 	await c.check()
@@ -71,7 +73,7 @@ private func signedFeed(version: String, archive: Data, key: Curve25519.Signing.
 
 @MainActor @Test func wrongKeyIsRejected() async throws {
 	let archive = Data("archive".utf8)
-	let c = UpdateController(currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
+	let c = UpdateController(appID: "app.test", currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
 	                         publicKey: Curve25519.Signing.PrivateKey().publicKey.rawRepresentation,
 	                         transport: FakeTransport(feed: signedFeed(version: "0.2.0", archive: archive, key: Curve25519.Signing.PrivateKey()), archive: archive))
 	await c.check()
@@ -79,7 +81,17 @@ private func signedFeed(version: String, archive: Data, key: Curve25519.Signing.
 }
 
 @MainActor @Test func notConfiguredDoesNothing() async {
-	let c = UpdateController(currentVersion: "0.1.0", feedURL: nil, publicKey: Data(), transport: FakeTransport(feed: Data(), archive: Data()))
+	let c = UpdateController(appID: "app.test", currentVersion: "0.1.0", feedURL: nil, publicKey: Data(), transport: FakeTransport(feed: Data(), archive: Data()))
 	await c.check()
 	#expect(c.state == .notConfigured)
+}
+
+@MainActor @Test func archiveSignedForAnotherAppIsRejected() async throws {
+	let key = Curve25519.Signing.PrivateKey()
+	let archive = Data("archive".utf8)
+	let c = UpdateController(appID: "app.test", currentVersion: "0.1.0", feedURL: URL(string: "https://example.com/feed.json"),
+	                         publicKey: key.publicKey.rawRepresentation,
+	                         transport: FakeTransport(feed: signedFeed(version: "0.2.0", archive: archive, key: key, appID: "app.other"), archive: archive))
+	await c.check()
+	guard case .failed = c.state else { Issue.record("state \(c.state)"); return }
 }

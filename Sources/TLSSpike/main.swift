@@ -114,7 +114,7 @@ final class Conn: @unchecked Sendable {
 		framer[StartTLSFramer.contextKey] = ctx
 		let params = NWParameters.tcp
 		params.defaultProtocolStack.applicationProtocols = [framer]
-		nw = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!, using: params)
+		nw = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port) ?? .any, using: params)
 	}
 
 	func open() async throws {

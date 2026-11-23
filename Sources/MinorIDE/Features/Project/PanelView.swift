@@ -36,7 +36,7 @@ final class PanelView: NSView {
 		picker.target = self
 		picker.action = #selector(picked(_:))
 		picker.setAccessibilityLabel(label)
-		let hideButton = NSButton(image: NSImage(systemSymbolName: hide.symbol, accessibilityDescription: hide.title)!,
+		let hideButton = NSButton(image: NSImage.symbol(hide.symbol, hide.title),
 		                          target: nil, action: hide.action)
 		hideButton.isBordered = false
 		hideButton.controlSize = .small

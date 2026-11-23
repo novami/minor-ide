@@ -108,8 +108,9 @@ public final class PathIndex: @unchecked Sendable {
 	public func search(_ query: String, recent: [String] = [], limit: Int = 100) -> [Match] {
 		let q = FuzzyQuery(query)
 		let list = lock.withLock {
-			if snapshot == nil { snapshot = Array(paths.values) }
-			return snapshot!
+			let current = snapshot ?? Array(paths.values)
+			snapshot = current
+			return current
 		}
 		if q.isEmpty {
 			let known = lock.withLock { Set(recent.filter { paths[$0] != nil }) }

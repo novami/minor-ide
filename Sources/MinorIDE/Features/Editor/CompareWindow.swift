@@ -12,7 +12,7 @@ final class CompareWindow: NSObject, NSWindowDelegate {
 		window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 650),
 		                  styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
 		let scroll = NSTextView.scrollableTextView()
-		let view = scroll.documentView as! NSTextView
+		let view = scroll.documentView as? NSTextView ?? NSTextView()
 		view.isEditable = false
 		view.textStorage?.setAttributedString(Self.diff(old: old, new: new, oldLabel: oldLabel, newLabel: newLabel))
 		view.setAccessibilityLabel(Strings.compare.comparison)

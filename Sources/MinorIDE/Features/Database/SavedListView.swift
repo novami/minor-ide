@@ -81,7 +81,7 @@ final class SavedListView: NSView, NSTableViewDataSource, NSTableViewDelegate, N
 	init(_ list: SavedList, project: Project) {
 		self.list = list
 		self.project = project
-		removeButton = NSButton(image: NSImage(named: NSImage.removeTemplateName)!, target: nil, action: nil)
+		removeButton = NSButton(image: (NSImage(named: NSImage.removeTemplateName) ?? NSImage()), target: nil, action: nil)
 		super.init(frame: .zero)
 		let column = NSTableColumn(identifier: .init("db"))
 		table.addTableColumn(column)
@@ -101,7 +101,7 @@ final class SavedListView: NSView, NSTableViewDataSource, NSTableViewDelegate, N
 		scroll.autohidesScrollers = true
 		scroll.drawsBackground = false
 
-		let add = NSButton(image: NSImage(named: NSImage.addTemplateName)!, target: self, action: #selector(add(_:)))
+		let add = NSButton(image: (NSImage(named: NSImage.addTemplateName) ?? NSImage()), target: self, action: #selector(add(_:)))
 		add.toolTip = list.addTitle
 		removeButton.target = self
 		removeButton.action = #selector(delete(_:))
@@ -219,7 +219,7 @@ final class SavedListView: NSView, NSTableViewDataSource, NSTableViewDelegate, N
 
 	func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
 		let c = rows[row]
-		let icon = NSImageView(image: NSImage(systemSymbolName: c.symbol, accessibilityDescription: nil)!)
+		let icon = NSImageView(image: NSImage.symbol(c.symbol, nil))
 		icon.contentTintColor = c.production ? .systemRed : .secondaryLabelColor
 		let name = NSTextField(labelWithString: c.name)
 		name.lineBreakMode = .byTruncatingTail

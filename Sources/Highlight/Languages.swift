@@ -64,7 +64,7 @@ public enum Languages {
 	public static func language(forPath path: String) -> SyntaxLanguage? {
 		let name = path.split(separator: "/").last.map(String.init) ?? path
 		let parts = name.split(separator: ".")
-		let ext = parts.count > 1 ? parts.last!.lowercased() : ""
+		let ext = parts.count > 1 ? (parts.last ?? "").lowercased() : ""
 		switch ext {
 		case "go": return .go
 		case "json", "jsonc", "code-workspace": return .json

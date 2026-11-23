@@ -80,7 +80,7 @@ final class LanguageServersPanel {
 	private func flush() {
 		guard let storage = textView.textStorage, !pending.isEmpty else { return }
 		let atEnd = scrollView.contentView.bounds.maxY >= textView.frame.maxY - 20
-		let attributes: [NSAttributedString.Key: Any] = [.font: textView.font!, .foregroundColor: NSColor.labelColor]
+		let attributes: [NSAttributedString.Key: Any] = [.font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular), .foregroundColor: NSColor.labelColor]
 		storage.append(NSAttributedString(string: pending.map { $0 + "\n" }.joined(), attributes: attributes))
 		pending = []
 		// Same limit as the log itself: the oldest lines go.

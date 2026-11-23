@@ -355,8 +355,9 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 				if end > range.lowerBound, rope.byte(at: end - 1) == 0x0A { end -= 1 }
 				current = (line, range.lowerBound, end, [])
 			}
-			let start = current!.start
-			current!.ranges.append((m.lowerBound - start)..<(min(m.upperBound, current!.end) - start))
+			if let start = current?.start, let end = current?.end {
+				current?.ranges.append((m.lowerBound - start)..<(min(m.upperBound, end) - start))
+			}
 		}
 		close()
 		return FileSearchResult(path: path, lines: lines)
@@ -596,7 +597,7 @@ final class FindInFiles: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegat
 
 /// Main-actor reference the helper's background callbacks can carry.
 @MainActor
-private final class ResultSink: Sendable {
+private final class ResultSink {
 	weak var owner: FindInFiles?
 	init(_ owner: FindInFiles) { self.owner = owner }
 }

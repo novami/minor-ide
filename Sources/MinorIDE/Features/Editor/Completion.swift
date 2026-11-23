@@ -80,9 +80,9 @@ final class CompletionController {
 
 	/// After any change of the text: the session goes on while the caret is in its word.
 	func textChanged() {
-		guard session != nil else { return }
+		guard let current = session else { return }
 		guard isValid() else { return close() }
-		if session!.list.isIncomplete { ask() }
+		if current.list.isIncomplete { ask() }
 		refilter()
 	}
 

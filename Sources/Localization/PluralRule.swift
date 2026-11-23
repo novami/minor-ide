@@ -185,7 +185,9 @@ public struct PluralRule: Sendable {
 public enum PluralRuleError: Error, Equatable, CustomStringConvertible {
 	case invalid(String)
 	public var description: String {
-		switch self { case .invalid(let place): "invalid plural rule near \(place)" }
+		switch self {
+		case .invalid(let place): "invalid plural rule near \(place)"
+		}
 	}
 }
 

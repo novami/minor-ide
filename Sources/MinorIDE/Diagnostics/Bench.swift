@@ -52,7 +52,7 @@ enum Bench {
 		report("type char", samples)
 		let total = samples.reduce(0, +)
 		print(String(format: "  [type char breakdown per key: edit %.3f ms, draw body %.3f ms, AppKit/CA %.3f ms]",
-		             model / 2 , (editor.drawSeconds - drawBefore) / 2, (total - model - (editor.drawSeconds - drawBefore)) / 2))
+		             model / 2, (editor.drawSeconds - drawBefore) / 2, (total - model - (editor.drawSeconds - drawBefore)) / 2))
 
 		samples = []
 		for _ in 0..<300 {

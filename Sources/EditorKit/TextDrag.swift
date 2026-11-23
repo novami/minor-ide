@@ -13,7 +13,7 @@ extension EditorView: NSDraggingSource {
 
 	/// The primary selection when a plain single click lands inside it.
 	func textDragCandidate(at point: NSPoint, clicks: Int, modifiers: NSEvent.ModifierFlags) -> TextDragStart? {
-		guard clicks == 1, modifiers.intersection([.shift, .option, .command, .control]).isEmpty else { return nil }
+		guard clicks == 1, modifiers.isDisjoint(with: [.shift, .option, .command, .control]) else { return nil }
 		let range = selections.primary.range, offset = offset(at: point)
 		guard !range.isEmpty, offset >= range.lowerBound, offset < range.upperBound else { return nil }
 		return TextDragStart(point: point, range: range)

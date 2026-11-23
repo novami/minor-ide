@@ -305,8 +305,8 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		menu.addItem(.separator())
 		let speech = menu.item(Strings.window.speech, nil)
 		speech.submenu = NSMenu(title: Strings.window.speech)
-		speech.submenu!.item(Strings.window.startSpeaking, #selector(EditorView.startSpeaking(_:)))
-		speech.submenu!.item(Strings.window.stopSpeaking, #selector(EditorView.stopSpeaking(_:)))
+		speech.menuOrEmpty.item(Strings.window.startSpeaking, #selector(EditorView.startSpeaking(_:)))
+		speech.menuOrEmpty.item(Strings.window.stopSpeaking, #selector(EditorView.stopSpeaking(_:)))
 		return menu
 	}
 
@@ -857,7 +857,7 @@ extension DocumentWindow {
 	func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
 		if id == Self.rightPanelItem {
 			// A push-on/push-off button, so the icon shows whether the panel is open.
-			let button = NSButton(image: NSImage(systemSymbolName: "sidebar.right", accessibilityDescription: Strings.panel.rightPanel)!,
+			let button = NSButton(image: NSImage.symbol("sidebar.right", Strings.panel.rightPanel),
 			                      target: self, action: #selector(toggleRightPanel(_:)))
 			button.bezelStyle = .toolbar
 			button.setButtonType(.pushOnPushOff)

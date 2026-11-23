@@ -205,7 +205,7 @@ final class CloneSheet: NSObject, NSTextFieldDelegate {
 }
 
 @MainActor
-private final class CloneProgress: Sendable {
+private final class CloneProgress {
 	weak var owner: CloneSheet?
 	init(_ owner: CloneSheet) { self.owner = owner }
 }

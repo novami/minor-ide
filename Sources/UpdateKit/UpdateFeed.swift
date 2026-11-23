@@ -31,7 +31,7 @@ public struct UpdateInfo: Sendable, Equatable, Decodable {
 	public let url: URL
 	/// SHA-256 of the archive, lowercase hex.
 	public let sha256: String
-	/// Ed25519 signature (base64) over the raw 32 digest bytes.
+	/// Ed25519 signature (base64) over `UpdateVerifier.signedMessage`.
 	public let signature: String
 	public let notes: String?
 	public let minimumSystemVersion: String?

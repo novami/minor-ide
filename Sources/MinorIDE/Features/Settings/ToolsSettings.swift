@@ -60,7 +60,7 @@ final class ToolsModel {
 	/// the shell's values on top).
 	func processEnvironment() async -> (LoginEnvironment, [String: String]) {
 		loadEnvironment()
-		let env = await loading!.value
+		let env = await (loading ?? Task.detached(priority: .utility) { LoginEnvironment.load() }).value
 		var environment = ProcessInfo.processInfo.environment
 		environment.merge(env.values) { $1 }
 		return (env, environment)

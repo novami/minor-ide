@@ -112,7 +112,11 @@ public struct Template: Sendable, Equatable {
 		case (.decimal(let d), _): return d.formatted(.number.locale(locale))
 		case (.date(let d), .time): return d.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: locale))
 		case (.date(let d), .date(let style)):
-			let date: Date.FormatStyle.DateStyle = switch style { case .short: .numeric; case .medium: .abbreviated; case .long: .long }
+			let date: Date.FormatStyle.DateStyle = switch style {
+			case .short: .numeric
+			case .medium: .abbreviated
+			case .long: .long
+			}
 			return d.formatted(Date.FormatStyle(date: date, time: .omitted, locale: locale))
 		case (.date(let d), _): return d.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened, locale: locale))
 		}

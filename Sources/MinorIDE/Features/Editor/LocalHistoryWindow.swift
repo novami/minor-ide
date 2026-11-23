@@ -29,7 +29,7 @@ final class LocalHistoryWindow: NSObject, NSWindowDelegate, NSTableViewDataSourc
 		window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 620),
 		                  styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
 		let scroll = NSTextView.scrollableTextView()
-		diffView = scroll.documentView as! NSTextView
+		diffView = scroll.documentView as? NSTextView ?? NSTextView()
 		super.init()
 		diffView.isEditable = false
 		diffView.textContainerInset = NSSize(width: 6, height: 8)
