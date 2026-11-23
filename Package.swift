@@ -14,6 +14,9 @@ let package = Package(
 	targets: [
 		.target(name: "MinorCore"),
 		.target(name: "Localization"),
+		.target(name: "L10nTooling", dependencies: ["Localization"]),
+		// make l10n, make l10n-check (docs/LOCALIZATION.md).
+		.executableTarget(name: "L10nTool", dependencies: ["L10nTooling", "Localization"]),
 		.target(name: "TextEngine"),
 		.target(name: "Highlight", dependencies: ["TextEngine"]),
 		.target(name: "EditorKit", dependencies: ["TextEngine", "MinorCore", "Highlight"]),
@@ -30,7 +33,7 @@ let package = Package(
 		                                                .product(name: "SwiftTerm", package: "SwiftTerm")]),
 		.testTarget(name: "TextEngineTests", dependencies: ["TextEngine"]),
 		.testTarget(name: "MinorCoreTests", dependencies: ["MinorCore"]),
-		.testTarget(name: "LocalizationTests", dependencies: ["Localization"]),
+		.testTarget(name: "LocalizationTests", dependencies: ["Localization", "L10nTooling"]),
 		.testTarget(name: "DBKitTests", dependencies: ["DBKit"]),
 		.testTarget(name: "SecretsKitTests", dependencies: ["SecretsKit"]),
 		.testTarget(name: "RemoteKitTests", dependencies: ["RemoteKit"]),
