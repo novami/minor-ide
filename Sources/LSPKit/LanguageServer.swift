@@ -551,6 +551,8 @@ public final class LanguageServer: @unchecked Sendable {
 				"resolveSupport": ["properties": ["edit"]],
 			],
 			"rename": ["prepareSupport": true],
+			"formatting": [:],
+			"rangeFormatting": [:],
 			"publishDiagnostics": ["relatedInformation": true, "versionSupport": true, "tagSupport": ["valueSet": [1, 2]], "codeDescriptionSupport": true],
 			"hover": ["contentFormat": ["markdown", "plaintext"]],
 			"signatureHelp": [

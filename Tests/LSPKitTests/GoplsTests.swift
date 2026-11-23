@@ -88,6 +88,22 @@ struct GoplsTests {
 		#expect(help?.active.label == "use(a int, b string)")
 		#expect(help?.activeParameter == 1)
 		#expect(help.map { (help!.active.label as NSString).substring(with: NSRange(location: $0.active.parameters[1].range.lowerBound, length: $0.active.parameters[1].range.count)) } == "b string")
+
+		// Formatting: only the selected line changes, then the whole file.
+		// After a blank line, so gofmt does not align these with the functions above.
+		let messy = "\nfunc a()  {}\nfunc b()  {}\n"
+		let end = text.byteCount, start = end + 1
+		let add = ChangeSet([(end..<end, messy)])
+		add.apply(to: &text)
+		server.change(uri: uri, version: 4, changes: add, text: text)
+		#expect(server.supportsFormatting)
+		let first = try #require(try await server.format(uri: uri, range: start..<(start + 3), in: text, settings: FormatSettings()))
+		var partly = text
+		ChangeSet(first).apply(to: &partly)
+		#expect(partly.string.hasSuffix("func a() {}\nfunc b()  {}\n"))
+		let all = try #require(try await server.format(uri: uri, in: text, settings: FormatSettings()))
+		ChangeSet(all).apply(to: &text)
+		#expect(text.string.hasSuffix("func a() {}\nfunc b() {}\n"))
 		await server.stop()
 	}
 }

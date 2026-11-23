@@ -66,6 +66,7 @@
 
 /* MinorIDE/CodeActions.swift */
 "No Actions Available" = "No Actions Available";
+"The formatter returned overlapping changes." = "The formatter returned overlapping changes.";
 "This element cannot be renamed." = "This element cannot be renamed.";
 "The file changed in the meantime. Try again." = "The file changed in the meantime. Try again.";
 "Rename “%@”" = "Rename “%@”";
@@ -180,6 +181,7 @@
 "Rename…" = "Rename…";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Format Code" = "Format Code";
 "Cut" = "Cut";
 "Copy" = "Copy";
 "Paste" = "Paste";
@@ -601,6 +603,9 @@
 "Remove from edited lines" = "Remove from edited lines";
 "Remove from all lines" = "Remove from all lines";
 "Keep" = "Keep";
+"Format on save" = "Format on save";
+"Format the file" = "Format the file";
+"Don’t format" = "Don’t format";
 "Default follows the language’s standard, such as PSR-12 for PHP and gofmt for Go. A file’s own line endings, .editorconfig and project settings take precedence." = "Default follows the language’s standard, such as PSR-12 for PHP and gofmt for Go. A file’s own line endings, .editorconfig and project settings take precedence.";
 "Default" = "Default";
 

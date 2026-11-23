@@ -292,6 +292,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 			menu.item(L("Find Usages"), #selector(DocumentWindow.findUsages(_:)))
 			menu.item(L("Quick Actions…"), #selector(DocumentWindow.showQuickActions(_:)))
 			menu.item(L("Rename…"), #selector(DocumentWindow.renameSymbol(_:)))
+			menu.item(L("Format Code"), #selector(DocumentWindow.formatCode(_:)))
 			menu.addItem(.separator())
 		}
 		menu.item(L("Cut"), #selector(NSText.cut(_:)))
@@ -468,6 +469,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 	@objc func showParameterInfo(_ sender: Any?) { focusedPane.signatureHelp?.invoke() }
 	@objc func showQuickActions(_ sender: Any?) { focusedPane.codeActions?.showActions() }
 	@objc func renameSymbol(_ sender: Any?) { focusedPane.codeActions?.rename() }
+	@objc func formatCode(_ sender: Any?) { focusedPane.codeActions?.format() }
 
 	/// Navigate › Next Problem (F2) / Previous Problem (⇧F2) in the focused file, with its message.
 	@objc func nextProblem(_ sender: Any?) { goToProblem(forward: true) }
@@ -554,6 +556,7 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 		case #selector(showParameterInfo(_:)): return focusedPane.signatureHelp?.isAvailable ?? false
 		case #selector(showQuickActions(_:)): return focusedPane.codeActions?.canShowActions ?? false
 		case #selector(renameSymbol(_:)): return focusedPane.codeActions?.canRename ?? false
+		case #selector(formatCode(_:)): return focusedPane.codeActions?.canFormat ?? false
 		case #selector(navigateBack(_:)): return project?.jumps.canGoBack ?? false
 		case #selector(nextProblem(_:)), #selector(previousProblem(_:)): return focusedPane.editor.document.hasDiagnostics
 		case #selector(showProblems(_:)): return project != nil
@@ -674,6 +677,17 @@ final class DocumentWindow: NSObject, NSWindowDelegate, NSToolbarDelegate, NSMen
 
 	@discardableResult
 	func save() -> Bool { save(document) }
+
+	/// Save (⌘S) of a file whose settings ask for format on save: formats it first when its
+	/// language server can (waiting at most 2 s), then calls `save`.
+	func formatAndSave(_ save: @escaping @MainActor () -> Void) {
+		let pane = focusedPane
+		guard pane.document.url != nil, pane.document.format.formatOnSave, let actions = pane.codeActions, actions.canFormat else { return save() }
+		Task {
+			try? await actions.format(range: nil, timeout: 2)
+			save()
+		}
+	}
 
 	@discardableResult
 	func saveAs() -> Bool { saveAs(document) }

@@ -57,6 +57,8 @@ public struct FormatSettings: Equatable, Sendable {
 	public var insertFinalNewline = true
 	public var trimTrailingWhitespace: TrimMode = .modifiedLines
 	public var maxLineLength: Int?
+	/// Run the language's formatter when the file is saved (`format_on_save`).
+	public var formatOnSave = false
 
 	public init() {}
 
@@ -104,6 +106,8 @@ public struct FormatSettings: Equatable, Sendable {
 				case "unset": trimTrailingWhitespace = base.trimTrailingWhitespace
 				default: break
 				}
+			case "format_on_save":
+				formatOnSave = unset ? base.formatOnSave : value == "true" ? true : value == "false" ? false : formatOnSave
 			case "max_line_length":
 				maxLineLength = value == "off" || unset ? nil : Int(value) ?? maxLineLength
 			default:
@@ -169,7 +173,7 @@ public enum FormatDefaults {
 		let languageDefaults: [String: String]
 		switch language {
 		case "php": languageDefaults = presets["php"]![preset ?? "psr12"] ?? presets["php"]!["psr12"]!
-		case "go": languageDefaults = ["indent_style": "tab", "tab_width": "4"] // gofmt
+		case "go": languageDefaults = ["indent_style": "tab", "tab_width": "4", "format_on_save": "true"] // gofmt
 		case "latte", "neon": languageDefaults = ["indent_style": "tab", "tab_width": "4"] // Nette conventions
 		case "javascript", "typescript", "vue", "css", "scss", "html", "yaml":
 			languageDefaults = ["indent_size": "2"] // Prettier / YAML convention; YAML forbids tabs

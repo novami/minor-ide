@@ -153,6 +153,48 @@ final class CodeActionController {
 		(error as? RPCError)?.message ?? error.localizedDescription
 	}
 
+	// MARK: Formatting
+
+	var canFormat: Bool { endpoint()?.server.supportsFormatting ?? false }
+
+	/// Reformat Code (⌥⌘L): the lines of the selection, or the whole file without one.
+	func format() {
+		guard let editor, canFormat else { return NSSound.beep() }
+		let selection = editor.selections.primary
+		Task { [weak self] in
+			do {
+				try await self?.format(range: selection.isEmpty ? nil : selection.range)
+			} catch is CancellationError {
+			} catch {
+				WorkspaceEditor.report(Self.message(error), in: self?.editor?.window)
+			}
+		}
+	}
+
+	/// Formats and applies the result as one undo step, unless the text changed meanwhile.
+	/// Gives up after `timeout` seconds (saving must not wait on a stuck server).
+	func format(range: Range<Int>?, timeout: Double? = nil) async throws {
+		guard let editor, let end = endpoint(), end.server.supportsFormatting else { return }
+		let rope = editor.rope, version = editor.document.version, settings = editor.format
+		let server = end.server, uri = end.uri
+		let request: @Sendable () async throws -> [(Range<Int>, String)]? = { try await server.format(uri: uri, range: range, in: rope, settings: settings) }
+		let result: [(Range<Int>, String)]??
+		if let timeout {
+			result = try await withThrowingTaskGroup(of: [(Range<Int>, String)]??.self) { group in
+				group.addTask { try await request() }
+				group.addTask { try await Task.sleep(for: .seconds(timeout)); return .none }
+				defer { group.cancelAll() }
+				return try await group.next() ?? .none
+			}
+		} else {
+			result = try await request()
+		}
+		guard case .some(let list) = result else { return } // timed out
+		guard let list else { throw RPCError(code: 0, message: L("The formatter returned overlapping changes.")) }
+		guard let editor = self.editor, editor.document.version == version else { return }
+		editor.replace(list)
+	}
+
 	// MARK: Rename
 
 	func rename() {

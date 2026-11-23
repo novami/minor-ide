@@ -78,6 +78,8 @@ enum MainMenu {
 		}
 
 		main.add(submenu: L("Format")) { m in
+			m.item(L("Format Code"), #selector(DocumentWindow.formatCode(_:)), "l", [.command, .option])
+			m.addItem(.separator())
 			let eol = m.item(L("Line Endings"), nil)
 			eol.submenu = NSMenu()
 			for (title, value) in [(L("LF (macOS, Unix)"), "lf"), (L("CRLF (Windows)"), "crlf"), (L("CR (Classic Mac)"), "cr")] {

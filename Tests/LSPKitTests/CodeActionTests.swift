@@ -46,6 +46,14 @@ struct CodeActionTests {
 		#expect(rope.replacements([TextEdit(edit(0, 0, 2, "x"))!, TextEdit(edit(0, 1, 2, "y"))!], encoding: .utf16) == nil)
 	}
 
+	@Test func lineSpanCoversWholeLines() {
+		let rope = Rope("ab\ncd\nef")
+		#expect(rope.lineSpan(of: 4..<4) == 3..<6)
+		// Ending at the start of a line does not take that line; the last line has no break.
+		#expect(rope.lineSpan(of: 1..<6) == 0..<6)
+		#expect(rope.lineSpan(of: 4..<7) == 3..<8)
+	}
+
 	@Test func previewShowsLinesAfterTheChange() {
 		let rope = Rope("func old() {}\n\nx := old() + old()\n")
 		let lines = rope.previewLines([(5..<8, "new"), (20..<23, "new"), (28..<31, "new")])

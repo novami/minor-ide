@@ -625,8 +625,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 	}
 
 	@objc func saveDocument(_ sender: Any?) {
-		let wasUntitled = current?.url == nil
-		if current?.save() == true, wasUntitled { watchLooseFiles() }
+		guard let window = current else { return }
+		let wasUntitled = window.url == nil
+		window.formatAndSave { [weak self, weak window] in
+			if window?.save() == true, wasUntitled { self?.watchLooseFiles() }
+		}
 	}
 
 	@objc func saveDocumentAs(_ sender: Any?) {

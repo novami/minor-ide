@@ -261,6 +261,7 @@ struct FormatSettingsView: View {
 				row(L("Newline at end of file"), "insert_final_newline", [("true", L("Add")), ("false", L("Don’t add"))])
 				row(L("Trailing spaces"), "trim_trailing_whitespace",
 				    [("modified", L("Remove from edited lines")), ("true", L("Remove from all lines")), ("false", L("Keep"))])
+				row(L("Format on save"), "format_on_save", [("true", L("Format the file")), ("false", L("Don’t format"))])
 			} footer: {
 				Text(L("Default follows the language’s standard, such as PSR-12 for PHP and gofmt for Go. A file’s own line endings, .editorconfig and project settings take precedence."))
 			}

@@ -67,6 +67,7 @@
 
 /* MinorIDE/CodeActions.swift */
 "No Actions Available" = "Žádné akce nejsou k dispozici";
+"The formatter returned overlapping changes." = "Formátovač vrátil překrývající se změny.";
 "This element cannot be renamed." = "Tento prvek nejde přejmenovat.";
 "The file changed in the meantime. Try again." = "Soubor se mezitím změnil. Zkuste to znovu.";
 "Rename “%@”" = "Přejmenovat „%@“";
@@ -183,6 +184,7 @@
 "Rename…" = "Přejmenovat…";
 
 /* MinorIDE/DocumentWindow.swift, MinorIDE/MainMenu.swift */
+"Format Code" = "Formátovat kód";
 "Cut" = "Vyjmout";
 "Copy" = "Kopírovat";
 "Paste" = "Vložit";
@@ -609,6 +611,9 @@
 "Remove from edited lines" = "Odstranit z upravených řádků";
 "Remove from all lines" = "Odstranit ze všech řádků";
 "Keep" = "Ponechat";
+"Format on save" = "Formátovat při uložení";
+"Format the file" = "Formátovat soubor";
+"Don’t format" = "Neformátovat";
 "Default follows the language’s standard, such as PSR-12 for PHP and gofmt for Go. A file’s own line endings, .editorconfig and project settings take precedence." = "Výchozí hodnota se řídí standardem jazyka, například PSR-12 pro PHP a gofmt pro Go. Přednost mají konce řádků samotného souboru, .editorconfig a nastavení projektu.";
 "Default" = "Výchozí";
 
