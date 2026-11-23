@@ -15,6 +15,8 @@ public final class TextDocument {
 	var diagnosticMarks: [DiagnosticMark] = []
 	var diagnosticCache: (version: Int, items: [EditorDiagnostic])?
 	var diagnosticsShown = false
+	/// Semantic tokens by line, empty when there are none (SemanticTokens.swift).
+	var semanticLines: [[Token]] = []
 	/// Called once after every text change, whichever view made it (dirty tracking).
 	public var onChange: (() -> Void)?
 	/// Increases with every text change (language server document versions).
@@ -69,6 +71,7 @@ public final class TextDocument {
 		precondition(views.isEmpty, "use an editor to change a shown document")
 		let whole = ChangeSet([(0..<rope.byteCount, new.string)])
 		rope = new
+		semanticLines = []
 		version += 1
 		onTextEdit?(whole, rope, version)
 	}
@@ -139,9 +142,11 @@ public final class TextDocument {
 		let editors = views
 		for view in editors { view.willEdit() }
 
+		let old = semanticLines.isEmpty ? nil : rope
 		changes.apply(to: &rope)
 		anchors.apply(changes)
 		edit.newLastLine = lastLine + rope.lineCount - edit.oldLines
+		if let old { moveSemanticTokens(changes, old: old, firstLine: edit.firstLine, oldLastLine: lastLine, newLastLine: edit.newLastLine) }
 		edit.syntaxDirty = highlighter?.edit(firstLine: edit.firstLine, oldLastLine: lastLine, newLastLine: edit.newLastLine, in: rope)
 		let edited = rope.maxColumns(tabWidth: format.tabWidth, lines: edit.firstLine...edit.newLastLine)
 		if edited > maxColumns { setMaxColumns(edited) }

@@ -1,5 +1,6 @@
 import AppKit
 import EditorKit
+import Highlight
 import LSPKit
 import MinorCore
 import TextEngine
@@ -70,6 +71,8 @@ final class LanguageServices {
 				guard let self else { return }
 				self.sync()
 				if let entry = self.opened[id] { self.server?.save(uri: entry.uri) }
+				// A saved file can change what names in the other files are.
+				self.refreshSemanticTokens()
 			}
 		})
 	}
@@ -106,6 +109,8 @@ final class LanguageServices {
 			entry.doc?.text.onTextEdit = nil
 			entry.doc?.text.setDiagnostics([])
 			entry.doc?.text.showsDiagnostics = false
+			entry.doc?.text.setSemanticTokens([])
+			semanticTasks.removeValue(forKey: entry.uri)?.cancel()
 			edits[entry.uri] = nil
 			opened[id] = nil
 		}
@@ -118,12 +123,14 @@ final class LanguageServices {
 			let uri = Self.uri(url)
 			let text = doc.text
 			server.open(uri: uri, languageID: languageID, version: text.version, text: text.rope)
-			text.onTextEdit = { [weak server, weak self] changes, rope, version in
+			text.onTextEdit = { [weak server, weak self, weak doc] changes, rope, version in
 				server?.change(uri: uri, version: version, changes: changes, text: rope)
+				if let doc { self?.scheduleSemanticTokens(doc, uri: uri, delay: .milliseconds(300)) }
 				self?.edits[uri, default: []].append((version, changes))
 				if let n = self?.edits[uri]?.count, n > Self.keptEdits { self?.edits[uri]?.removeFirst(n - Self.keptEdits) }
 			}
 			opened[ObjectIdentifier(doc)] = Opened(doc: doc, uri: uri)
+			scheduleSemanticTokens(doc, uri: uri, delay: .zero)
 			text.showsDiagnostics = true
 			// Problems the server found before the file was opened (positions in the text on disk).
 			if let report = problems[uri] {
@@ -138,6 +145,48 @@ final class LanguageServices {
 
 	/// Whether the server has `doc` open (its diagnostics are in its text).
 	func isTracking(_ doc: FileDocument) -> Bool { opened[ObjectIdentifier(doc)]?.doc === doc }
+
+	// MARK: Semantic tokens
+
+	private var semanticTasks: [String: Task<Void, Never>] = [:]
+
+	/// Asks for the document's semantic tokens after `delay`; a newer request or edit replaces
+	/// a pending one, and an answer for older text is dropped.
+	private func scheduleSemanticTokens(_ doc: FileDocument, uri: String, delay: Duration) {
+		semanticTasks[uri]?.cancel()
+		semanticTasks[uri] = Task { [weak self, weak doc] in
+			if delay > .zero { try? await Task.sleep(for: delay) }
+			guard !Task.isCancelled, let self, let doc, let server, let legend = server.semanticLegend,
+			      opened[ObjectIdentifier(doc)]?.uri == uri else { return }
+			let text = doc.text, rope = text.rope, version = text.version
+			let lines = await Task.detached(priority: .userInitiated) { () -> [[Token]]? in
+				guard let tokens = try? await server.semanticTokens(uri: uri, in: rope) else { return nil }
+				return Self.colors(tokens, legend)
+			}.value
+			guard let lines, !Task.isCancelled, text.version == version, opened[ObjectIdentifier(doc)]?.uri == uri else { return }
+			text.setSemanticTokens(lines)
+		}
+	}
+
+	private func refreshSemanticTokens() {
+		for entry in opened.values {
+			if let doc = entry.doc { scheduleSemanticTokens(doc, uri: entry.uri, delay: .zero) }
+		}
+	}
+
+	/// Editor tokens for the server's tokens; types the lexer colours well are left out.
+	/// Only the readonly modifier changes a colour.
+	nonisolated static func colors(_ lines: [[SemanticToken]], _ legend: SemanticLegend) -> [[Token]] {
+		let readonly = legend.modifiers.firstIndex(of: "readonly").map { 1 << $0 } ?? 0
+		let plain = legend.types.map { TokenKind(semanticType: $0, modifiers: []) }
+		let fixed = legend.types.map { TokenKind(semanticType: $0, modifiers: ["readonly"]) }
+		return lines.map { line in
+			line.compactMap { t in
+				guard t.type >= 0, t.type < plain.count, let kind = (t.modifiers & readonly != 0 ? fixed : plain)[t.type] else { return nil }
+				return Token(t.start, t.length, kind)
+			}
+		}
+	}
 
 	// MARK: Diagnostics
 
@@ -210,6 +259,9 @@ final class LanguageServices {
 		}
 		wait { status == .server(.running) && !progress.isActive }
 		print("language server:", status, progress.text ?? "")
+		wait { editor.document.hasSemanticTokens }
+		let colored = (0..<editor.rope.lineCount).flatMap { line in editor.document.semanticTokens(line: line).map { "\(line):\($0.start)\($0.kind)" } }
+		print("semantic tokens:", colored.count, colored.prefix(12).joined(separator: " "))
 		editor.replace([(editor.rope.byteCount..<editor.rope.byteCount, "\nfunc minorideCheck() {}\n")])
 		var names: [String] = []
 		let uri = Self.uri(url)
@@ -433,6 +485,7 @@ final class LanguageServices {
 				if state != .running { self.progress.reset() }
 				if case .failed = state { self.clearProblems() }
 				self.setStatus(.server(state))
+				if state == .running { self.refreshSemanticTokens() }
 			}
 		}
 		handlers.progress = { [weak self] event in
@@ -525,7 +578,10 @@ final class LanguageServices {
 		for entry in opened.values {
 			entry.doc?.text.onTextEdit = nil
 			entry.doc?.text.showsDiagnostics = false
+			entry.doc?.text.setSemanticTokens([])
 		}
+		for task in semanticTasks.values { task.cancel() }
+		semanticTasks = [:]
 		opened = [:]
 		edits = [:]
 		progress.reset()

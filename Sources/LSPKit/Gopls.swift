@@ -11,7 +11,7 @@ public enum Gopls {
 
 	/// Answer to `workspace/configuration` (section "gopls").
 	public static let settings: JSONValue = ["gopls": initializationOptions]
-	public static let initializationOptions: JSONValue = ["staticcheck": true]
+	public static let initializationOptions: JSONValue = ["staticcheck": true, "semanticTokens": true]
 
 	/// Language identifier of a file gopls handles, nil for other files.
 	public static func languageID(forPath path: String) -> String? {

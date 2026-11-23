@@ -555,6 +555,22 @@ public final class LanguageServer: @unchecked Sendable {
 			"rangeFormatting": [:],
 			"publishDiagnostics": ["relatedInformation": true, "versionSupport": true, "tagSupport": ["valueSet": [1, 2]], "codeDescriptionSupport": true],
 			"hover": ["contentFormat": ["markdown", "plaintext"]],
+			"semanticTokens": [
+				"requests": ["full": true],
+				"tokenTypes": [
+					"namespace", "type", "class", "enum", "interface", "struct", "typeParameter", "parameter", "variable",
+					"property", "enumMember", "event", "function", "method", "macro", "keyword", "modifier", "comment",
+					"string", "number", "regexp", "operator", "decorator", "label",
+				],
+				"tokenModifiers": [
+					"declaration", "definition", "readonly", "static", "deprecated", "abstract", "async", "modification",
+					"documentation", "defaultLibrary",
+				],
+				"formats": ["relative"],
+				"overlappingTokenSupport": false,
+				"multilineTokenSupport": false,
+				"augmentsSyntaxTokens": true,
+			],
 			"signatureHelp": [
 				"contextSupport": true,
 				"signatureInformation": [

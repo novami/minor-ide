@@ -11,7 +11,7 @@ Estimates are rough (one developer with AI). Remaining phases R0–R14 sum to ab
 | 0 | Build without third-party tools (SwiftPM, bundle script, Makefile), editor, PHP scanner and helper spikes |
 | 1a–1f | Custom editor: rope, selections, anchors, undo, Core Text rendering, input methods, mouse, line commands, find and replace, folding, lexers (Go, PHP, Latte, NEON, SQL, JSON, JS/TS, CSS/SCSS and more), project window, split editor, settings, safe save, Local History, backups, session restore, status bar, line wrapping, sticky headers, accessibility, system text features |
 | 2b | Daily use: open file by name, Find in Files (currently through the Go helper), Git change gutter, terminal (manual check pending) |
-| 3 (steps 1–6c) | LSP client and gopls: completion, go to definition, navigation history, hover, signature help, diagnostics, quick fixes, rename |
+| 3 (steps 1–6e) | LSP client and gopls: completion, go to definition, navigation history, hover, signature help, diagnostics, quick fixes, rename, formatting, semantic tokens |
 
 Postponed: **phase 2, release and updater**. It waits for an Apple Developer account, starts with a self-signed certificate (see the archive), and can be pulled forward at any time.
 
@@ -22,7 +22,7 @@ Postponed: **phase 2, release and updater**. It waits for an Apple Developer acc
 - **S3 Startup and memory**: `--bench-startup` (cold, warm, Dashboard) and an idle `phys_footprint` sample. Done when the numbers are in PERFORMANCE.md and the 100 MB idle target is confirmed or revised with the owner.
 
 ## R1 Finish Go LSP (≈ 1 week)
-- 3.7 formatting (⌥⌘L, selection, format on save) and semantic tokens over the lexer.
+- 3.7 formatting (⌥⌘L, selection, format on save) and semantic tokens over the lexer. (done 2026-11-23)
 - Remove 3.8 (generic external language servers, ADR-5).
 - Done when a real Go project has all of 3.4–3.7, key latency is unchanged, and the app survives a gopls crash.
 

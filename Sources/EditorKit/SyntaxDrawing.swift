@@ -92,7 +92,7 @@ extension EditorView {
 				b = breaks(ofLine: line)
 				if let highlighter {
 					let bytes = rope.bytes(in: rope.lineRange(line))
-					runs = Self.unitRuns(bytes, highlighter.tokens(line: line, bytes: bytes))
+					runs = Self.unitRuns(bytes, document.colorTokens(line: line, bytes: bytes, highlighter: highlighter))
 				}
 			}
 			guard let l else { continue }

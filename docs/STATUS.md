@@ -2,11 +2,11 @@
 
 Working position. Updated after every finished block of work; a new session starts here. The detailed log until 2026-11-18 is in [archive/status-v1.md](archive/status-v1.md) (Czech).
 
-**Last update:** 2026-11-23 (R1: phase 3 step 6d, formatting through gopls)
+**Last update:** 2026-11-23 (R1: phase 3 step 6e, semantic tokens from gopls)
 
 ## Where we are
 
-- Done: phases 0, 1a–1f (editor), 2b in code (manual check pending), 3 steps 1–6d (gopls: completion, navigation, history, hover, signature help, diagnostics, quick fixes, rename, formatting). Details in [ROADMAP.md](ROADMAP.md#done).
+- Done: phases 0, 1a–1f (editor), 2b in code (manual check pending), 3 steps 1–6e (gopls: completion, navigation, history, hover, signature help, diagnostics, quick fixes, rename, formatting, semantic tokens). Details in [ROADMAP.md](ROADMAP.md#done).
 - Postponed: phase 2 (release and updater) until an Apple Developer account exists.
 - The architecture was revised on 2026-11-22 after a new product specification. Decisions: [DECISIONS.md](DECISIONS.md). The old plan is archived.
 - Editor performance (M2, `make bench`): typing p99 0.11 ms, newline 0.31 ms, scroll 0.20 ms, jump 0.43 ms, 1 M rope edits in 0.74 s.
@@ -17,9 +17,12 @@ Working position. Updated after every finished block of work; a new session star
 1. Spikes S1 ([spike-php-swift.md](spike-php-swift.md)) and S2 ([spike-tls.md](spike-tls.md)) are done; ADR-4 and ADR-7 hold. S2 code: `Sources/TLSSpike` (framer that sends the TLS request, then `prependApplicationProtocol` with TLS). TLS 1.3 with a test CA against PostgreSQL 17 and MariaDB 11; system trust and servers without TLS are rejected.
 2. Spike S3 measured (`make bench-startup`, results in [PERFORMANCE.md](PERFORMANCE.md#measurements)): warm start ~180 ms (budget 200 ms, at the limit), welcome window 75–93 ms, idle 33–37 MB. Waiting for the owner to confirm the 100 MB idle target; real cold start needs `sudo purge`.
 3. Step 6d done: Format › Format Code (⌥⌘L, also in the editor menu) formats the file, or only the lines of the selection (gopls has no range formatting, so edits outside those lines are dropped). `format_on_save` format property (on for Go by default, row in Settings › Formatting); ⌘S waits at most 2 s for the server. Saving from the close dialog and auto save do not format.
-4. **Next: R1**: phase 3 step 6e (semantic tokens over the lexer), then remove 3.8 and check R1 "Done when" on a real Go project (including a gopls crash).
+4. Step 6e done: gopls semantic tokens (`semanticTokens: true`, `textDocument/semanticTokens/full`) recolour names over the lexer (types, functions, methods, fields, constants; strings, comments and keywords stay with the lexer). Requested on open, 300 ms after an edit, after any save and when the server starts running; an answer for older text is dropped. Between answers the tokens follow edits; tokens an edit touches are dropped. Checked against gopls on MinorDLNA (112 tokens in `store.go`).
+5. **Next: R1**: remove 3.8 (check that no code or settings for generic external servers remain), then check R1 "Done when" on a real Go project (including a gopls crash).
 
 ## Open items
+
+- **Semantic tokens**: no `workspace/semanticTokens/refresh` and no delta requests; files changed by an external tool refresh only after an edit or a save. Bench today runs about 2× slower than the numbers above even without changes (machine noise); it stays within budget.
 
 - **Manual check debt** (postponed by the owner until phase 3 is done): phase 2b with the owner, launched from Finder.
 - **Unpushed local commits**: push only when the owner asks, then check the CI run.
