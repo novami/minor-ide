@@ -1,16 +1,14 @@
 # Contributing
 
-MinorIDE is a native macOS IDE for PHP and Go, written in Swift for Apple Silicon (macOS 14+).
+MinorIDE is a native macOS IDE for PHP and Go, written in Swift for Apple Silicon (macOS 26+).
 Start with [docs/STATUS.md](docs/STATUS.md) (current position) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Workflow
 
-- `make test` runs the Go and Swift tests (always through make, not `swift test`).
-- `make bench` runs the editor benchmark; changes to the editing path must stay within the budget
-  in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
-- `make l10n` regenerates `Strings.swift` after editing `Resources/Localization/en-US.json`;
+- `xcodebuild test -scheme MinorIDE -destination 'platform=macOS,arch=arm64'` runs the XCTest suite; `swiftlint lint --strict` must be clean.
+- Changes to the editing path must stay within the budget in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+- `tools/l10n.sh generate` regenerates `Strings.swift` after editing `Resources/Localization/en-US.json`;
   every UI text needs an English and a Czech entry in the same commit.
-- `make run` builds and starts the app.
 
 ## Rules
 

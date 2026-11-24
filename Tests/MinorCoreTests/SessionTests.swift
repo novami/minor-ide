@@ -1,9 +1,9 @@
 import Foundation
-import Testing
-@testable import MinorCore
+import XCTest
+@testable import MinorIDE
 
-struct SessionTests {
-	@Test func takeReturnsExistingWindowsOnceAndOnlyWhenRestoring() throws {
+final class SessionTests: XCTestCase {
+	func testTakeReturnsExistingWindowsOnceAndOnlyWhenRestoring() throws {
 		let dir = FileManager.default.temporaryDirectory.appendingPathComponent("SessionTests-\(UUID().uuidString)")
 		try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 		defer { try? FileManager.default.removeItem(at: dir) }
@@ -12,10 +12,10 @@ struct SessionTests {
 		let url = dir.appendingPathComponent("session.json")
 		let windows = [Session.Window(project: dir.path, file: file), Session.Window(project: nil, file: dir.path + "/gone.go")]
 		try Session(windows: windows, front: file, restore: true).save(to: url)
-		#expect(Session.take(from: url)?.windows == [windows[0]])
-		#expect(Session.take(from: url) == nil) // read once
+		XCTAssertEqual(Session.take(from: url)?.windows, [windows[0]])
+		XCTAssertEqual(Session.take(from: url), nil) // read once
 
 		try Session(windows: windows, front: nil, restore: false).save(to: url)
-		#expect(Session.take(from: url) == nil)
+		XCTAssertNil(Session.take(from: url))
 	}
 }

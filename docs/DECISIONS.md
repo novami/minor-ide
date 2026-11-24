@@ -79,3 +79,12 @@ Each record: context, decision, consequences. Status is "accepted" unless stated
 | PHP stubs | official `*.stub.php` from php-src and PECL repositories, pinned to a release tag; availability for 7.2–7.4 from an own table |
 | Network ports | none, except Delve on `127.0.0.1` during a debug session and the askpass Unix socket (`0700`, one-time token) |
 | SSH | system OpenSSH only, `known_hosts` verification, never `StrictHostKeyChecking=no` |
+
+## ADR-15 Migration to the Minor common base (2026-11-24)
+- **Decision**: the app is built on `novami/minor-swift-core` (MinorLog, MinorKeychain, MinorUpdater) and the `minor-swift-starter` project layout: Xcode project with synchronized folders `App/`, `Core/`, `Features/`, `Tests/`, all settings in `Config/*.xcconfig`, macOS 26+, arm64 only, XCTest, SwiftLint `--strict` in CI.
+- **Supersedes**: "Build: SwiftPM and an own bundle script" and the own Ed25519 updater (`UpdateKit`, `tools/minorupdate.swift`, `tools/release.sh`); distribution is Developer ID + notarization + MinorUpdater (GitHub Releases, SHA-256, same Team ID). Sparkle or other update frameworks are not used.
+- **Kept**: ADR-2 (AppKit workspace, SwiftUI for settings and panels), ADR-3 (own editor, no `NSTextView`), ADR-4, ADR-5, ADR-9 (own localization, `tools/l10n.sh`), ADR-11 (project search without an index).
+- **Module layout**: former SwiftPM modules are folders in `Core/`. Default actor isolation is MainActor, so engine folders (`Core/*` except `Editor`) are marked `nonisolated`. The "below the UI no AppKit" rule is checked by review and grep in CI review, not by the compiler.
+- **PHP**: stubs are generated from the chosen PHP through Reflection and cached per version and extension set (no bundled third-party stubs); formatting is own indentation, `php-cs-fixer` optional and external; toolchains: existing installations are detected (Homebrew, `/usr/local`, asdf, mise), the PHP download source is open; per-project settings in `.minoride/` in the project, trust stored outside the project.
+- **Dependencies**: SwiftTerm is pinned to 1.18.0, not 1.20.0: from 1.19 the package ships a build plugin that `xcodebuild` in CI refuses without `-skipPackagePluginValidation`. SwiftTerm compiles Metal shaders, so the Metal Toolchain component must be installed.
+- **Removed**: Go helper `server/` (nothing used it), PHP scan spike (`PHPKit`, `PHPScan`, `TLSSpike`), startup/catalog benchmarks (editor budget is now checked by hand until a measured XCTest exists), `make` targets.

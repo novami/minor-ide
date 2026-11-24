@@ -1,25 +1,25 @@
 import Foundation
-import Testing
-@testable import SecretsKit
+import XCTest
+@testable import MinorIDE
 
-struct LoginEnvironmentTests {
-	@Test func readsChosenVariablesFromTheShellBetweenMarkers() throws {
+final class LoginEnvironmentTests: XCTestCase {
+	func testReadsChosenVariablesFromTheShellBetweenMarkers() throws {
 		// An empty ZDOTDIR keeps the user's own startup files out; .zshrc printing is simulated.
 		let dir = FileManager.default.temporaryDirectory.appendingPathComponent("LoginEnvironmentTests-\(UUID().uuidString)")
 		try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 		defer { try? FileManager.default.removeItem(at: dir) }
 		try Data("echo welcome\nexport PATH=/custom/bin:$PATH\nexport GOFLAGS=-mod=mod\nexport SECRET=x\n".utf8).write(to: dir.appendingPathComponent(".zshrc"))
 		let env = LoginEnvironment.load(shell: "/bin/zsh", environment: ["ZDOTDIR": dir.path, "HOME": dir.path, "PATH": "/usr/bin:/bin"])
-		#expect(env.fromShell)
-		#expect(env.values["PATH"]?.hasPrefix("/custom/bin:") == true)
-		#expect(env.values["GOFLAGS"] == "-mod=mod")
-		#expect(env.values["SECRET"] == nil)
-		#expect(env.which("ls") == "/bin/ls")
+		XCTAssertTrue(env.fromShell)
+		XCTAssertEqual(env.values["PATH"]?.hasPrefix("/custom/bin:"), true)
+		XCTAssertEqual(env.values["GOFLAGS"], "-mod=mod")
+		XCTAssertNil(env.values["SECRET"])
+		XCTAssertEqual(env.which("ls"), "/bin/ls")
 	}
 
-	@Test func fallsBackWhenTheShellFails() {
+	func testFallsBackWhenTheShellFails() {
 		let env = LoginEnvironment.load(shell: "/nonexistent/shell", environment: ["PATH": "/usr/bin"])
-		#expect(!env.fromShell)
-		#expect(env.values["PATH"]?.hasPrefix("/usr/bin:/opt/homebrew/bin") == true)
+		XCTAssertFalse(env.fromShell)
+		XCTAssertEqual(env.values["PATH"]?.hasPrefix("/usr/bin:/opt/homebrew/bin"), true)
 	}
 }

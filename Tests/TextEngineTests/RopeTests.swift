@@ -1,20 +1,20 @@
-import Testing
-@testable import TextEngine
+import XCTest
+@testable import MinorIDE
 
-struct RopeTests {
-	@Test func basics() {
+final class RopeTests: XCTestCase {
+	func testBasics() {
 		var r = Rope("ahoj\nsvěte\n")
-		#expect(r.lineCount == 3)
-		#expect(r.string(in: r.lineRange(1)) == "světe")
-		#expect(r.line(containing: 5) == 1)
-		#expect(r.utf16Offset(ofByte: r.byteCount) == "ahoj\nsvěte\n".utf16.count)
+		XCTAssertEqual(r.lineCount, 3)
+		XCTAssertEqual(r.string(in: r.lineRange(1)), "světe")
+		XCTAssertEqual(r.line(containing: 5), 1)
+		XCTAssertEqual(r.utf16Offset(ofByte: r.byteCount), "ahoj\nsvěte\n".utf16.count)
 		r.replace(0..<4, with: "čau 😀")
-		#expect(r.string == "čau 😀\nsvěte\n")
-		#expect(r.utf16Count == "čau 😀\nsvěte\n".utf16.count)
+		XCTAssertEqual(r.string, "čau 😀\nsvěte\n")
+		XCTAssertEqual(r.utf16Count, "čau 😀\nsvěte\n".utf16.count)
 	}
 
 	/// Random edits checked against a plain byte array, including multi-byte text and large pastes.
-	@Test func randomEditsMatchReference() {
+	func testRandomEditsMatchReference() {
 		var rng = SplitMix64(seed: 42)
 		let pieces = ["a", "bc", "\n", "č", "😀", "line\n", String(repeating: "x", count: 3000), "ž\nš\n"]
 		var reference: [UInt8] = []
@@ -37,51 +37,51 @@ struct RopeTests {
 
 			if step % 400 == 0 { snapshots.append((rope, reference)) }
 			if step % 50 == 0 {
-				#expect(rope.bytes(in: 0..<rope.byteCount) == reference)
-				#expect(rope.validate())
+				XCTAssertEqual(rope.bytes(in: 0..<rope.byteCount), reference)
+				XCTAssertTrue(rope.validate())
 				let s = String(decoding: reference, as: UTF8.self)
-				#expect(rope.utf16Count == s.utf16.count)
+				XCTAssertEqual(rope.utf16Count, s.utf16.count)
 				let lines = s.split(separator: "\n", omittingEmptySubsequences: false)
-				#expect(rope.lineCount == lines.count)
+				XCTAssertEqual(rope.lineCount, lines.count)
 				let line = Int(rng.next() % UInt64(lines.count))
-				#expect(rope.string(in: rope.lineRange(line)) == String(lines[line]))
-				#expect(rope.line(containing: rope.offset(ofLine: line)) == line)
+				XCTAssertEqual(rope.string(in: rope.lineRange(line)), String(lines[line]))
+				XCTAssertEqual(rope.line(containing: rope.offset(ofLine: line)), line)
 			}
 		}
 		for (snapshot, bytes) in snapshots {
-			#expect(snapshot.bytes(in: 0..<snapshot.byteCount) == bytes)
-			#expect(snapshot.validate())
+			XCTAssertEqual(snapshot.bytes(in: 0..<snapshot.byteCount), bytes)
+			XCTAssertTrue(snapshot.validate())
 		}
 	}
 
-	@Test func snapshotIsIndependent() {
+	func testSnapshotIsIndependent() {
 		var r = Rope(String(repeating: "abc\n", count: 10_000))
 		let snapshot = r
 		r.replace(0..<r.byteCount, with: "")
-		#expect(r.isEmpty)
-		#expect(snapshot.lineCount == 10_001)
+		XCTAssertTrue(r.isEmpty)
+		XCTAssertEqual(snapshot.lineCount, 10_001)
 	}
-	@Test func utf16ToByteOffsets() {
+	func testUtf16ToByteOffsets() {
 		let text = String(repeating: "čau 😀\n", count: 400) // several leaves, sequences split between them
 		let r = Rope(text)
 		var units = 0, bytes = 0
 		for scalar in text.unicodeScalars {
-			#expect(r.byteOffset(ofUTF16: units) == bytes)
-			if scalar.utf16.count == 2 { #expect(r.byteOffset(ofUTF16: units + 1) == bytes) }
+			XCTAssertEqual(r.byteOffset(ofUTF16: units), bytes)
+			if scalar.utf16.count == 2 { XCTAssertEqual(r.byteOffset(ofUTF16: units + 1), bytes) }
 			units += scalar.utf16.count
 			bytes += scalar.utf8.count
 		}
-		#expect(r.byteOffset(ofUTF16: units + 5) == r.byteCount)
+		XCTAssertEqual(r.byteOffset(ofUTF16: units + 5), r.byteCount)
 	}
 
-	@Test func wordBoundaries() {
+	func testWordBoundaries() {
 		let r = Rope("  $žluť_1 ->  x\n")
-		#expect(r.wordEnd(after: 0) == 3) // "$" is punctuation
-		#expect(r.wordEnd(after: 3) == 11)
-		#expect(r.wordEnd(after: 11) == 14)
-		#expect(r.wordStart(before: 14) == 12)
-		#expect(r.wordStart(before: r.byteCount) == 16)
-		#expect(r.wordStart(before: 3) == 2)
+		XCTAssertEqual(r.wordEnd(after: 0), 3) // "$" is punctuation
+		XCTAssertEqual(r.wordEnd(after: 3), 11)
+		XCTAssertEqual(r.wordEnd(after: 11), 14)
+		XCTAssertEqual(r.wordStart(before: 14), 12)
+		XCTAssertEqual(r.wordStart(before: r.byteCount), 16)
+		XCTAssertEqual(r.wordStart(before: 3), 2)
 	}
 }
 
@@ -97,5 +97,4 @@ struct SplitMix64: RandomNumberGenerator {
 		z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
 		return z ^ (z >> 31)
 	}
-
 }

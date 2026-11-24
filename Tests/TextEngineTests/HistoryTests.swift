@@ -1,19 +1,19 @@
-import Testing
-@testable import TextEngine
+import XCTest
+@testable import MinorIDE
 
-struct HistoryTests {
-	@Test func invertedChangeSetRestoresText() {
+final class HistoryTests: XCTestCase {
+	func testInvertedChangeSetRestoresText() {
 		var rope = Rope("abc\ndef")
 		let cs = ChangeSet([(1..<2, "XYZ"), (4..<4, "-"), (5..<7, "")])
 		let inverse = cs.inverted(against: rope)
 		cs.apply(to: &rope)
-		#expect(rope.string == "aXYZc\n-d")
+		XCTAssertEqual(rope.string, "aXYZc\n-d")
 		inverse.apply(to: &rope)
-		#expect(rope.string == "abc\ndef")
+		XCTAssertEqual(rope.string, "abc\ndef")
 	}
 
 	/// Random multi-caret edits, then undo everything and redo everything.
-	@Test func randomEditsUndoAndRedo() {
+	func testRandomEditsUndoAndRedo() {
 		var rng = SplitMix64(seed: 42)
 		var rope = Rope("hello\nsvěte\n")
 		var history = EditHistory()
@@ -36,17 +36,17 @@ struct HistoryTests {
 		let steps = history.undoStack.count
 		for n in (0..<steps).reversed() {
 			for t in history.undo()!.transactions.reversed() { t.inverse.apply(to: &rope) }
-			#expect(rope.string == snapshots[n])
+			XCTAssertEqual(rope.string, snapshots[n])
 		}
 		for n in 1...steps {
 			for t in history.redo()!.transactions { t.changes.apply(to: &rope) }
-			#expect(rope.string == snapshots[n])
+			XCTAssertEqual(rope.string, snapshots[n])
 		}
 	}
 
 	/// Typing, deleting, caret moves, undo and redo interleaved at random, checked against
 	/// a model that keeps the text and selections after each undo step.
-	@Test func interleavedEditsUndoRedoMatchModel() {
+	func testInterleavedEditsUndoRedoMatchModel() {
 		var rng = SplitMix64(seed: 99)
 		var rope = Rope("ahoj\nsvěte\n😀 čau\n")
 		var sel = SelectionSet(caret: 0)
@@ -75,16 +75,16 @@ struct HistoryTests {
 				guard let step = history.undo() else { continue }
 				for t in step.transactions.reversed() { t.inverse.apply(to: &rope) }
 				sel = step.selectionsBefore
-				#expect(sel == befores[current])
+				XCTAssertEqual(sel, befores[current])
 				current -= 1
-				#expect(rope.string == states[current].0)
+				XCTAssertEqual(rope.string, states[current].0)
 			case 2:
 				guard let step = history.redo() else { continue }
 				for t in step.transactions { t.changes.apply(to: &rope) }
 				sel = step.selectionsAfter
 				current += 1
-				#expect(rope.string == states[current].0)
-				#expect(sel == states[current].1)
+				XCTAssertEqual(rope.string, states[current].0)
+				XCTAssertEqual(sel, states[current].1)
 			default:
 				let deleting = rng.next() % 3 == 0
 				let piece = pieces[Int(rng.next() % UInt64(pieces.count))]
@@ -108,13 +108,13 @@ struct HistoryTests {
 				} else {
 					states[current] = (rope.string, sel)
 				}
-				#expect(history.undoStack.count == current && history.redoStack.isEmpty)
+				XCTAssertTrue(history.undoStack.count == current && history.redoStack.isEmpty)
 			}
 		}
-		#expect(rope.validate())
+		XCTAssertTrue(rope.validate())
 	}
 
-	@Test func typingCoalescesByWordPauseAndCaret() {
+	func testTypingCoalescesByWordPauseAndCaret() {
 		var history = EditHistory()
 		var rope = Rope("")
 		var time = 0.0
@@ -127,13 +127,13 @@ struct HistoryTests {
 			cs.apply(to: &rope)
 		}
 		for c in "foo bar" { type(String(c)) }
-		#expect(history.undoStack.count == 2) // "foo ", "bar"
+		XCTAssertEqual(history.undoStack.count, 2) // "foo ", "bar"
 		type("x", after: 1) // pause
-		#expect(history.undoStack.count == 3)
+		XCTAssertEqual(history.undoStack.count, 3)
 		type("y", at: 0) // caret moved
-		#expect(history.undoStack.count == 4)
+		XCTAssertEqual(history.undoStack.count, 4)
 		history.seal()
 		type("z", at: 1)
-		#expect(history.undoStack.count == 5)
+		XCTAssertEqual(history.undoStack.count, 5)
 	}
 }

@@ -1,0 +1,33 @@
+{
+  "originHash" : "8854d694249d97ae8beea958768e0de022c468790303d423204b621fb771f744",
+  "pins" : [
+    {
+      "identity" : "minor-swift-core",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/novami/minor-swift-core.git",
+      "state" : {
+        "revision" : "7ccc18fbb17080c53551459b5af1c473f6c4b848",
+        "version" : "0.1.1"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+        "version" : "1.8.2"
+      }
+    },
+    {
+      "identity" : "swiftterm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/migueldeicaza/SwiftTerm.git",
+      "state" : {
+        "revision" : "7691f85b222a67a66b58499e1b2647443cf0dda7",
+        "version" : "1.18.0"
+      }
+    }
+  ],
+  "version" : 3
+}

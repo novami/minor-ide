@@ -1,8 +1,8 @@
-import Testing
-@testable import TextEngine
+import XCTest
+@testable import MinorIDE
 
-struct SelectionTests {
-	@Test func mergesOverlapsAndKeepsPrimary() {
+final class SelectionTests: XCTestCase {
+	func testMergesOverlapsAndKeepsPrimary() {
 		let set = SelectionSet([
 			Selection(anchor: 10, head: 6),
 			Selection(caret: 2),
@@ -11,22 +11,22 @@ struct SelectionTests {
 			Selection(anchor: 12, head: 14),
 			Selection(anchor: 14, head: 16), // touching ranges stay apart
 		], primary: 2)
-		#expect(set.all == [Selection(caret: 2), Selection(anchor: 4, head: 10), Selection(anchor: 12, head: 14), Selection(anchor: 14, head: 16)])
-		#expect(set.primaryIndex == 1)
+		XCTAssertEqual(set.all, [Selection(caret: 2), Selection(anchor: 4, head: 10), Selection(anchor: 12, head: 14), Selection(anchor: 14, head: 16)])
+		XCTAssertEqual(set.primaryIndex, 1)
 	}
 
-	@Test func mapsThroughMultiCaretTyping() {
+	func testMapsThroughMultiCaretTyping() {
 		var rope = Rope("ab\ncd\nef")
 		let set = SelectionSet([Selection(caret: 1), Selection(anchor: 3, head: 5), Selection(caret: 8)])
 		let cs = ChangeSet(set.all.map { ($0.range, "XY") })
 		cs.apply(to: &rope)
-		#expect(rope.string == "aXYb\nXY\nefXY")
+		XCTAssertEqual(rope.string, "aXYb\nXY\nefXY")
 		// Ranges cover their replacement; the editor collapses them itself.
-		#expect(set.mapped(through: cs).all.map(\.range) == [3..<3, 5..<7, 12..<12])
+		XCTAssertEqual(set.mapped(through: cs).all.map(\.range), [3..<3, 5..<7, 12..<12])
 	}
 
 	/// Random selections and edits checked against a reference byte array.
-	@Test func randomChangeSetsMatchReference() {
+	func testRandomChangeSetsMatchReference() {
 		var rng = SplitMix64(seed: 7)
 		let pieces = ["", "a", "\n", "č", "😀", "x\ny"]
 		var reference = Array("ahoj\nsvěte\nčau 😀\n".utf8)
@@ -41,26 +41,26 @@ struct SelectionTests {
 			let raw = (0..<(1 + Int(rng.next() % 5))).map { _ in Selection(anchor: boundary(), head: boundary()) }
 			let p = Int(rng.next() % UInt64(raw.count))
 			let set = SelectionSet(raw, primary: p)
-			#expect(set.primary.range.lowerBound <= raw[p].range.lowerBound && raw[p].range.upperBound <= set.primary.range.upperBound)
+			XCTAssertTrue(set.primary.range.lowerBound <= raw[p].range.lowerBound && raw[p].range.upperBound <= set.primary.range.upperBound)
 			for (a, b) in zip(set.all, set.all.dropFirst()) {
-				#expect(a.range.upperBound <= b.range.lowerBound && !(a.range.upperBound == b.range.lowerBound && (a.isEmpty || b.isEmpty)))
+				XCTAssertTrue(a.range.upperBound <= b.range.lowerBound && !(a.range.upperBound == b.range.lowerBound && (a.isEmpty || b.isEmpty)))
 			}
 
 			let texts = set.all.map { _ in pieces[Int(rng.next() % UInt64(pieces.count))] }
 			let cs = ChangeSet(Array(zip(set.all.map(\.range), texts)))
 			for (s, t) in zip(set.all, texts).reversed() { reference.replaceSubrange(s.range, with: Array(t.utf8)) }
 			cs.apply(to: &rope)
-			#expect(rope.bytes(in: 0..<rope.byteCount) == reference)
+			XCTAssertEqual(rope.bytes(in: 0..<rope.byteCount), reference)
 
 			// Each replaced range maps to exactly its new text.
 			var delta = 0
 			for (s, t) in zip(set.all, texts) {
 				let start = s.range.lowerBound + delta
-				#expect(cs.map(s.range.lowerBound, bias: .before) == start)
-				#expect(cs.map(s.range.upperBound, bias: .after) == start + t.utf8.count)
+				XCTAssertEqual(cs.map(s.range.lowerBound, bias: .before), start)
+				XCTAssertEqual(cs.map(s.range.upperBound, bias: .after), start + t.utf8.count)
 				delta += t.utf8.count - s.range.count
 			}
-			for s in set.mapped(through: cs).all { #expect(s.range.upperBound <= rope.byteCount) }
+			for s in set.mapped(through: cs).all { XCTAssertTrue(s.range.upperBound <= rope.byteCount) }
 		}
 	}
 }

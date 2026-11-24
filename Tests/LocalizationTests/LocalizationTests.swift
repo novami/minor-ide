@@ -1,32 +1,31 @@
 import Foundation
-import Testing
-@testable import Localization
-@testable import L10nTooling
+import XCTest
+@testable import MinorIDE
 
-struct PluralRuleTests {
+final class PluralRuleTests: XCTestCase {
 	let czech = try! PluralRules(["one": "i = 1 and v = 0", "few": "i = 2..4 and v = 0", "many": "v != 0"])
 
-	@Test func czechCategories() throws {
-		#expect(czech.category(PluralOperands(1)) == .one)
-		#expect(czech.category(PluralOperands(3)) == .few)
-		#expect(czech.category(PluralOperands(5)) == .other)
-		#expect(czech.category(PluralOperands(0)) == .other)
-		#expect(czech.category(PluralOperands(1.5)) == .many)
-		#expect(czech.category(try #require(PluralOperands(decimal: "1.0"))) == .many)
+	func testCzechCategories() throws {
+		XCTAssertEqual(czech.category(PluralOperands(1)), .one)
+		XCTAssertEqual(czech.category(PluralOperands(3)), .few)
+		XCTAssertEqual(czech.category(PluralOperands(5)), .other)
+		XCTAssertEqual(czech.category(PluralOperands(0)), .other)
+		XCTAssertEqual(czech.category(PluralOperands(1.5)), .many)
+		XCTAssertEqual(czech.category(try XCTUnwrap(PluralOperands(decimal: "1.0"))), .many)
 	}
 
-	@Test func moduloListsAndSamples() throws {
+	func testModuloListsAndSamples() throws {
 		// Russian "few", with a sample list that must be ignored.
 		let rule = try PluralRule("v = 0 and i % 10 = 2..4 and i % 100 != 12..14 @integer 2~4, 22~24")
-		#expect(rule.matches(PluralOperands(22)))
-		#expect(!rule.matches(PluralOperands(12)))
-		#expect(try PluralRule("n = 0,1 or n = 11..99").matches(PluralOperands(42)))
-		#expect(throws: PluralRuleError.self) { try PluralRule("i = = 1") }
-		#expect(throws: PluralRuleError.self) { try PluralRule("x = 1") }
+		XCTAssertTrue(rule.matches(PluralOperands(22)))
+		XCTAssertFalse(rule.matches(PluralOperands(12)))
+		try XCTAssertTrue(PluralRule("n = 0,1 or n = 11..99").matches(PluralOperands(42)))
+		XCTAssertThrowsError(try PluralRule("i = = 1"))
+		XCTAssertThrowsError(try PluralRule("x = 1"))
 	}
 }
 
-struct LocalizerTests {
+final class LocalizerTests: XCTestCase {
 	static let czechFile = #"""
 	{
 		"$meta": { "locale": "cs-CZ", "name": "Čeština", "englishName": "Czech", "fallback": "en-US",
@@ -50,41 +49,50 @@ struct LocalizerTests {
 		Localizer(chain: [try Catalog(data: Data(Self.czechFile.utf8)), try Catalog(data: Data(Self.englishFile.utf8))])
 	}
 
-	@Test func textsPluralsVariantsAndFormats() throws {
+	func testTextsPluralsVariantsAndFormats() throws {
 		let l = try localizer()
-		#expect(l.string("project.delete.confirmation", ["projectName": .text("Web")]) == "Smazat projekt „Web“?")
-		#expect(l.string("files.selected", count: 1) == "Vybrán 1 soubor")
-		#expect(l.string("files.selected", count: 3) == "Vybrány 3 soubory")
-		#expect(l.string("files.selected", count: 12) == "Vybráno 12 souborů")
-		#expect(l.string("docker.container", variant: "genitive") == "kontejneru")
-		#expect(l.string("docker.container") == "kontejner")
-		#expect(l.string("size", ["size": .integer(2_000_000)]).hasSuffix("MB, {doslova}"))
+		XCTAssertEqual(l.string("project.delete.confirmation", ["projectName": .text("Web")]), "Smazat projekt „Web“?")
+		XCTAssertEqual(l.string("files.selected", count: 1), "Vybrán 1 soubor")
+		XCTAssertEqual(l.string("files.selected", count: 3), "Vybrány 3 soubory")
+		XCTAssertEqual(l.string("files.selected", count: 12), "Vybráno 12 souborů")
+		XCTAssertEqual(l.string("docker.container", variant: "genitive"), "kontejneru")
+		XCTAssertEqual(l.string("docker.container"), "kontejner")
+		XCTAssertTrue(l.string("size", ["size": .integer(2_000_000)]).hasSuffix("MB, {doslova}"))
 	}
 
-	@Test func missingTranslationIsMarkedInDebug() throws {
-		#expect(try localizer().string("only.english") == "⟦only.english⟧")
-		#expect(try localizer().string("no.such.key") == "⟦no.such.key⟧")
+	func testMissingTranslationIsMarkedInDebug() throws {
+		try XCTAssertEqual(localizer().string("only.english"), "⟦only.english⟧")
+		try XCTAssertEqual(localizer().string("no.such.key"), "⟦no.such.key⟧")
 	}
 
-	@Test func catalogReportsProblemsAndParserReportsDuplicates() throws {
+	func testCatalogReportsProblemsAndParserReportsDuplicates() throws {
 		let source = #"{ "$meta": { "locale": "de-DE" }, "a": { "b": "x {broken" }, "c": "1", "c": "2" }"#
 		let parsed = try JSONTreeParser.parse(Data(source.utf8))
-		#expect(parsed.duplicates.map(\.path) == ["c"])
+		XCTAssertEqual(parsed.duplicates.map(\.path), ["c"])
 		let catalog = try Catalog(tree: parsed.tree)
-		#expect(catalog.problems.count == 1)
-		#expect(catalog.messages["a.b"]?.text?.segments == [.literal("x {broken")])
+		XCTAssertEqual(catalog.problems.count, 1)
+		XCTAssertEqual(catalog.messages["a.b"]?.text?.segments, [.literal("x {broken")])
 	}
 
-	@Test func languageResolution() {
+	func testLanguageResolution() {
 		let available = ["cs-CZ", "en-US", "pt-BR"]
-		#expect(L10n.resolve(preference: nil, available: available, preferred: ["cs", "en"]) == "cs-CZ")
-		#expect(L10n.resolve(preference: "system", available: available, preferred: ["de-DE", "pt-PT"]) == "pt-BR")
-		#expect(L10n.resolve(preference: "en-US", available: available, preferred: ["cs-CZ"]) == "en-US")
-		#expect(L10n.resolve(preference: nil, available: available, preferred: ["ja"]) == "en-US")
+		XCTAssertEqual(L10n.resolve(preference: nil, available: available, preferred: ["cs", "en"]), "cs-CZ")
+		XCTAssertEqual(L10n.resolve(preference: "system", available: available, preferred: ["de-DE", "pt-PT"]), "pt-BR")
+		XCTAssertEqual(L10n.resolve(preference: "en-US", available: available, preferred: ["cs-CZ"]), "en-US")
+		XCTAssertEqual(L10n.resolve(preference: nil, available: available, preferred: ["ja"]), "en-US")
 	}
 }
 
-struct ToolingTests {
+final class ToolingTests: XCTestCase {
+	/// The real language files: Czech complete, no unused or missing keys (CI gate, was `make l10n-check`).
+	func testShippedLanguageFilesAreValid() {
+		let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+		let report = Validator(directory: root.appendingPathComponent("Resources/Localization"),
+		                       sources: root, required: ["cs-CZ"]).run()
+		XCTAssertTrue(report.errors.isEmpty, report.errors.joined(separator: "\n"))
+	}
+
+
 	func write(_ files: [String: String]) throws -> URL {
 		let dir = FileManager.default.temporaryDirectory.appendingPathComponent("L10nTests-\(UUID().uuidString)")
 		try FileManager.default.createDirectory(at: dir.appendingPathComponent("Sources"), withIntermediateDirectories: true)
@@ -104,15 +112,15 @@ struct ToolingTests {
 	}
 	"""#
 
-	@Test func generatesTypedAccessors() throws {
+	func testGeneratesTypedAccessors() throws {
 		let code = Generator.swift(source: Self.english, catalog: try Catalog(data: Data(Self.english.utf8)))
-		#expect(code.contains("/// Status bar.\n\t\tpublic static func selected(count: Int) -> String { L10n.string(\"files.selected\", count: count) }"))
-		#expect(code.contains("public static func `open`(path: some CustomStringConvertible, date: Date) -> String"))
-		#expect(code.contains("public enum ContainerVariant: String, Sendable { case genitive }"))
-		#expect(code.contains("public static var `default`: String { L10n.string(\"default\") }"))
+		XCTAssertTrue(code.contains("/// Status bar.\n\t\tpublic static func selected(count: Int) -> String { L10n.string(\"files.selected\", count: count) }"))
+		XCTAssertTrue(code.contains("public static func `open`(path: some CustomStringConvertible, date: Date) -> String"))
+		XCTAssertTrue(code.contains("public enum ContainerVariant: String, Sendable { case genitive }"))
+		XCTAssertTrue(code.contains("public static var `default`: String { L10n.string(\"default\") }"))
 	}
 
-	@Test func validatorFindsProblems() throws {
+	func testValidatorFindsProblems() throws {
 		let czech = #"""
 		{
 			"$meta": { "locale": "cs-CZ", "name": "Čeština", "englishName": "Czech",
@@ -132,7 +140,7 @@ struct ToolingTests {
 			"\"two\" never applies", "\"few\" is missing", "\"many\" is missing", "{date} must have the format \"date:short\"",
 			"files.extra is not in en-US.json", "variant \"genitive\" is missing", "default is not translated", "docker.container is not used",
 		]
-		for text in expected { #expect(report.errors.contains { $0.contains(text) }, "\(text)") }
-		#expect(report.completeness.first?.done == 0)
+		for text in expected { XCTAssertTrue(report.errors.contains { $0.contains(text) }, "\(text)") }
+		XCTAssertEqual(report.completeness.first?.done, 0)
 	}
 }

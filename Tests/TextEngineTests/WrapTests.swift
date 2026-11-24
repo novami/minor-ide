@@ -1,31 +1,31 @@
-import Testing
-@testable import TextEngine
+import XCTest
+@testable import MinorIDE
 
-struct WrapTests {
+final class WrapTests: XCTestCase {
 	func breaks(_ s: String, _ column: Int, tab: Int = 4) -> [Int] {
 		WrapMap.breaks(Array(s.utf8), column: column, tabWidth: tab)
 	}
 
-	@Test func breaksAfterSpacesOrAtTheColumn() {
-		#expect(breaks("aaaa bbbb cccc", 10) == [10])
-		#expect(breaks("abcdefghijkl", 5) == [5, 10])
-		#expect(breaks("short", 10) == [])
-		#expect(breaks("\tx", 4) == [1]) // a tab fills the row
-		#expect(breaks("abcde\u{301}f", 5) == [6]) // the accent stays with its letter
-		#expect(breaks("😀😀😀", 2) == [4]) // UTF-16 units
-		#expect(breaks("aaaa      bb", 4) == [10]) // spaces hang past the column
+	func testBreaksAfterSpacesOrAtTheColumn() {
+		XCTAssertEqual(breaks("aaaa bbbb cccc", 10), [10])
+		XCTAssertEqual(breaks("abcdefghijkl", 5), [5, 10])
+		XCTAssertEqual(breaks("short", 10), [])
+		XCTAssertEqual(breaks("\tx", 4), [1]) // a tab fills the row
+		XCTAssertEqual(breaks("abcde\u{301}f", 5), [6]) // the accent stays with its letter
+		XCTAssertEqual(breaks("😀😀😀", 2), [4]) // UTF-16 units
+		XCTAssertEqual(breaks("aaaa      bb", 4), [10]) // spaces hang past the column
 	}
 
-	@Test func displayMapWithWrapsAndFolds() {
+	func testDisplayMapWithWrapsAndFolds() {
 		let map = DisplayMap(hidden: [3...4], wrapped: [(1, 2), (4, 1), (5, 1)])
-		#expect(map.rowCount(lineCount: 6) == 7)
-		#expect((0..<7).map { map.position(atRow: $0).line } == [0, 1, 1, 1, 2, 5, 5])
-		#expect(map.position(atRow: 2) == (1, 1) && map.position(atRow: 6) == (5, 1))
-		#expect((0..<6).map(map.row(of:)) == [0, 1, 4, 4, 4, 5])
-		#expect(map.rows(ofLine: 1) == 3 && map.rows(ofLine: 4) == 1)
+		XCTAssertEqual(map.rowCount(lineCount: 6), 7)
+		XCTAssertEqual((0..<7).map { map.position(atRow: $0).line }, [0, 1, 1, 1, 2, 5, 5])
+		XCTAssertTrue(map.position(atRow: 2) == (1, 1) && map.position(atRow: 6) == (5, 1))
+		XCTAssertEqual((0..<6).map(map.row(of:)), [0, 1, 4, 4, 4, 5])
+		XCTAssertTrue(map.rows(ofLine: 1) == 3 && map.rows(ofLine: 4) == 1)
 	}
 
-	@Test func updateMatchesFullComputation() {
+	func testUpdateMatchesFullComputation() {
 		var rng = SplitMix64(seed: 7)
 		let words = ["a", "bb", "ccc ", " ", "\t", "dddddddd", "\n", "é", "😀"]
 		var rope = Rope((0..<200).map { _ in words.randomElement(using: &rng)! }.joined())
@@ -38,14 +38,14 @@ struct WrapTests {
 			let first = rope.line(containing: start), oldLast = rope.line(containing: end), oldCount = rope.lineCount
 			ChangeSet([(start..<end, text)]).apply(to: &rope)
 			map.update(rope: rope, first: first, oldLast: oldLast, newLast: oldLast + rope.lineCount - oldCount)
-			#expect(map == WrapMap(rope: rope, column: 6, tabWidth: 4))
+			XCTAssertEqual(map, WrapMap(rope: rope, column: 6, tabWidth: 4))
 		}
 	}
 
-	@Test func widestLineInColumns() {
+	func testWidestLineInColumns() {
 		let rope = Rope("ab\n\tx\nčeština😀\n" + String(repeating: "y", count: 70_000) + "\nz")
-		#expect(rope.maxColumns(tabWidth: 4) == 70_000) // spans chunks
-		#expect(rope.maxColumns(tabWidth: 4, lines: 0...2) == 8)
-		#expect(rope.maxColumns(tabWidth: 8, lines: 1...1) == 9)
+		XCTAssertEqual(rope.maxColumns(tabWidth: 4), 70_000) // spans chunks
+		XCTAssertEqual(rope.maxColumns(tabWidth: 4, lines: 0...2), 8)
+		XCTAssertEqual(rope.maxColumns(tabWidth: 8, lines: 1...1), 9)
 	}
 }
