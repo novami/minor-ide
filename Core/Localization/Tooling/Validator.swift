@@ -1,6 +1,6 @@
 import Foundation
 
-/// Checks the language files against the source language and the code (docs/LOCALIZATION.md).
+/// Checks the language files against the source language and the code (CONTRIBUTING.md).
 nonisolated public struct Validator {
 	public struct Report {
 		public var errors: [String] = []

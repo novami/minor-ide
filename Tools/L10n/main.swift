@@ -1,8 +1,8 @@
 import Foundation
 import L10nKit
 
-// minoride-l10n: `generate` writes the typed accessors, `validate` checks all language files (docs/LOCALIZATION.md).
-// Run from the repository root (tools/l10n.sh generate | validate).
+// minoride-l10n: `generate` writes the typed accessors, `validate` checks all language files (CONTRIBUTING.md).
+// Run from the repository root (Tools/l10n.sh generate | validate).
 
 let resources = URL(fileURLWithPath: "Resources/Localization")
 let output = URL(fileURLWithPath: "Core/Localization/Generated/Strings.swift")

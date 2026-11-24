@@ -2,7 +2,7 @@
 import PackageDescription
 
 // Developer tool, not part of the app: generates and validates the localization accessors.
-// Run through tools/l10n.sh from the repository root.
+// Run through Tools/l10n.sh from the repository root.
 let package = Package(
 	name: "l10n",
 	platforms: [.macOS(.v26)],

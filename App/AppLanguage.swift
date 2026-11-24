@@ -1,6 +1,6 @@
 import AppKit
 
-/// The UI language: loaded once at startup, chosen in Settings › General (docs/LOCALIZATION.md).
+/// The UI language: loaded once at startup, chosen in Settings › General (CONTRIBUTING.md).
 @MainActor
 enum AppLanguage {
 	/// Language files in the app bundle; nil outside the bundle (swift run), where English is used.
