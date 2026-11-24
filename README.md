@@ -21,7 +21,7 @@ macOS 26 or newer on Apple Silicon (arm64 only), Xcode 26 with the Metal Toolcha
 ```bash
 xcodebuild test -scheme MinorIDE -destination 'platform=macOS,arch=arm64'
 swiftlint lint --strict
-tools/l10n.sh generate    # after editing Resources/Localization/en-US.json
+Tools/l10n.sh generate    # after editing Resources/Localization/en-US.json
 ```
 
 ## Architecture
@@ -31,24 +31,32 @@ The project is an Xcode project with synchronized folders; all build settings ar
 [minor-swift-core](https://github.com/novami/minor-swift-core) (MinorLog, MinorKeychain, MinorUpdater)
 and the [minor-swift-starter](https://github.com/novami/minor-swift-starter) template.
 
-- `App/` — entry point, menus, windows. The workspace window is AppKit, settings and panels are SwiftUI (ADR-2).
+- `App/` — entry point, menus, windows. The workspace window is AppKit, settings and panels are SwiftUI .
 - `Core/` — engine code below the UI: `Text` (rope), `Highlight`, `Editor`, `LSP` (gopls client),
   `Project`, `Database`, `Remote`, `Security`, `Localization`, `Support`. Everything except `Editor`
   must not import AppKit. Default actor isolation is MainActor, so these folders are marked `nonisolated`.
 - `Features/` — UI features (editor, project, settings, database).
-- `Tests/` — XCTest. `Resources/` — language files, help book, licenses. `docs/` — design documents.
+- `Tests/` — XCTest. `Resources/` — language files, help book, licenses. `Tools/` — localization generator, icon script.
 
-Decisions taken at the migration (details in [docs/DECISIONS.md](docs/DECISIONS.md), ADR-15):
+Design decisions:
 
-- Own editor and rendering are kept (ADR-3), no `NSTextView`.
-- PHP: own lexer, parser, index and type inference in `Core/PHP` (no LSP, ADR-4). Built-in functions and
+- Swift only; no new Go code. The editor is own (rope, Core Text), no `NSTextView`: multiple cursors, folding and large files need that control.
+- Database clients (MySQL, PostgreSQL) are own, over Network.framework; SQLite through the system library.
+- PHP: own lexer, parser, index and type inference in `Core/PHP` (no LSP). Built-in functions and
   classes (stubs) are generated through Reflection by the selected PHP and cached per version.
   Formatting: own indentation only, `php-cs-fixer` optional as an external tool.
-- Go: own LSP client and `gopls` (ADR-5).
+- Go: own LSP client and `gopls`.
 - PHP and Go toolchains: existing installations are detected (Homebrew, `/usr/local`, asdf, mise); the PHP
   download source is still open. Project settings live in `.minoride/` inside the project, trust decisions outside it.
-- Project search stays the Swift implementation without an index (ADR-11).
+- Project search stays the Swift implementation without an index .
 - Distribution: Developer ID, notarization and MinorUpdater only. No sandbox, hardened runtime.
+
+## Roadmap
+
+Done: editor, Go through gopls, localization, project search, migration to the Minor base, PHP tokenizer.
+Next: PHP parser with error recovery, index with Composer autoload and stubs, completion/definition/hover,
+types and PHPDoc, usages/rename/diagnostics, run and tests, Git, Docker, databases, debugger, Nette/Latte/NEON.
+After the first release: Xdebug, Redis, Node.js tooling, more languages.
 
 ## Dependencies
 
@@ -56,7 +64,7 @@ Decisions taken at the migration (details in [docs/DECISIONS.md](docs/DECISIONS.
 - [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) 1.18.0 (pinned exactly), MIT. The licence text is in
   `Resources/Licenses/SwiftTerm.txt` and in the About window.
 
-Everything else uses Apple system frameworks.
+Everything else uses Apple system frameworks. PHP and Go tools (PHPStan, Composer, gopls, …) are only run as external programs. A new dependency needs a discussion first.
 
 ## Releases
 
@@ -67,4 +75,4 @@ A tag `X.Y.Z` runs `release.yml`: lint, tests, build, Developer ID signing, nota
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Security: see [SECURITY.md](SECURITY.md).
+MIT, see [LICENSE](LICENSE). Contributing: [CONTRIBUTING.md](CONTRIBUTING.md). Security: [SECURITY.md](SECURITY.md).

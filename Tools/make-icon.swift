@@ -1,5 +1,5 @@
 // Draws the app icon: glossy blue gradient squircle, a rounded "M" and an amber underscore caret.
-// Usage: swift tools/make-icon.swift <out.iconset>; then iconutil -c icns <out.iconset>.
+// Usage: swift Tools/make-icon.swift <out.iconset>; then iconutil -c icns <out.iconset>.
 import AppKit
 
 let out = CommandLine.arguments.dropFirst().first ?? "AppIcon.iconset"

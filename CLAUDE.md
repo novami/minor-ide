@@ -1,28 +1,28 @@
 # MinorIDE
 
-Nativní IDE pro PHP a Go na macOS (Apple Silicon), celé ve Swiftu. Dokumenty (anglicky): `docs/PRD.md` (rozsah), `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` (ADR), `docs/ROADMAP.md` (fáze), `docs/SECURITY.md`, `docs/PERFORMANCE.md`, `docs/LOCALIZATION.md`, `docs/UI-GUIDELINES.md`, `docs/DEPENDENCIES.md`.
-
-**Pracovní pozice: `docs/STATUS.md`.** Na začátku session ho přečti a pokračuj „Next step“. Po každém dokončeném bloku práce ho aktualizuj (co je hotové, další krok, otevřené věci), commitni a řekni uživateli, že může vyčistit kontext.
+Nativní IDE pro PHP a Go na macOS (Apple Silicon), celé ve Swiftu. Popis, architektura a rozhodnutí: `README.md`; pravidla pro přispěvatele: `CONTRIBUTING.md`; bezpečnostní model: `SECURITY.md`. Další dokumenty neexistují (historie je v gitu).
 
 ## Příkazy
-- `xcodebuild test -scheme MinorIDE -destination 'platform=macOS,arch=arm64'` – XCTest; `swiftlint lint --strict` musí být čistý (CI to vynucuje)
-- `tools/l10n.sh generate` – po změně `Resources/Localization/en-US.json` přegeneruje `Strings.swift` (`docs/LOCALIZATION.md`); validaci (čeština kompletní, nepoužité klíče) hlídá test `ToolingTests`
+- Test: `xcodebuild test -scheme MinorIDE -destination 'platform=macOS,arch=arm64'`; `swiftlint lint --strict` musí být čistý (CI vynucuje)
 - Build: `xcodebuild -scheme MinorIDE -destination 'platform=macOS,arch=arm64' build`; Release s `CODE_SIGNING_ALLOWED=NO`
-- Struktura: `App/` (vstup, menu), `Core/` (engine bez UI, složky `nonisolated`), `Features/` (UI), `Tests/`, `Config/*.xcconfig` (veškerá nastavení buildu); ADR-15 v `docs/DECISIONS.md`
+- `Tools/l10n.sh generate` po změně `Resources/Localization/en-US.json` (validaci hlídá `ToolingTests`)
 - Push: `git -c credential.helper= -c credential.helper='!gh auth git-credential' push`
 
 ## Pravidla
-- Pracuj po úkolech v pořadí fází z `docs/ROADMAP.md`. Úkol končí splněním „Done when“, testem hlavní cesty a commitem.
-- Commity malé, jen vlastní soubory (`git commit -- <soubory>`), bez AI podpisů. Nikdy `git push` bez vyžádání.
-- **Jen Swift** (ADR-1). Nový Go kód nepsat.
-- **Žádná nová závislost bez souhlasu uživatele.** Povolené: `minor-swift-core` a SwiftTerm (pinnutý přesně). Stuby PHP se generují Reflection z vybraného PHP. Systémové frameworky macOS jsou volné.
-- **PHP inteligence přímo v aplikaci, bez LSP** (ADR-4). LSP jen pro gopls (ADR-5). PHP nástroje (PHPStan, Psalm, fixery, Composer, testy) jen přes CLI.
-- **Žádná vazba na konkurenční IDE**: nejmenovat je v UI, kódu, dokumentaci ani commitech a nepodporovat jejich vlastní formáty souborů ani jejich data.
-- Na hlavním vlákně jen UI. Změna v editační cestě musí zůstat v rozpočtu z `docs/PERFORMANCE.md`.
-- Moduly pod UI (`TextEngine`, `Highlight`, `LanguageKit`, `PHPKit`, `LSPKit`, `ProjectKit`, `ToolKit`, `MinorCore`, `Localization` …) nesmí importovat AppKit.
-- PHP: každá nová schopnost začíná markerovým testem; každá opravená chyba parseru dostane fixture. Parser nikdy nesmí spadnout (žádné `!`, kontrolované indexy, časový limit).
-- **UI podle Apple HIG** (`docs/UI-GUIDELINES.md`): standardní lišta menu a zkratky, sheety místo modálních dialogů, okno Nastavení (⌘,), systémové barvy a tmavý režim. Pracovní okno v AppKitu, SwiftUI pro nastavení, Dashboard, formuláře a panely. Každý text v UI lokalizovaný přes `Strings.<klíč>` (klíč v `en-US.json` i `cs-CZ.json`, `tools/l10n.sh generate`, vše ve stejném commitu); čeština musí být vždy kompletní (kontrola je součást testů).
-- **Kód, komentáře a dokumentace anglicky** (jednoduchá US angličtina); čeština jen v překladech. Tento soubor a odpovědi uživateli česky.
-- **Bezpečnost** (`docs/SECURITY.md`): hesla jen v Klíčence; nikdy v argumentech procesů, proměnných prostředí, logu ani souborech. Procesy spouštět s polem argumentů, nikdy přes shell se složeným řetězcem. Neznámý projekt = Omezený režim (nespouštět jeho nástroje ani příkazy z jeho nastavení, ani Git, gopls, `go` s cizím toolchainem, Composer, Docker a debugger; důvěra se ukládá mimo projekt). SSH jen se ověřeným klíčem serveru. Žádné síťové porty; výjimky: Delve na `127.0.0.1` během ladění, askpass přes unixový socket.
-- Když se rozhodnutí z ADR ukáže jako špatné, zastav a popiš varianty. Technologii neměň sám.
-- Swift: taby, Swift 6 strict concurrency, výchozí izolace MainActor: nové soubory v `Core/` (mimo `Editor`) musí mít deklarace `nonisolated`. Testy XCTest.
+- Pravidla kódu, závislostí, lokalizace, HIG a výkonu jsou v `CONTRIBUTING.md`, bezpečnost v `SECURITY.md`. Zde jen to, co z nich přímo nevyplývá:
+- Žádná nová závislost bez souhlasu. Povolené: `minor-swift-core`, SwiftTerm (pinnutý přesně). Stuby PHP přes Reflection z vybraného PHP.
+- Neznámý projekt = Omezený režim (žádné nástroje, Git, gopls, Composer, Docker, debugger z projektu); hesla jen v Klíčence, nikdy v argumentech, prostředí ani logu.
+- Když se rozhodnutí z README („Design decisions“) ukáže jako špatné, zastav a popiš varianty; technologii neměň sám.
+- Kód, komentáře a dokumentace anglicky; tento soubor a odpovědi česky. Žádná zmínka o konkurenčních IDE.
+- Implementuj sám, bez delegace na Sonnet subagenta.
+- GUI: aplikace spuštěná z mého shellu nedostává vstup; ruční test nech na uživateli (spuštění z Finderu). `--snapshot` nevidí chyby vrstev, ověřuj složené okno.
+- Dokumentaci neprodukuj navíc: README/CONTRIBUTING/SECURITY/CHANGELOG, postup vydání jen v README.
+
+## Workflow
+Po dokončeném bloku aktualizuj „Pracovní pozici“ níže, commitni a řekni uživateli, že může vyčistit kontext. Na „pokračuj“ čti pozici a jeď podle „Next step“.
+
+## Pracovní pozice (aktualizováno 2026-11-24)
+- Hotovo: migrace na Minor základ (merged), PHP tokenizer (větev `php-lexer`, PR 3 otevřený).
+- Next: ruleset na `main` (checks `lint / swiftlint`, `test / xctest`); pak PHP parser s obnovou po chybách, index + Composer autoload + stuby, completion/definition/hover, typy a PHPDoc, usages/rename/diagnostika, toolchainy, úklid LSP klienta, run/testy/Composer, terminál, Git.
+- Otevřené: neověřen podepsaný release, notarizace, updater a ruční test z Finderu; Help book bez vyhledávacích indexů; chybí XCTest benchmark editoru; chybí secrets pro release; nerozhodnuto: zdroj PHP binárky, formátování PHP.
+- Prostředí: Xcode 26 s Metal Toolchain (`xcodebuild -downloadComponent MetalToolchain`).
