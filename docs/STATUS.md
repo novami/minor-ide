@@ -2,18 +2,18 @@
 
 Working position. Updated after every finished block of work; a new session starts here. Older logs: [archive/status-v1.md](archive/status-v1.md) (until 2026-11-18, Czech), [archive/status-pre-migration.md](archive/status-pre-migration.md) (until 2026-11-23).
 
-**Last update:** 2026-11-24 (migration to the Minor common base, PR 1)
+**Last update:** 2026-11-24 (PR 1 merged, starting PR 3)
 
 ## Where we are
 
-- Branch `migrate-to-minor-swift-core`: the app is now an Xcode project (starter layout, MinorLog/MinorKeychain/MinorUpdater, SwiftTerm 1.18.0), XCTest, SwiftLint `--strict` clean. Decisions: ADR-15 in [DECISIONS.md](DECISIONS.md), summary in the README.
-- Local checks passed: `xcodebuild test`, `swiftlint lint --strict`, Release build with `CODE_SIGNING_ALLOWED=NO` (Info.plist: `MinorUpdateRepository = novami/minor-ide`, version 0.1.0, arm64), the app starts (`--dump-menu`).
-- Feature state is unchanged from before the migration (editor, gopls, project search, databases, remote, terminal). PHP intelligence does not exist yet; the old spike (`PHPKit`) was removed, see git history.
+- PR 1 (migration to the Minor common base) is merged into `main` (merge commit `d4a0df1`): Xcode project, MinorLog/MinorKeychain/MinorUpdater, SwiftTerm 1.18.0, XCTest, SwiftLint `--strict`. Decisions: ADR-15 in [DECISIONS.md](DECISIONS.md).
+- The ruleset on `main` is not created yet (see Open items).
+- Feature state is unchanged from before the migration (editor, gopls, project search, databases, remote, terminal). PHP highlighting is the line-based `Core/Highlight/Lexers/PHPLexer.swift`; PHP intelligence does not exist yet (the old `PHPKit` spike was removed, see git history, commit 914bb28).
 
 ## Next step
 
-1. Push the branch (only when the owner asks), open the PR, wait for green CI, then create the ruleset on `main` (required checks `lint / swiftlint`, `test / xctest`, integration_id 15368, PR with 0 approvals, no deletion, `non_fast_forward`). `main` has no ruleset or branch protection today.
-2. Then PRs in the order of the migration brief: (3) PHP lexer and highlighting, (4) parser with error recovery, (5) index, Composer autoload and stubs, (6) completion/definition/hover, (7) types and PHPDoc, (8) usages, rename, diagnostics, (9) toolchains and process environment (may go earlier for stub generation), (10) LSP client cleanup for gopls (`actor`, own data model), (11) run, tests, Composer, (12) terminal polish, (13) Git.
+1. Create the ruleset on `main` (required checks `lint / swiftlint`, `test / xctest`, integration_id 15368, PR with 0 approvals, no deletion, `non_fast_forward`); `main` has none today.
+2. PR 3 in progress: PHP lexer and highlighting (branch `php-lexer`). Then (4) parser with error recovery, (5) index, Composer autoload and stubs, (6) completion/definition/hover, (7) types and PHPDoc, (8) usages, rename, diagnostics, (9) toolchains and process environment (may go earlier for stub generation), (10) LSP client cleanup for gopls (`actor`, own data model), (11) run, tests, Composer, (12) terminal polish, (13) Git.
 
 ## Open items
 
