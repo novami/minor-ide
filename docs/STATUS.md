@@ -13,7 +13,7 @@ Working position. Updated after every finished block of work; a new session star
 ## Next step
 
 1. Create the ruleset on `main` (required checks `lint / swiftlint`, `test / xctest`, integration_id 15368, PR with 0 approvals, no deletion, `non_fast_forward`); `main` has none today.
-2. PR 3 (branch `php-lexer`, code done, not pushed): full-text `PHPTokenizer` in `Core/PHP/` (flat tokens, never traps, mutation test) plus highlighter additions (`die`, `__halt_compiler`, magic constants). Still to do before PR 4: keyword table and PHPDoc/heredoc-interpolation tokens in the tokenizer if the parser needs them. Then (4) parser with error recovery, (5) index, Composer autoload and stubs, (6) completion/definition/hover, (7) types and PHPDoc, (8) usages, rename, diagnostics, (9) toolchains and process environment (may go earlier for stub generation), (10) LSP client cleanup for gopls (`actor`, own data model), (11) run, tests, Composer, (12) terminal polish, (13) Git.
+2. PR 3 (branch `php-lexer`, code done, PR open): full-text `PHPTokenizer` in `Core/PHP/` (flat tokens, never traps, mutation test) plus highlighter additions (`die`, `__halt_compiler`, magic constants). Still to do before PR 4: keyword table and PHPDoc/heredoc-interpolation tokens in the tokenizer if the parser needs them. Then (4) parser with error recovery, (5) index, Composer autoload and stubs, (6) completion/definition/hover, (7) types and PHPDoc, (8) usages, rename, diagnostics, (9) toolchains and process environment (may go earlier for stub generation), (10) LSP client cleanup for gopls (`actor`, own data model), (11) run, tests, Composer, (12) terminal polish, (13) Git.
 
 ## Open items
 
