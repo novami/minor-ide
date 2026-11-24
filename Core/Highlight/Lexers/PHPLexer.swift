@@ -7,14 +7,14 @@ nonisolated public struct PHPLexer: Lexer {
 	}
 
 	static let keywords = WordSet("""
-		abstract and as break case catch clone const continue declare default do echo else elseif
-		empty enddeclare endfor endforeach endif endswitch endwhile enum eval exit extends final
+		abstract and as break case catch clone const continue declare default die do echo else elseif
+		__halt_compiler empty enddeclare endfor endforeach endif endswitch endwhile enum eval exit extends final
 		finally fn for foreach function global goto if implements include include_once instanceof
 		insteadof interface isset list match namespace new or print private protected public readonly
 		require require_once return static switch throw trait try unset use var while xor yield
 		""", caseInsensitive: true)
 	static let types = WordSet("int float bool string array mixed void never iterable object callable self parent null false true", caseInsensitive: true)
-	static let constants = WordSet("true false null", caseInsensitive: true)
+	static let constants = WordSet("true false null __class__ __dir__ __file__ __function__ __line__ __method__ __namespace__ __trait__ __property__", caseInsensitive: true)
 	/// Keywords after which a name is a class name.
 	static let classContext = WordSet("class interface trait enum extends implements new instanceof namespace use insteadof", caseInsensitive: true)
 
