@@ -11,7 +11,7 @@ func serverURL() throws -> URL {
 		.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
 		.appendingPathComponent("server/bin/minoride-server")
 	guard FileManager.default.isExecutableFile(atPath: url.path) else {
-		throw RPCError(code: 0, message: "missing \(url.path), run `make server`")
+		throw XCTSkip("Go helper missing at \(url.path); run `make server` or set MINORIDE_SERVER")
 	}
 	return url
 }
