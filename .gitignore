@@ -1,6 +1,7 @@
 .build/
 build/
-server/bin/
+DerivedData/
+xcuserdata/
 .swiftpm/
 .DS_Store
 *.test

@@ -1,8 +1,8 @@
-import Testing
-@testable import TextEngine
+import XCTest
+@testable import MinorIDE
 
-struct AnchorTests {
-	@Test func followsEditsAndUndo() {
+final class AnchorTests: XCTestCase {
+	func testFollowsEditsAndUndo() {
 		var rope = Rope("ab\ncd\nef")
 		var anchors = AnchorSet()
 		let line3 = anchors.add(at: 6) // start of "ef"
@@ -13,22 +13,22 @@ struct AnchorTests {
 		let inverse = cs.inverted(against: rope)
 		cs.apply(to: &rope)
 		anchors.apply(cs)
-		#expect(rope.string == "//\nab\nX\nef")
-		#expect(anchors.offset(of: line3) == 8)
-		#expect(anchors.offset(of: insertPoint) == 7) // after "X"
-		#expect(anchors.offset(of: deleted) == 7) // collapsed to the deletion point
-		#expect(anchors.anchors(in: 7...7).map(\.id) == [insertPoint, deleted])
+		XCTAssertEqual(rope.string, "//\nab\nX\nef")
+		XCTAssertEqual(anchors.offset(of: line3), 8)
+		XCTAssertEqual(anchors.offset(of: insertPoint), 7) // after "X"
+		XCTAssertEqual(anchors.offset(of: deleted), 7) // collapsed to the deletion point
+		XCTAssertEqual(anchors.anchors(in: 7...7).map(\.id), [insertPoint, deleted])
 
 		inverse.apply(to: &rope)
 		anchors.apply(inverse)
-		#expect(rope.string == "ab\ncd\nef")
-		#expect(anchors.offset(of: line3) == 6)
+		XCTAssertEqual(rope.string, "ab\ncd\nef")
+		XCTAssertEqual(anchors.offset(of: line3), 6)
 		anchors.remove(line3)
-		#expect(anchors.offset(of: line3) == nil && anchors.count == 2)
+		XCTAssertTrue(anchors.offset(of: line3) == nil && anchors.count == 2)
 	}
 
 	/// The binary search in `ChangeSet.map` against a plain linear scan.
-	@Test func mapMatchesLinearReference() {
+	func testMapMatchesLinearReference() {
 		var rng = SplitMix64(seed: 11)
 		for _ in 0..<500 {
 			let length = Int(rng.next() % 60)
@@ -39,7 +39,7 @@ struct AnchorTests {
 			let cs = ChangeSet(edits)
 			for offset in 0...length {
 				for bias in [ChangeSet.Bias.before, .after] {
-					#expect(cs.map(offset, bias: bias) == linearMap(cs, offset, bias))
+					XCTAssertEqual(cs.map(offset, bias: bias), linearMap(cs, offset, bias))
 				}
 			}
 		}

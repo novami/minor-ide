@@ -8,41 +8,62 @@ A native IDE for PHP and Go on macOS, written in Swift. Status: in development, 
 - Go: gopls integration (completion, navigation, hover, diagnostics, rename, formatting)
 - PHP, Latte and NEON highlighting; PHP intelligence is planned in-app (no LSP)
 - Quick Open, Find in Files with scopes and replace preview, Git change gutter, terminal
-- English and Czech UI
-- Update checks with automatic download (on by default, can be turned off in Settings › Updates)
+- Databases and remote servers (own protocols), English and Czech UI
+- Update checks from GitHub Releases (Settings › Updates)
 
 ## Requirements
 
-- Apple Silicon Mac, macOS 14 or newer. Intel is not supported.
-- Swift 6 toolchain (Xcode or Command Line Tools) and Go (for the temporary helper in `server/`).
+macOS 26 or newer on Apple Silicon (arm64 only), Xcode 26 with the Metal Toolchain component
+(`xcodebuild -downloadComponent MetalToolchain`, needed by SwiftTerm).
 
 ## Build and test
 
 ```bash
-make test     # Go and Swift tests
-make bench    # editor benchmark
-make run      # build build/MinorIDE.app and start it
+xcodebuild test -scheme MinorIDE -destination 'platform=macOS,arch=arm64'
+swiftlint lint --strict
+tools/l10n.sh generate    # after editing Resources/Localization/en-US.json
 ```
 
-## Structure
+## Architecture
 
-- `Sources/` — SwiftPM modules (`TextEngine`, `Highlight`, `EditorKit`, `LSPKit`, `PHPKit`,
-  `ProjectKit`, `DBKit`, `RemoteKit`, `SecretsKit`, `UpdateKit`, `Localization`, `MinorCore`) and the
-  app target `MinorIDE` (`App`, `Features`, `Services`, `Diagnostics`). Modules below the UI do not
-  import AppKit.
-- `Tests/`, `Resources/`, `tools/`, `server/` (temporary Go helper), `docs/`.
-- Documentation: [docs/](docs/) (PRD, architecture, decisions, roadmap, status).
+The project is an Xcode project with synchronized folders; all build settings are in `Config/*.xcconfig`
+(identity in `App.xcconfig`, version in `Version.xcconfig`). It is built on
+[minor-swift-core](https://github.com/novami/minor-swift-core) (MinorLog, MinorKeychain, MinorUpdater)
+and the [minor-swift-starter](https://github.com/novami/minor-swift-starter) template.
+
+- `App/` — entry point, menus, windows. The workspace window is AppKit, settings and panels are SwiftUI (ADR-2).
+- `Core/` — engine code below the UI: `Text` (rope), `Highlight`, `Editor`, `LSP` (gopls client),
+  `Project`, `Database`, `Remote`, `Security`, `Localization`, `Support`. Everything except `Editor`
+  must not import AppKit. Default actor isolation is MainActor, so these folders are marked `nonisolated`.
+- `Features/` — UI features (editor, project, settings, database).
+- `Tests/` — XCTest. `Resources/` — language files, help book, licenses. `docs/` — design documents.
+
+Decisions taken at the migration (details in [docs/DECISIONS.md](docs/DECISIONS.md), ADR-15):
+
+- Own editor and rendering are kept (ADR-3), no `NSTextView`.
+- PHP: own lexer, parser, index and type inference in `Core/PHP` (no LSP, ADR-4). Built-in functions and
+  classes (stubs) are generated through Reflection by the selected PHP and cached per version.
+  Formatting: own indentation only, `php-cs-fixer` optional as an external tool.
+- Go: own LSP client and `gopls` (ADR-5).
+- PHP and Go toolchains: existing installations are detected (Homebrew, `/usr/local`, asdf, mise); the PHP
+  download source is still open. Project settings live in `.minoride/` inside the project, trust decisions outside it.
+- Project search stays the Swift implementation without an index (ADR-11).
+- Distribution: Developer ID, notarization and MinorUpdater only. No sandbox, hardened runtime.
 
 ## Dependencies
 
-SwiftTerm (pinned exactly). Everything else uses Apple system frameworks.
+- minor-swift-core (`upToNextMinorVersion` from 0.1.1), MIT.
+- [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) 1.18.0 (pinned exactly), MIT. The licence text is in
+  `Resources/Licenses/SwiftTerm.txt` and in the About window.
 
-## Updates and distribution
+Everything else uses Apple system frameworks.
 
-The app can check a signed feed over HTTPS, download an update and verify its SHA-256 digest and
-Ed25519 signature. The feed is a release asset (`appcast.json`) in this public repository; archives are signed with the shared MinorUpdate key (`tools/minorupdate.swift`). Delivery is **not active yet**: there is no Developer ID signing, notarization or
-published release (so the feed does not exist yet), and no release has been published. Installing swaps the app bundle in place (with rollback) after the signature, bundle ID, version and code signature checks. Releases are prepared locally with `tools/release.sh`. The release
-design is in [docs/DECISIONS.md](docs/DECISIONS.md).
+## Releases
+
+A tag `X.Y.Z` runs `release.yml`: lint, tests, build, Developer ID signing, notarization and a GitHub Release with
+`MinorIDE-X.Y.Z.zip`. **A release fails until these repository secrets exist:** `DEVELOPER_ID_P12`,
+`DEVELOPER_ID_P12_PASSWORD`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`. Set `DEVELOPMENT_TEAM` in
+`Config/App.xcconfig` first.
 
 ## License
 

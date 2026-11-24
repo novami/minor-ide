@@ -1,8 +1,7 @@
-import Testing
-import TextEngine
-@testable import Highlight
+import XCTest
+@testable import MinorIDE
 
-struct SyntaxHighlighterTests {
+final class SyntaxHighlighterTests: XCTestCase {
 	/// Tokens of every line lexed from the top, the reference for incremental relexing.
 	static func reference(_ rope: Rope, _ lexer: any Lexer) -> [[Token]] {
 		var state = LexState.start
@@ -13,7 +12,7 @@ struct SyntaxHighlighterTests {
 		}
 	}
 
-	@Test func randomEditsMatchFullRelex() {
+	func testRandomEditsMatchFullRelex() {
 		var rng = SystemRandomNumberGenerator()
 		let pieces = ["/*", "*/", "`", "\"", "\n", "x := 1\n", "// c\n", "func f() {\n", "}\n", "'a'", " "]
 		var rope = Rope("package main\n\nfunc main() {\n\ts := `raw\nline`\n\t/* c */ x := 1\n}\n")
@@ -32,36 +31,36 @@ struct SyntaxHighlighterTests {
 		}
 		let expected = Self.reference(rope, GoLexer())
 		for line in 0..<rope.lineCount {
-			#expect(h.tokens(line: line, in: rope) == expected[line], "line \(line)")
+			XCTAssertEqual(h.tokens(line: line, in: rope), expected[line], "line \(line)")
 		}
 	}
 
-	@Test func openingACommentRecoloursBelowAndStopsWhenStatesMeet() {
+	func testOpeningACommentRecoloursBelowAndStopsWhenStatesMeet() {
 		var rope = Rope("a\nb\nc\nd")
 		let h = SyntaxHighlighter(lexer: GoLexer(), lineCount: rope.lineCount)
 		_ = h.tokens(line: 3, in: rope)
 		rope.replace(0..<0, with: "/*")
-		#expect(h.edit(firstLine: 0, oldLastLine: 0, newLastLine: 0, in: rope) == 0...3)
+		XCTAssertEqual(h.edit(firstLine: 0, oldLastLine: 0, newLastLine: 0, in: rope), 0...3)
 		rope.replace(rope.offset(ofLine: 1)..<rope.offset(ofLine: 1), with: "*/")
-		#expect(h.edit(firstLine: 1, oldLastLine: 1, newLastLine: 1, in: rope) == 1...3)
+		XCTAssertEqual(h.edit(firstLine: 1, oldLastLine: 1, newLastLine: 1, in: rope), 1...3)
 		rope.replace(rope.offset(ofLine: 2)..<rope.offset(ofLine: 2), with: "x")
-		#expect(h.edit(firstLine: 2, oldLastLine: 2, newLastLine: 2, in: rope) == 2...2)
+		XCTAssertEqual(h.edit(firstLine: 2, oldLastLine: 2, newLastLine: 2, in: rope), 2...2)
 	}
 
-	@Test func linesAcrossChunkBoundaries() {
+	func testLinesAcrossChunkBoundaries() {
 		let text = "a\n" + String(repeating: "x", count: 70_000) + "\nb\n\nc"
 		let rope = Rope(text)
 		var lines: [String] = []
 		SyntaxHighlighter.forEachLine(of: rope, from: 1, count: rope.lineCount - 1) { lines.append(String(decoding: $0, as: UTF8.self)) }
-		#expect(lines == Array(text.split(separator: "\n", omittingEmptySubsequences: false).dropFirst().map(String.init)))
+		XCTAssertEqual(lines, Array(text.split(separator: "\n", omittingEmptySubsequences: false).dropFirst().map(String.init)))
 	}
 
-	@Test func gapArrayKeepsOrder() {
+	func testGapArrayKeepsOrder() {
 		var g = GapArray(repeating: 0, count: 5)
 		for i in 0..<5 { g[i] = i }
 		g.replace(1..<3, with: 9, count: 3) // [0, 9, 9, 9, 3, 4]
 		g.replace(5..<6, with: 7, count: 0) // [0, 9, 9, 9, 3]
 		g.replace(0..<0, with: 8, count: 2) // [8, 8, 0, 9, 9, 9, 3]
-		#expect((0..<g.count).map { g[$0] } == [8, 8, 0, 9, 9, 9, 3])
+		XCTAssertEqual((0..<g.count).map { g[$0] }, [8, 8, 0, 9, 9, 9, 3])
 	}
 }

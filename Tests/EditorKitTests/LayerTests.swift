@@ -1,7 +1,6 @@
 import AppKit
-import Testing
-import TextEngine
-@testable import EditorKit
+import XCTest
+@testable import MinorIDE
 
 @MainActor
 final class LayerTests {
@@ -27,50 +26,50 @@ final class LayerTests {
 
 	isolated deinit { window.close() }
 
-	@Test func caretsMoveInTheirLayerWithoutRedrawingText() throws {
+	func testCaretsMoveInTheirLayerWithoutRedrawingText() throws {
 		display()
 		e.setSelections(SelectionSet([Selection(caret: 5), Selection(caret: 13)])) // "b|ar", "q|ux"
 		display()
-		let path = try #require(e.caretLayer.path)
+		let path = try XCTUnwrap(e.caretLayer.path)
 		let width = ("0" as NSString).size(withAttributes: [.font: e.font]).width
-		#expect(path.contains(CGPoint(x: e.textInset + width + 1, y: e.lineHeight * 1.5)))
-		#expect(path.contains(CGPoint(x: e.textInset + width + 1, y: e.lineHeight * 2.5)))
-		#expect(!path.contains(CGPoint(x: e.textInset + 1, y: e.lineHeight * 0.5)))
+		XCTAssertTrue(path.contains(CGPoint(x: e.textInset + width + 1, y: e.lineHeight * 1.5)))
+		XCTAssertTrue(path.contains(CGPoint(x: e.textInset + width + 1, y: e.lineHeight * 2.5)))
+		XCTAssertFalse(path.contains(CGPoint(x: e.textInset + 1, y: e.lineHeight * 0.5)))
 		// A test process may not get a key window; blinking runs only while carets show.
-		#expect((e.caretLayer.animation(forKey: "blink") != nil) == e.showsCarets)
+		XCTAssertEqual((e.caretLayer.animation(forKey: "blink") != nil), e.showsCarets)
 
 		// Blinking needs no draw pass at all.
 		let draws = e.drawCount
 		display()
-		#expect(e.drawCount == draws)
+		XCTAssertEqual(e.drawCount, draws)
 	}
 
-	@Test func caretsHideWithoutFocus() {
+	func testCaretsHideWithoutFocus() {
 		window.makeFirstResponder(nil)
 		display()
-		#expect(e.caretLayer.isHidden)
+		XCTAssertTrue(e.caretLayer.isHidden)
 		window.makeFirstResponder(e)
 		display()
-		#expect(e.showsCarets == !e.caretLayer.isHidden)
+		XCTAssertEqual(e.showsCarets, !e.caretLayer.isHidden)
 	}
 
-	@Test func gutterSitsBesideTextAndRedrawsOnlyWhenLinesChange() throws {
-		let gutter = try #require(e.gutter)
-		#expect(gutter.frame.width == e.gutterWidth)
-		#expect(e.convert(NSPoint.zero, to: nil).x >= e.gutterWidth) // text starts right of the gutter
+	func testGutterSitsBesideTextAndRedrawsOnlyWhenLinesChange() throws {
+		let gutter = try XCTUnwrap(e.gutter)
+		XCTAssertEqual(gutter.frame.width, e.gutterWidth)
+		XCTAssertTrue(e.convert(NSPoint.zero, to: nil).x >= e.gutterWidth) // text starts right of the gutter
 		e.setSelections(SelectionSet(caret: 3))
 		display()
 		var draws = gutter.drawCount
 		e.insertText("x", replacementRange: NSRange(location: NSNotFound, length: 0))
 		display()
-		#expect(gutter.drawCount == draws) // same line numbers
+		XCTAssertEqual(gutter.drawCount, draws) // same line numbers
 		draws = gutter.drawCount
 		e.doCommand(by: #selector(NSResponder.insertNewline(_:)))
 		display()
-		#expect(gutter.drawCount > draws)
+		XCTAssertTrue(gutter.drawCount > draws)
 	}
 
-	@Test func latencyMonitorTimesKeyToCommit() {
+	func testLatencyMonitorTimesKeyToCommit() {
 		let monitor = LatencyMonitor(view: e)
 		e.latencyMonitor = monitor
 		let key = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
@@ -78,22 +77,22 @@ final class LayerTests {
 		                           isARepeat: false, keyCode: 7)!
 		e.keyDown(with: key)
 		RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05)) // the pass ends with the commit
-		#expect(e.rope.string(in: 0..<1) == "x")
-		#expect(monitor.commits.count == 1)
-		#expect(monitor.commits.allSatisfy { $0 >= 0 && $0 < 1 })
+		XCTAssertEqual(e.rope.string(in: 0..<1), "x")
+		XCTAssertEqual(monitor.commits.count, 1)
+		XCTAssertTrue(monitor.commits.allSatisfy { $0 >= 0 && $0 < 1 })
 	}
 
-	@Test func accessibilityReadsTheCurrentLine() {
+	func testAccessibilityReadsTheCurrentLine() {
 		let e = EditorView(text: "Příliš\nžluťoučký kůň\n")
 		e.setSelections(SelectionSet(caret: 12)) // bytes of "Příliš\nž"
-		#expect(e.accessibilityRole() == .textArea)
+		XCTAssertEqual(e.accessibilityRole(), .textArea)
 		let line = e.accessibilityInsertionPointLineNumber()
-		#expect(line == 1)
-		#expect(e.accessibilityString(for: e.accessibilityRange(forLine: line)) == "žluťoučký kůň\n")
-		#expect(e.accessibilitySelectedTextRange() == NSRange(location: 8, length: 0))
-		#expect(e.accessibilityLine(for: 8) == 1)
+		XCTAssertEqual(line, 1)
+		XCTAssertEqual(e.accessibilityString(for: e.accessibilityRange(forLine: line)), "žluťoučký kůň\n")
+		XCTAssertEqual(e.accessibilitySelectedTextRange(), NSRange(location: 8, length: 0))
+		XCTAssertEqual(e.accessibilityLine(for: 8), 1)
 		e.setAccessibilitySelectedTextRange(NSRange(location: 0, length: 6))
-		#expect(e.accessibilitySelectedText() == "Příliš")
-		#expect(e.accessibilityNumberOfCharacters() == 21)
+		XCTAssertEqual(e.accessibilitySelectedText(), "Příliš")
+		XCTAssertEqual(e.accessibilityNumberOfCharacters(), 21)
 	}
 }

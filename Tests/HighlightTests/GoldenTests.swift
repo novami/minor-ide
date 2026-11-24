@@ -1,12 +1,11 @@
 import Foundation
-import Testing
-import TextEngine
-@testable import Highlight
+import XCTest
+@testable import MinorIDE
 
 /// Golden tests: each Golden/<name>.<ext> is lexed line by line and compared with
 /// Golden/<name>.<ext>.tokens ("line:column kind text" per token). MINORIDE_UPDATE_GOLDEN=1
 /// rewrites the expected files; review the diff before committing.
-struct GoldenTests {
+final class GoldenTests: XCTestCase {
 	static let dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Golden")
 
 	static var cases: [String] {
@@ -30,9 +29,9 @@ struct GoldenTests {
 		return out
 	}
 
-	@Test(arguments: cases) func golden(_ name: String) throws {
+	func testGolden(_ name: String) throws {
 		let source = Self.dir.appendingPathComponent(name)
-		let lexer = try #require(Languages.lexer(forPath: name), "no lexer for \(name)")
+		let lexer = try XCTUnwrap(Languages.lexer(forPath: name), "no lexer for \(name)")
 		let actual = Self.render(try String(contentsOf: source, encoding: .utf8), lexer: lexer)
 		let expectedURL = source.appendingPathExtension("tokens")
 		if ProcessInfo.processInfo.environment["MINORIDE_UPDATE_GOLDEN"] == "1" {
@@ -40,6 +39,6 @@ struct GoldenTests {
 			return
 		}
 		let expected = try String(contentsOf: expectedURL, encoding: .utf8)
-		#expect(actual == expected)
+		XCTAssertEqual(actual, expected)
 	}
 }

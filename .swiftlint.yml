@@ -1,12 +1,29 @@
-# Advisory: CI reports findings but does not fail the build.
 included:
-  - Sources
+  - App
+  - Core
+  - Features
   - Tests
+
 excluded:
-  - Sources/Localization/Generated
-  - Sources/Highlight/Lexers
-  - Sources/MinorIDE/Diagnostics # benchmarks: a failed invariant should stop the run
+  - .build
+  - DerivedData
+  - Core/Localization/Generated
+  - Core/Highlight/Lexers # hand-tuned scanners with short byte-level names
+
+
+opt_in_rules:
+  - contains_over_first_not_nil
+  - empty_count
+  - empty_string
+  - fatal_error_message
+  - first_where
+  - force_unwrapping
+  - redundant_nil_coalescing
+  - vertical_whitespace_closing_braces
+
 disabled_rules:
+  # Carried over from the former configuration (the code base was written against these).
+  - trailing_comma
   - line_length
   - identifier_name
   - type_name
@@ -18,15 +35,11 @@ disabled_rules:
   - large_tuple
   - nesting
   - todo
-  - trailing_comma
   - opening_brace
   - vertical_whitespace
   - empty_enum_arguments
   - unused_closure_parameter
   - statement_position
+  - implicitly_unwrapped_optional # AppKit view properties set up after init
   - optional_data_string_conversion # String(decoding:) is intended: invalid UTF-8 becomes U+FFFD, never a nil
-opt_in_rules:
-  - empty_count
-  - force_unwrapping
-force_unwrapping:
-  severity: warning
+

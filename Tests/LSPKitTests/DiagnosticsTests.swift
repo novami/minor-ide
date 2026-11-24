@@ -1,11 +1,9 @@
 import Foundation
-import MinorCore
-import Testing
-import TextEngine
-@testable import LSPKit
+import XCTest
+@testable import MinorIDE
 
-struct DiagnosticsTests {
-	@Test func parsesDiagnostics() {
+final class DiagnosticsTests: XCTestCase {
+	func testParsesDiagnostics() {
 		let report = PublishedDiagnostics([
 			"uri": "file:///p/a.go", "version": 3,
 			"diagnostics": [
@@ -19,17 +17,17 @@ struct DiagnosticsTests {
 				["message": "no range"],
 			],
 		])
-		#expect(report?.version == 3)
-		#expect(report?.diagnostics.map(\.severity) == [.error, .hint])
-		#expect(report?.diagnostics.map(\.code) == ["UndeclaredName", "1001"])
-		#expect(report?.diagnostics.last?.unnecessary == true)
-		#expect(report?.diagnostics.first?.href == "https://pkg.go.dev/x")
-		#expect(report?.diagnostics.first?.related.map(\.message) == ["other declaration"])
-		#expect(report?.diagnostics.first?.related.first?.location.range.start == Position(line: 4, character: 1))
+		XCTAssertEqual(report?.version, 3)
+		XCTAssertEqual(report?.diagnostics.map(\.severity), [.error, .hint])
+		XCTAssertEqual(report?.diagnostics.map(\.code), ["UndeclaredName", "1001"])
+		XCTAssertEqual(report?.diagnostics.last?.unnecessary, true)
+		XCTAssertEqual(report?.diagnostics.first?.href, "https://pkg.go.dev/x")
+		XCTAssertEqual(report?.diagnostics.first?.related.map(\.message), ["other declaration"])
+		XCTAssertEqual(report?.diagnostics.first?.related.first?.location.range.start, Position(line: 4, character: 1))
 	}
 
 	/// Ranges are bytes in the text of the version the server diagnosed, also after later edits.
-	@Test func rangesAreInTheDiagnosedVersion() async throws {
+	func testRangesAreInTheDiagnosedVersion() async throws {
 		let h = Harness()
 		var rope = Rope("ab\nčd\n")
 		h.lsp.open(uri: "file:///p/a.go", languageID: "go", version: 1, text: rope)
@@ -47,8 +45,8 @@ struct DiagnosticsTests {
 		try h.server.peer.notify("textDocument/publishDiagnostics", ["uri": "file:///p/b.go", "diagnostics": [d]])
 		try await waitUntil { h.diagnostics.value.count == 3 }
 		let got = h.diagnostics.value
-		#expect(got[0].version == 1 && got[0].ranges == [3..<5]) // "č" before the edit
-		#expect(got[1].version == 2 && got[1].ranges == [5..<7])
-		#expect(got[2].ranges == nil) // not open
+		XCTAssertTrue(got[0].version == 1 && got[0].ranges == [3..<5]) // "č" before the edit
+		XCTAssertTrue(got[1].version == 2 && got[1].ranges == [5..<7])
+		XCTAssertEqual(got[2].ranges, nil) // not open
 	}
 }

@@ -1,0 +1,1 @@
+nonisolated public enum MinorCore {}
