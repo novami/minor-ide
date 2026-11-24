@@ -13,7 +13,7 @@ enum AppUpdater {
 		let feed = (info["MIUpdateFeedURL"] as? String).flatMap(URL.init(string:))
 		let key = (info["MIUpdatePublicKey"] as? String).flatMap { Data(base64Encoded: $0) } ?? Data()
 		let version = info["CFBundleShortVersionString"] as? String ?? "0.0.0"
-		return UpdateController(appID: Bundle.main.bundleIdentifier ?? "cz.novami.minoride", currentVersion: version, feedURL: feed, publicKey: key,
+		return UpdateController(appID: Bundle.main.bundleIdentifier ?? "cz.novami.minor.ide", currentVersion: version, feedURL: feed, publicKey: key,
 		                        preferences: preferences(SettingsFile.load(SettingsFile.userURL)), transport: URLSessionTransport())
 	}()
 

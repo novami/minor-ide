@@ -36,7 +36,7 @@ cat > "$HELP/Info.plist" <<EOF
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key><string>en</string>
-	<key>CFBundleIdentifier</key><string>cz.novami.minoride.help</string>
+	<key>CFBundleIdentifier</key><string>cz.novami.minor.ide.help</string>
 	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
 	<key>CFBundleName</key><string>MinorIDE Help</string>
 	<key>CFBundlePackageType</key><string>BNDL</string>
@@ -63,9 +63,9 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <dict>
 	<key>CFBundleExecutable</key><string>MinorIDE</string>
 	<key>CFBundleHelpBookFolder</key><string>MinorIDE.help</string>
-	<key>CFBundleHelpBookName</key><string>cz.novami.minoride.help</string>
+	<key>CFBundleHelpBookName</key><string>cz.novami.minor.ide.help</string>
 	<key>CFBundleIconFile</key><string>AppIcon</string>
-	<key>CFBundleIdentifier</key><string>cz.novami.minoride</string>
+	<key>CFBundleIdentifier</key><string>cz.novami.minor.ide</string>
 	<key>CFBundleName</key><string>MinorIDE</string>
 	<key>CFBundleDevelopmentRegion</key><string>en</string>
 	<key>CFBundleLocalizations</key><array>${LOCALIZATIONS}</array>

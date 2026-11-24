@@ -65,7 +65,7 @@ Each record: context, decision, consequences. Status is "accepted" unless stated
 ## ADR-14 Carried decisions from the first plan
 | Topic | Decision |
 |---|---|
-| Name and license | MinorIDE, bundle id `cz.novami.minoride`, MIT |
+| Name and license | MinorIDE, bundle id `cz.novami.minor.ide`, MIT |
 | Highlighting | own incremental lexers with line-start state |
 | Debugger | own DAP client; Delve for Go; Tracy for PHP in the MVP |
 | Updates | own updater over GitHub Releases, Ed25519 signature signed locally (key never on GitHub), code signature check; self-signed certificate until a Developer ID exists, then notarization |

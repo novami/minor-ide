@@ -17,9 +17,9 @@ ditto -c -k --keepParent build/MinorIDE.app "$ZIP"
 URL="https://github.com/novami/minor-ide/releases/download/$VERSION/MinorIDE-$VERSION.zip"
 NOTES=docs/release-notes/$VERSION.md
 if [ -f "$NOTES" ]; then
-	swift tools/minorupdate.swift sign "$ZIP" cz.novami.minoride "$VERSION" "$URL" "$NOTES" > build/appcast.json
+	swift tools/minorupdate.swift sign "$ZIP" cz.novami.minor.ide "$VERSION" "$URL" "$NOTES" > build/appcast.json
 else
-	swift tools/minorupdate.swift sign "$ZIP" cz.novami.minoride "$VERSION" "$URL" > build/appcast.json
+	swift tools/minorupdate.swift sign "$ZIP" cz.novami.minor.ide "$VERSION" "$URL" > build/appcast.json
 fi
 echo "Ready: $ZIP and build/appcast.json. Publish with:"
 echo "  gh release create $VERSION $ZIP build/appcast.json --title $VERSION --notes-file <notes>"
